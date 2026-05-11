@@ -29,120 +29,120 @@
 
         #map-container { 
             height: 1200px; 
-            width: 1000px; 
+            width: 1200px; 
             position: relative;
             background-color: #ffffff;
             transform-origin: 0 0;
-            transition: transform 0.2s ease-out;
+            transition: transform 0.1s ease-out;
         }
 
-        /* Rejilla más visible para alinear fácil */
         .design-grid {
             background-image: 
-                linear-gradient(to right, #f1f5f9 1px, transparent 1px),
-                linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
-            background-size: 40px 40px;
+                linear-gradient(to right, #f1f5f9 2px, transparent 2px),
+                linear-gradient(to bottom, #f1f5f9 2px, transparent 2px);
+            background-size: 50px 50px;
         }
 
-        .mesa {
+        .mesa, .area-vip {
             position: absolute;
             transform: translate(-50%, -50%);
             z-index: 20;
             touch-action: none;
             cursor: pointer;
-            width: 48px;
-            height: 48px;
-            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 800;
-            font-size: 13px;
+            user-select: none;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
         }
 
-        .area-vip {
-            position: absolute;
-            transform: translate(-50%, -50%);
-            z-index: 10;
-            border: 2px dashed #94a3b8;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 900;
-            font-size: 11px;
-            text-transform: uppercase;
-            touch-action: none;
-            border-radius: 12px;
-            cursor: pointer;
-            text-align: center;
-        }
+        .mesa { border-radius: 12px; }
+        .area-vip { border: 3px dashed #94a3b8; border-radius: 16px; text-transform: uppercase; }
 
+        /* ESTADOS DE AUDITORÍA */
         .item-free { background-color: #ffffff; color: #1e293b; border: 2px solid #e2e8f0; }
+        
+        /* COLOR INTERMEDIO (Indefinida) */
+        .item-doubt { 
+            background-color: #facc15 !important; /* Amarillo Intenso */
+            color: #000000 !important; 
+            border: 3px solid #eab308 !important;
+            animation: pulse-yellow 2s infinite;
+        }
+
         .item-occupied { 
             background-color: #0f172a !important; 
             color: #ffffff !important; 
             border-color: #0f172a !important;
         }
 
+        @keyframes pulse-yellow {
+            0% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(250, 204, 21, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }
+        }
+
         .selected-design { 
             outline: 4px solid #3b82f6; 
-            outline-offset: 2px; 
+            outline-offset: 4px; 
             z-index: 50 !important; 
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.6);
         }
 
-        /* Botones laterales de Zoom */
-        .zoom-bar {
+        .zoom-controls {
             position: fixed;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
+            right: 16px;
+            top: 35%;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            z-index: 100;
+            gap: 12px;
+            z-index: 200;
         }
 
-        .zoom-btn {
-            width: 44px;
-            height: 44px;
+        .btn-zoom {
+            width: 54px;
+            height: 54px;
             background: white;
-            border-radius: 12px;
+            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            color: #475569;
-            font-size: 18px;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.15);
+            color: #0f172a;
+            border: 1px solid #e2e8f0;
         }
 
-        /* Panel de herramientas rápido (Flotante) */
         .fab-container {
             position: fixed;
-            bottom: 120px;
+            bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 12px;
-            z-index: 130;
+            gap: 15px;
+            z-index: 250;
+            background: rgba(15, 23, 42, 0.95);
+            padding: 14px 24px;
+            border-radius: 40px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 25px 30px -5px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        .fab-add {
-            padding: 12px 20px;
-            background: #0f172a;
+        .fab-btn {
+            padding: 10px 18px;
             color: white;
             border-radius: 20px;
             font-weight: 900;
             font-size: 11px;
             text-transform: uppercase;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 20px); }
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 24px); }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden text-slate-900">
@@ -152,98 +152,106 @@
         <div class="flex items-center gap-2">
             <h1 class="font-black text-lg italic tracking-tighter uppercase">SPOT CHECK</h1>
         </div>
-        <div id="design-edit-top" class="hidden flex items-center gap-2 bg-blue-600 px-3 py-1.5 rounded-full animate-in fade-in">
-            <input id="label-input" type="text" class="w-20 bg-transparent text-white font-bold outline-none border-b border-blue-400 text-sm" placeholder="Mesa...">
-            <button onclick="rotateSelected()" id="rotate-btn" class="p-1 text-white"><i class="fa-solid fa-rotate"></i></button>
-            <button onclick="deleteSelected()" class="p-1 text-white"><i class="fa-solid fa-trash-can"></i></button>
+        
+        <!-- Panel Edición con Tamaño y Rotación -->
+        <div id="design-edit-top" class="hidden flex items-center gap-1 bg-blue-600 px-2 py-1.5 rounded-full animate-in slide-in-from-top">
+            <input id="label-input" type="text" class="w-12 bg-transparent text-white font-bold outline-none border-b border-blue-400 text-sm text-center" placeholder="ID">
+            <div class="h-6 w-[1px] bg-blue-400 mx-1"></div>
+            <!-- Ajuste de Tamaño -->
+            <button onclick="changeSize(10)" class="p-2 text-white bg-blue-500 rounded-lg active:scale-90"><i class="fa-solid fa-up-right-and-down-left-from-center text-[10px]"></i></button>
+            <button onclick="changeSize(-10)" class="p-2 text-white bg-blue-500 rounded-lg active:scale-90"><i class="fa-solid fa-minimize text-[10px]"></i></button>
+            <div class="h-6 w-[1px] bg-blue-400 mx-1"></div>
+            <button onclick="rotateSelected()" class="p-2 text-white active:rotate-45 transition-transform"><i class="fa-solid fa-rotate"></i></button>
+            <button onclick="deleteSelected()" class="p-2 text-white bg-red-500 rounded-lg ml-1"><i class="fa-solid fa-trash-can"></i></button>
         </div>
+
         <button onclick="toggleLock()" id="lock-btn" class="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center border border-slate-800">
             <i class="fa-solid fa-lock text-red-500" id="lock-icon"></i>
         </button>
     </header>
 
-    <!-- NAVEGACIÓN -->
+    <!-- NAV PRINCIPAL -->
     <nav class="bg-white border-b border-slate-200 p-2 flex gap-1 z-[140]">
         <button onclick="setMode('audit')" id="nav-audit" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase bg-slate-950 text-white shadow-lg transition-all">Auditar</button>
         <button onclick="setMode('design')" id="nav-design" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 transition-all">Diseño</button>
-        <button onclick="setMode('history')" id="nav-history" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 transition-all">Reportes</button>
+        <button onclick="setMode('history')" id="nav-history" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 transition-all">Historial</button>
     </nav>
 
-    <!-- CONTROLES ZOOM -->
-    <div class="zoom-bar">
-        <button onclick="changeZoom(0.2)" class="zoom-btn active:scale-90"><i class="fa-solid fa-plus"></i></button>
-        <button onclick="changeZoom(-0.2)" class="zoom-btn active:scale-90"><i class="fa-solid fa-minus"></i></button>
-        <button onclick="resetZoom()" class="zoom-btn text-[9px] font-bold">1:1</button>
-    </div>
-
-    <!-- BOTONES RÁPIDOS DE CREACIÓN (SOLO EN DISEÑO) -->
-    <div id="design-fabs" class="fab-container hidden">
-        <button onclick="addTable()" class="fab-add bg-slate-900">
-            <i class="fa-solid fa-square-plus text-lg"></i> + MESA
-        </button>
-        <button onclick="addVIP()" class="fab-add bg-blue-700">
-            <i class="fa-solid fa-vector-square text-lg"></i> + VIP
-        </button>
-    </div>
-
-    <!-- ÁREA DE MAPA -->
+    <!-- CONTENEDOR DE MAPA -->
     <main class="flex-1 overflow-hidden bg-slate-200 relative" id="main-view">
+        
+        <div class="zoom-controls">
+            <button onclick="applyZoom(0.1)" class="btn-zoom active:scale-90"><i class="fa-solid fa-plus"></i></button>
+            <button onclick="resetZoom()" class="btn-zoom text-[9px] font-black uppercase">Fit</button>
+            <button onclick="applyZoom(-0.1)" class="btn-zoom active:scale-90"><i class="fa-solid fa-minus"></i></button>
+        </div>
+
+        <!-- FABs DE DISEÑO (Solo modo diseño + desbloqueado) -->
+        <div id="design-fabs" class="fab-container hidden">
+            <button onclick="addTable()" class="fab-btn bg-white !text-slate-950 border border-slate-200">
+                <i class="fa-solid fa-plus text-blue-600"></i> + MESA
+            </button>
+            <button onclick="addVIP()" class="fab-btn bg-blue-600">
+                <i class="fa-solid fa-vector-square"></i> + ÁREA VIP
+            </button>
+        </div>
+
         <div id="map-wrapper">
-            <div id="map-container">
+            <div id="map-container" class="design-grid">
                 <div id="mesas-layer" class="w-full h-full relative"></div>
             </div>
         </div>
     </main>
 
-    <!-- PANEL INFERIOR (AUDITORÍA) -->
+    <!-- FOOTER ACCIÓN -->
     <footer id="audit-footer" class="p-6 bg-white border-t border-slate-200 z-[140] shadow-2xl safe-bottom">
-        <button onclick="openSaveModal()" class="w-full bg-slate-950 text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest border-b-4 border-slate-800 active:translate-y-1 active:border-b-0 transition-all">Finalizar Auditoría</button>
+        <button onclick="openSaveModal()" class="w-full bg-slate-950 text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest border-b-4 border-slate-800 active:translate-y-1 active:border-b-0 transition-all">Cerrar Auditoría</button>
     </footer>
 
     <!-- MODAL DE GUARDADO -->
     <div id="modal-save" class="fixed inset-0 bg-slate-900/90 z-[300] hidden items-center justify-center p-6 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 space-y-5 shadow-2xl">
-            <h3 class="text-xl font-black uppercase italic text-center">Cerrar Reporte</h3>
-            <div class="space-y-4">
-                <input id="aud-resp" type="text" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold" placeholder="Tu Nombre">
-                <input id="aud-lugar" type="text" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold" placeholder="Sector">
+        <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 space-y-5">
+            <h3 class="text-xl font-black uppercase text-center italic">Guardar Reporte</h3>
+            <div class="space-y-3">
+                <input id="aud-resp" type="text" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold" placeholder="Tu Nombre">
+                <input id="aud-lugar" type="text" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold" placeholder="Sector o Salón">
                 <div class="grid grid-cols-2 gap-2">
-                    <input id="aud-insitu" type="number" class="p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-sm" placeholder="In Situ">
-                    <input id="aud-micros" type="number" class="p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-sm" placeholder="Micros">
+                    <input id="aud-insitu" type="number" class="p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold" placeholder="Pax In Situ">
+                    <input id="aud-micros" type="number" class="p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold" placeholder="Pax Micros">
                 </div>
             </div>
-            <button onclick="confirmSave()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase shadow-lg shadow-blue-200">Guardar Ahora</button>
-            <button onclick="closeSaveModal()" class="w-full text-slate-400 font-bold uppercase text-[10px] tracking-widest">Cancelar</button>
+            <button onclick="confirmSave()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase shadow-lg">Finalizar y Limpiar</button>
+            <button onclick="closeSaveModal()" class="w-full text-slate-400 font-bold uppercase text-[10px] text-center">Volver al Mapa</button>
         </div>
     </div>
 
-    <!-- PANTALLA REPORTES -->
-    <div id="history-screen" class="fixed inset-0 bg-white z-[200] hidden flex-col p-6 overflow-y-auto">
-        <div class="flex justify-between items-center mb-8 pt-10">
-            <h2 class="text-2xl font-black uppercase italic">Historial</h2>
-            <button onclick="setMode('audit')" class="text-slate-300 text-3xl"><i class="fa-solid fa-circle-xmark"></i></button>
+    <!-- PANTALLA HISTORIAL -->
+    <div id="history-screen" class="fixed inset-0 bg-white z-[200] hidden flex-col p-6 overflow-y-auto pt-16">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-black uppercase italic">Reportes Anteriores</h2>
+            <button onclick="setMode('audit')" class="text-slate-300 text-3xl active:scale-90"><i class="fa-solid fa-circle-xmark"></i></button>
         </div>
-        <div id="history-list" class="space-y-4 pb-10"></div>
+        <div id="history-list" class="space-y-4 pb-20"></div>
     </div>
 
     <script>
-        const DB_KEY = 'spotcheck_v9_fast';
+        const DB_KEY = 'spotcheck_v15_stable';
         let tables = JSON.parse(localStorage.getItem(`${DB_KEY}_tables`)) || [];
         let audits = JSON.parse(localStorage.getItem(`${DB_KEY}_audits`)) || [];
         let currentMode = 'audit';
         let isLocked = true;
         let selectedId = null;
-        let zoomLevel = 0.8; // Empezamos con un poco de zoom out para ver más
+        let zoomLevel = 0.85;
 
         function init() {
             if (tables.length === 0) {
                 tables = [
-                    { id: 1, x: 20, y: 20, label: "01", type: 'mesa', occupied: false },
-                    { id: 2, x: 50, y: 20, label: "VIP 1", type: 'vip', w: 160, h: 60, occupied: false }
+                    { id: 1, x: 25, y: 20, label: "01", type: 'mesa', status: 'free', w: 60, h: 60 },
+                    { id: 2, x: 50, y: 30, label: "VIP 1", type: 'vip', status: 'free', w: 180, h: 90 }
                 ];
             }
             render();
-            resetZoom();
+            updateUI();
         }
 
         function render() {
@@ -251,37 +259,48 @@
             const container = document.getElementById('map-container');
             layer.innerHTML = '';
             
-            container.className = currentMode === 'design' ? 'design-grid' : '';
             container.style.transform = `scale(${zoomLevel})`;
+            container.className = (currentMode === 'design' && !isLocked) ? 'design-grid' : '';
 
             tables.forEach(t => {
                 const el = document.createElement('div');
-                const isOccupied = t.occupied;
                 
-                if (t.type === 'vip') {
-                    el.className = `area-vip ${isOccupied ? 'item-occupied' : 'item-free'} ${selectedId === t.id && currentMode === 'design' ? 'selected-design' : ''}`;
-                    el.style.width = t.w + 'px';
-                    el.style.height = t.h + 'px';
-                } else {
-                    el.className = `mesa ${isOccupied ? 'item-occupied' : 'item-free'} ${selectedId === t.id && currentMode === 'design' ? 'selected-design' : ''}`;
-                }
+                // Determinar clase de estado (Triple Ciclo)
+                let statusClass = 'item-free';
+                if (t.status === 'doubt') statusClass = 'item-doubt';
+                if (t.status === 'occupied') statusClass = 'item-occupied';
+
+                const baseClass = t.type === 'vip' ? 'area-vip' : 'mesa';
+                const selectClass = (selectedId === t.id && currentMode === 'design') ? 'selected-design' : '';
+                
+                el.className = `${baseClass} ${statusClass} ${selectClass}`;
+                
+                // Aplicar dimensiones guardadas
+                el.style.width = (t.w || 60) + 'px';
+                el.style.height = (t.h || 60) + 'px';
+                el.style.fontSize = Math.max(11, (t.w || 60) / 4) + 'px';
                 
                 el.style.left = t.x + '%';
                 el.style.top = t.y + '%';
                 el.innerText = t.label;
 
+                // Lógica de clic centralizada
                 el.onclick = (e) => {
                     e.stopPropagation();
                     if (currentMode === 'audit') {
-                        t.occupied = !t.occupied;
+                        // CICLO TRIPLE: Free -> Doubt -> Occupied -> Free
+                        if (t.status === 'free' || !t.status) t.status = 'doubt';
+                        else if (t.status === 'doubt') t.status = 'occupied';
+                        else t.status = 'free';
+                        
                         save(); render();
                     } else if (currentMode === 'design' && !isLocked) {
                         selectedId = t.id;
-                        updateUI();
-                        render();
+                        updateUI(); render();
                     }
                 };
 
+                // Lógica de Drag & Drop (Solo Diseño)
                 if (currentMode === 'design' && !isLocked) {
                     el.onpointerdown = (e) => {
                         selectedId = t.id;
@@ -294,22 +313,42 @@
             });
         }
 
-        function changeZoom(delta) {
-            zoomLevel = Math.max(0.4, Math.min(2.0, zoomLevel + delta));
+        function changeSize(delta) {
+            const t = tables.find(x => x.id === selectedId);
+            if (!t) return;
+            // Aumentar o disminuir proporcionalmente
+            t.w = Math.max(40, (t.w || 60) + delta);
+            t.h = Math.max(40, (t.h || 60) + delta);
+            render();
+            save();
+        }
+
+        function rotateSelected() {
+            const t = tables.find(x => x.id === selectedId);
+            if(t) { 
+                const temp = t.w;
+                t.w = t.h;
+                t.h = temp;
+                render(); save(); 
+            }
+        }
+
+        function applyZoom(delta) {
+            zoomLevel = Math.max(0.3, Math.min(2.5, zoomLevel + delta));
             render();
         }
 
-        function resetZoom() { zoomLevel = 0.8; render(); }
+        function resetZoom() { zoomLevel = 0.85; render(); }
 
         function startDragging(e, t, el) {
-            const rect = document.getElementById('map-container').getBoundingClientRect();
+            const container = document.getElementById('map-container');
+            const rect = container.getBoundingClientRect();
             
             function onMove(ev) {
-                // Cálculo de coordenadas ajustado al Zoom
                 let newX = ((ev.clientX - rect.left) / rect.width) * 100;
                 let newY = ((ev.clientY - rect.top) / rect.height) * 100;
-                t.x = Math.max(2, Math.min(98, newX));
-                t.y = Math.max(2, Math.min(98, newY));
+                t.x = Math.max(1, Math.min(99, newX));
+                t.y = Math.max(1, Math.min(99, newY));
                 el.style.left = t.x + '%';
                 el.style.top = t.y + '%';
             }
@@ -317,26 +356,21 @@
             function stop() {
                 window.removeEventListener('pointermove', onMove);
                 window.removeEventListener('pointerup', stop);
-                save();
-                render();
+                save(); render();
             }
 
             window.addEventListener('pointermove', onMove);
             window.addEventListener('pointerup', stop);
         }
 
-        function toggleLock() {
-            isLocked = !isLocked;
-            document.getElementById('lock-icon').className = isLocked ? 'fa-solid fa-lock text-red-500' : 'fa-solid fa-unlock text-blue-500';
-            selectedId = null;
-            updateUI();
-            render();
-        }
-
         function setMode(m) {
-            currentMode = m; selectedId = null;
-            document.querySelectorAll('nav button').forEach(b => b.classList.replace('bg-slate-950', 'text-slate-400'));
-            document.querySelectorAll('nav button').forEach(b => b.classList.remove('text-white', 'shadow-lg'));
+            currentMode = m;
+            selectedId = null;
+            
+            document.querySelectorAll('nav button').forEach(b => {
+                b.classList.remove('bg-slate-950', 'text-white', 'shadow-lg');
+                b.classList.add('text-slate-400');
+            });
             document.getElementById(`nav-${m}`).classList.add('bg-slate-950', 'text-white', 'shadow-lg');
             
             document.getElementById('audit-footer').classList.toggle('hidden', m !== 'audit');
@@ -348,87 +382,94 @@
             render();
         }
 
+        function toggleLock() {
+            isLocked = !isLocked;
+            const icon = document.getElementById('lock-icon');
+            icon.className = isLocked ? 'fa-solid fa-lock text-red-500' : 'fa-solid fa-unlock text-blue-500';
+            setMode(currentMode);
+        }
+
         function updateUI() {
             const topPanel = document.getElementById('design-edit-top');
-            const fabs = document.getElementById('design-fabs');
             const item = tables.find(t => t.id === selectedId);
-
-            fabs.classList.toggle('hidden', currentMode !== 'design' || isLocked);
 
             if (selectedId && currentMode === 'design' && !isLocked) {
                 topPanel.classList.remove('hidden');
-                document.getElementById('label-input').value = item.label;
-                document.getElementById('label-input').oninput = (e) => { item.label = e.target.value; render(); };
-                document.getElementById('rotate-btn').classList.toggle('hidden', item.type !== 'vip');
+                const input = document.getElementById('label-input');
+                input.value = item.label;
+                input.oninput = (e) => { item.label = e.target.value.toUpperCase(); render(); save(); };
             } else {
                 topPanel.classList.add('hidden');
             }
         }
 
         function addTable() {
-            const nextLabel = (tables.filter(x => x.type === 'mesa').length + 1).toString().padStart(2, '0');
-            const newTable = { id: Date.now(), x: 50, y: 40, label: nextLabel, type: 'mesa', occupied: false };
-            tables.push(newTable);
-            selectedId = newTable.id;
-            updateUI(); render(); save();
+            const num = tables.filter(x => x.type === 'mesa').length + 1;
+            const newT = { id: Date.now(), x: 50, y: 50, label: num.toString().padStart(2, '0'), type: 'mesa', status: 'free', w: 60, h: 60 };
+            tables.push(newT);
+            selectedId = newT.id;
+            save(); render(); updateUI();
         }
 
         function addVIP() {
-            const newVIP = { id: Date.now(), x: 50, y: 40, label: "VIP", type: 'vip', w: 200, h: 60, occupied: false };
-            tables.push(newVIP);
-            selectedId = newVIP.id;
-            updateUI(); render(); save();
-        }
-
-        function rotateSelected() {
-            const t = tables.find(x => x.id === selectedId);
-            if(t && t.type === 'vip') { [t.w, t.h] = [t.h, t.w]; render(); save(); }
+            const newV = { id: Date.now(), x: 50, y: 50, label: "VIP", type: 'vip', status: 'free', w: 180, h: 90 };
+            tables.push(newV);
+            selectedId = newV.id;
+            save(); render(); updateUI();
         }
 
         function deleteSelected() {
-            tables = tables.filter(t => t.id !== selectedId);
-            selectedId = null; updateUI(); render(); save();
+            if(confirm("¿Eliminar este elemento definitivamente?")) {
+                tables = tables.filter(t => t.id !== selectedId);
+                selectedId = null; save(); render(); updateUI();
+            }
         }
 
         function openSaveModal() { document.getElementById('modal-save').style.display = 'flex'; }
         function closeSaveModal() { document.getElementById('modal-save').style.display = 'none'; }
 
         function confirmSave() {
+            const occ = tables.filter(t => t.status === 'occupied').length;
+            const dbt = tables.filter(t => t.status === 'doubt').length;
+            
             const audit = {
                 id: Date.now(),
-                resp: document.getElementById('aud-resp').value || 'S/F',
-                lugar: document.getElementById('aud-lugar').value || 'Gral',
-                insitu: document.getElementById('aud-insitu').value || '-',
-                micros: document.getElementById('aud-micros').value || '-',
+                resp: document.getElementById('aud-resp').value || 'Sin Nombre',
+                lugar: document.getElementById('aud-lugar').value || 'Salón Principal',
+                insitu: document.getElementById('aud-insitu').value || '0',
+                micros: document.getElementById('aud-micros').value || '0',
                 date: new Date().toLocaleString([], {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}),
-                occ: tables.filter(t => t.occupied).length,
+                occ: occ,
+                doubt: dbt,
                 total: tables.length
             };
             audits.unshift(audit);
-            tables.forEach(t => t.occupied = false);
+            // Limpiar estados para la próxima vuelta
+            tables.forEach(t => t.status = 'free');
             save(); closeSaveModal(); setMode('history');
         }
 
         function renderHistory() {
             const list = document.getElementById('history-list');
             list.innerHTML = audits.map(a => `
-                <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-2 h-full bg-blue-600"></div>
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <p class="text-[8px] font-black uppercase text-slate-400 mb-1">${a.date}</p>
-                            <p class="font-black text-slate-900 uppercase leading-none">${a.resp}</p>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-2xl font-black text-blue-600">${Math.round((a.occ/a.total)*100)}%</span>
+                <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm relative overflow-hidden flex justify-between items-center">
+                    <div class="absolute top-0 left-0 w-2 h-full bg-slate-950"></div>
+                    <div>
+                        <p class="text-[8px] font-black uppercase text-slate-400 mb-1">${a.date}</p>
+                        <p class="font-black text-slate-900 uppercase text-sm">${a.resp}</p>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase mt-1 italic">${a.lugar}</p>
+                        <div class="flex gap-2 mt-2">
+                             <span class="text-[9px] bg-slate-100 px-2 py-0.5 rounded font-bold">IN SITU: ${a.insitu}</span>
+                             <span class="text-[9px] bg-slate-100 px-2 py-0.5 rounded font-bold">MICROS: ${a.micros}</span>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 text-[10px] font-bold text-slate-500 uppercase mt-2 pt-2 border-t border-slate-50">
-                        <div>Situ: <span class="text-slate-900">${a.insitu}</span></div>
-                        <div>Micro: <span class="text-slate-900">${a.micros}</span></div>
+                    <div class="text-right">
+                        <span class="text-[10px] font-black block text-slate-400">OCUPACIÓN</span>
+                        <span class="text-3xl font-black text-blue-600 leading-none">${Math.round((a.occ/a.total)*100)}%</span>
+                        ${a.doubt > 0 ? `<p class="text-[8px] font-black text-yellow-600 mt-1">${a.doubt} DUDAS</p>` : ''}
                     </div>
                 </div>
-            `).join('') || '<p class="text-center text-slate-300 py-10 uppercase text-[10px] font-black">Historial Vacío</p>';
+            `).join('') || '<p class="text-center text-slate-300 py-20 uppercase text-[10px] font-black">Historial Vacío</p>';
         }
 
         function save() {
