@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#020617">
     
-    <title>SPOT CHECK - PROFESIONAL</title>
+    <title>SPOT CHECK - CONTROL PROFESIONAL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -38,39 +38,42 @@
             z-index: 20;
             touch-action: none;
             cursor: pointer;
-            width: 54px;
-            height: 54px;
-            border-radius: 16px;
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 800;
             font-size: 14px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.1s ease;
         }
 
         .area-vip {
             position: absolute;
             z-index: 10;
             border: 2px dashed #94a3b8;
-            background-color: rgba(241, 245, 249, 0.8);
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 900;
-            font-size: 10px;
+            font-size: 12px;
             text-transform: uppercase;
-            color: #475569;
             touch-action: none;
-            border-radius: 12px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
 
-        .mesa-free { background-color: #ffffff; color: #1e293b; border: 2px solid #e2e8f0; }
-        .mesa-occupied { 
+        /* Estados de Auditoría */
+        .item-free { background-color: #ffffff; color: #1e293b; border: 2px solid #e2e8f0; }
+        .item-occupied { 
             background-color: #0f172a !important; 
             color: #ffffff !important; 
-            transform: translate(-50%, -50%) scale(1.1);
+            border-color: #0f172a !important;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+            z-index: 25;
         }
 
         .selected-design { 
@@ -98,12 +101,36 @@
             padding: 20px;
         }
 
-        /* Estilo para los botones principales */
         .btn-main {
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             transition: all 0.2s ease;
         }
         .btn-main:active { transform: scale(0.96); }
+
+        /* Custom inputs para auditoría */
+        .audit-input-group {
+            background: #f8fafc;
+            padding: 12px 16px;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+        }
+        .audit-label {
+            font-size: 8px;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: #94a3b8;
+            letter-spacing: 0.1em;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .audit-field {
+            width: 100%;
+            background: transparent;
+            font-weight: 800;
+            font-size: 14px;
+            outline: none;
+            color: #0f172a;
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden text-slate-900">
@@ -124,9 +151,9 @@
 
     <!-- NAVEGACIÓN -->
     <nav class="bg-white border-b border-slate-200 p-2 flex gap-1 z-[110]">
-        <button onclick="setMode('audit')" id="nav-audit" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase bg-slate-950 text-white">Auditar</button>
-        <button onclick="setMode('design')" id="nav-design" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400">Diseño</button>
-        <button onclick="setMode('history')" id="nav-history" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400">Histo</button>
+        <button onclick="setMode('audit')" id="nav-audit" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase bg-slate-950 text-white transition-all">Auditar</button>
+        <button onclick="setMode('design')" id="nav-design" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 transition-all">Diseño Completo</button>
+        <button onclick="setMode('history')" id="nav-history" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 transition-all">Historial</button>
     </nav>
 
     <!-- ÁREA DE MAPA -->
@@ -145,10 +172,13 @@
             </div>
             <p class="text-[9px] font-black uppercase text-blue-400 text-center">Modifica el ID o arrastra el elemento</p>
         </div>
-        <div class="grid grid-cols-3 gap-3">
-            <button onclick="addTable()" class="bg-slate-950 text-white py-5 rounded-2xl font-black text-[10px] uppercase italic btn-main">+ Mesa</button>
-            <button onclick="addVIP('h')" class="bg-blue-600 text-white py-5 rounded-2xl font-black text-[10px] uppercase italic btn-main">+ VIP H</button>
-            <button onclick="addVIP('v')" class="bg-blue-600 text-white py-5 rounded-2xl font-black text-[10px] uppercase italic btn-main">+ VIP V</button>
+        <div class="grid grid-cols-2 gap-3 mb-2">
+            <button onclick="addTable()" class="bg-slate-900 text-white py-4 rounded-xl font-black text-[10px] uppercase italic btn-main">+ Nueva Mesa</button>
+            <button onclick="addVIP('gran')" class="bg-blue-700 text-white py-4 rounded-xl font-black text-[10px] uppercase italic btn-main">+ VIP Grande (4x4)</button>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="addVIP('h')" class="bg-slate-200 text-slate-700 py-4 rounded-xl font-black text-[10px] uppercase italic btn-main">+ VIP Horiz.</button>
+            <button onclick="addVIP('v')" class="bg-slate-200 text-slate-700 py-4 rounded-xl font-black text-[10px] uppercase italic btn-main">+ VIP Vert.</button>
         </div>
     </footer>
 
@@ -157,29 +187,42 @@
         <button onclick="openSaveModal()" class="w-full bg-slate-950 text-white py-6 rounded-[2rem] font-black text-sm uppercase italic tracking-widest shadow-2xl btn-main border-b-4 border-slate-800">Finalizar Reporte</button>
     </footer>
 
-    <!-- MODAL DE GUARDADO (MASTER PLANTILLA) -->
+    <!-- MODAL DE GUARDADO (MASTER PLANTILLA NOTAS) -->
     <div id="modal-save">
-        <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 shadow-2xl">
-            <div class="text-center">
-                <div class="w-16 h-1 w-16 bg-slate-100 rounded-full mx-auto mb-4"></div>
+        <div class="bg-white w-full max-w-sm rounded-[3rem] p-6 space-y-4 shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div class="text-center mb-2">
                 <h3 class="text-2xl font-black italic uppercase tracking-tighter text-slate-950">Documentar</h3>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Reporte de Auditoría</p>
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Plantilla Maestra de Auditoría</p>
             </div>
             
-            <div class="space-y-5">
-                <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100">
-                    <label class="text-[9px] font-black uppercase text-slate-400 mb-2 block tracking-widest">Responsable</label>
-                    <input id="auditor-name" type="text" class="w-full bg-transparent font-black uppercase text-lg outline-none placeholder:text-slate-200" placeholder="NOMBRE...">
+            <div class="space-y-3">
+                <div class="audit-input-group">
+                    <span class="audit-label">Responsable</span>
+                    <input id="aud-resp" type="text" class="audit-field" placeholder="NOMBRE...">
                 </div>
-                <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100">
-                    <label class="text-[9px] font-black uppercase text-slate-400 mb-2 block tracking-widest">Observaciones de Campo</label>
-                    <textarea id="audit-notes" rows="4" class="w-full bg-transparent font-medium text-sm outline-none resize-none placeholder:text-slate-200" placeholder="Escribe aquí novedades, reservas o incidencias..."></textarea>
+                <div class="audit-input-group">
+                    <span class="audit-label">Lugar / Sector</span>
+                    <input id="aud-lugar" type="text" class="audit-field" placeholder="EJ: VIP 1, TERRAZA...">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="audit-input-group">
+                        <span class="audit-label">In Situ</span>
+                        <input id="aud-insitu" type="number" class="audit-field" placeholder="0">
+                    </div>
+                    <div class="audit-input-group">
+                        <span class="audit-label">Micros</span>
+                        <input id="aud-micros" type="number" class="audit-field" placeholder="0">
+                    </div>
+                </div>
+                <div class="audit-input-group">
+                    <span class="audit-label">Observaciones de Campo</span>
+                    <textarea id="aud-obs" rows="3" class="audit-field resize-none" placeholder="Escribe aquí novedades..."></textarea>
                 </div>
             </div>
 
-            <div class="pt-4 space-y-3">
-                <button onclick="confirmSave()" class="w-full bg-blue-600 text-white py-6 rounded-[2rem] font-black text-xs uppercase shadow-xl btn-main">Confirmar y Guardar</button>
-                <button onclick="closeSaveModal()" class="w-full py-2 text-slate-400 font-bold text-[10px] uppercase tracking-widest">Volver</button>
+            <div class="pt-2 space-y-3">
+                <button onclick="confirmSave()" class="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black text-xs uppercase shadow-xl btn-main">Confirmar y Guardar</button>
+                <button onclick="closeSaveModal()" class="w-full py-2 text-slate-400 font-bold text-[10px] uppercase tracking-widest text-center">Cancelar</button>
             </div>
         </div>
     </div>
@@ -190,13 +233,13 @@
             <h2 class="text-2xl font-black italic uppercase tracking-tighter">Historial</h2>
             <button onclick="setMode('audit')" class="bg-slate-100 w-12 h-12 rounded-full flex items-center justify-center text-slate-400 shadow-sm"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
-        <div id="history-list" class="space-y-4"></div>
+        <div id="history-list" class="space-y-4 pb-20"></div>
     </div>
 
     <script>
-        const DB_KEY = 'spotcheck_v4_pro';
-        let tables = JSON.parse(localStorage.getItem(`${DB_KEY}_tables`)) || [];
-        let audits = JSON.parse(localStorage.getItem(`${DB_KEY}_audits`)) || [];
+        const DB_PREFIX = 'spotcheck_final_v5';
+        let tables = JSON.parse(localStorage.getItem(`${DB_PREFIX}_tables`)) || [];
+        let audits = JSON.parse(localStorage.getItem(`${DB_PREFIX}_audits`)) || [];
         let isLocked = true;
         let currentMode = 'audit';
         let selectedId = null;
@@ -215,12 +258,14 @@
 
             tables.forEach(t => {
                 const el = document.createElement('div');
+                const isOccupied = t.occupied;
+                
                 if (t.type === 'vip') {
-                    el.className = `area-vip ${selectedId === t.id && currentMode === 'design' ? 'selected-design' : ''}`;
-                    el.style.width = (t.w || 40) + '%';
+                    el.className = `area-vip ${isOccupied ? 'item-occupied' : 'item-free'} ${selectedId === t.id && currentMode === 'design' ? 'selected-design' : ''}`;
+                    el.style.width = (t.w || 20) + '%';
                     el.style.height = (t.h || 10) + '%';
                 } else {
-                    el.className = `mesa ${t.occupied ? 'mesa-occupied' : 'mesa-free'} ${selectedId === t.id && currentMode === 'design' ? 'selected-design' : ''}`;
+                    el.className = `mesa ${isOccupied ? 'item-occupied' : 'item-free'} ${selectedId === t.id && currentMode === 'design' ? 'selected-design' : ''}`;
                 }
                 
                 el.style.left = t.x + '%';
@@ -236,7 +281,7 @@
                 };
 
                 el.onclick = () => {
-                    if (currentMode === 'audit' && t.type !== 'vip') {
+                    if (currentMode === 'audit') {
                         t.occupied = !t.occupied;
                         saveData();
                         render();
@@ -282,7 +327,7 @@
         function toggleLock() {
             isLocked = !isLocked;
             document.getElementById('lock-icon').className = isLocked ? 'fa-solid fa-lock text-red-500' : 'fa-solid fa-unlock text-blue-500';
-            document.getElementById('lock-text').innerText = isLocked ? 'Bloqueado' : 'Editor';
+            document.getElementById('lock-text').innerText = isLocked ? 'Bloqueado' : 'Editor Activo';
             updateEditPanel();
             render();
         }
@@ -304,13 +349,12 @@
             render(); saveData();
         }
 
-        function addVIP(dir) {
-            const isH = dir === 'h';
-            tables.push({ 
-                id: Date.now(), x: 50, y: 30, label: 'VIP', type: 'vip', 
-                w: isH ? 44 : 16, 
-                h: isH ? 12 : 38 
-            });
+        function addVIP(type) {
+            let w = 20, h = 10, label = "VIP";
+            if(type === 'v') { w = 15; h = 25; }
+            if(type === 'gran') { w = 35; h = 25; label = "GRAN VIP"; }
+            
+            tables.push({ id: Date.now(), x: 50, y: 30, label: label, type: 'vip', w, h, occupied: false });
             render(); saveData();
         }
 
@@ -323,23 +367,23 @@
         function closeSaveModal() { document.getElementById('modal-save').style.display = 'none'; }
 
         function confirmSave() {
-            const auditor = document.getElementById('auditor-name').value || 'S/N';
-            const notes = document.getElementById('audit-notes').value || '';
-            const occ = tables.filter(t => t.occupied && t.type !== 'vip').length;
-            const total = tables.filter(t => t.type !== 'vip').length;
-            
-            audits.unshift({
+            const auditData = {
                 id: Date.now(),
-                auditor: auditor.toUpperCase(),
-                notes: notes,
                 date: new Date().toLocaleDateString(),
                 time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-                perc: total > 0 ? Math.round((occ/total)*100) : 0
-            });
+                resp: document.getElementById('aud-resp').value || 'S/N',
+                lugar: document.getElementById('aud-lugar').value || 'Gral',
+                insitu: document.getElementById('aud-insitu').value || '0',
+                micros: document.getElementById('aud-micros').value || '0',
+                obs: document.getElementById('aud-obs').value || '',
+                perc: 0
+            };
+
+            const occ = tables.filter(t => t.occupied).length;
+            auditData.perc = tables.length > 0 ? Math.round((occ/tables.length)*100) : 0;
             
+            audits.unshift(auditData);
             tables.forEach(t => t.occupied = false);
-            document.getElementById('auditor-name').value = '';
-            document.getElementById('audit-notes').value = '';
             saveData();
             closeSaveModal();
             setMode('history');
@@ -348,39 +392,45 @@
         function renderHistory() {
             const list = document.getElementById('history-list');
             list.innerHTML = audits.map(a => `
-                <div class="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-2.5 h-full bg-slate-900"></div>
-                    <div class="flex justify-between items-start mb-4">
+                <div class="bg-white p-5 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-2 h-full bg-slate-900"></div>
+                    <div class="flex justify-between items-start mb-3">
                         <div>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">${a.date} - ${a.time}</p>
-                            <p class="font-black text-base uppercase text-slate-950">${a.auditor}</p>
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">${a.date} · ${a.time}</p>
+                            <p class="font-black text-sm uppercase text-slate-950">${a.resp}</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-3xl font-black text-blue-600 leading-none">${a.perc}%</p>
-                            <p class="text-[8px] font-black uppercase text-blue-400 mt-1">OCUPACIÓN</p>
+                            <p class="text-2xl font-black text-blue-600 leading-none">${a.perc}%</p>
+                            <p class="text-[7px] font-black uppercase text-blue-400 mt-1">Ocupación</p>
                         </div>
                     </div>
-                    ${a.notes ? `
-                        <div class="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 italic">
-                            <p class="text-[11px] text-slate-500 leading-relaxed font-medium">"${a.notes}"</p>
+                    <div class="space-y-2 border-t border-slate-50 pt-3">
+                        <div class="flex justify-between text-[10px]">
+                            <span class="text-slate-400 font-bold uppercase">Sector:</span>
+                            <span class="font-black text-slate-700">${a.lugar}</span>
                         </div>
-                    ` : ''}
+                        <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2 rounded-xl text-[10px]">
+                            <div><span class="audit-label">In Situ</span><span class="font-black">${a.insitu}</span></div>
+                            <div><span class="audit-label">Micros</span><span class="font-black">${a.micros}</span></div>
+                        </div>
+                        ${a.obs ? `<p class="italic text-slate-500 text-[10px] mt-2 leading-tight">"${a.obs}"</p>` : ''}
+                    </div>
                 </div>
-            `).join('') || '<div class="py-20 text-center"><i class="fa-solid fa-folder-open text-slate-200 text-4xl mb-4 block"></i><p class="text-slate-300 font-black uppercase text-[10px] tracking-widest">Sin reportes registrados</p></div>';
+            `).join('') || '<p class="text-center py-20 text-slate-300 font-black uppercase text-[10px]">Sin reportes registrados</p>';
         }
 
         function resetLayout() {
             tables = [
-                { id: 1, x: 20, y: 15, label: "1", type: 'mesa', occupied: false },
-                { id: 2, x: 35, y: 15, label: "2", type: 'mesa', occupied: false },
-                { id: 3, x: 50, y: 15, label: "3", type: 'mesa', occupied: false }
+                { id: 1, x: 20, y: 20, label: "1", type: 'mesa', occupied: false },
+                { id: 2, x: 40, y: 20, label: "2", type: 'mesa', occupied: false },
+                { id: 3, x: 50, y: 50, label: "VIP PRINCIPAL", type: 'vip', w: 40, h: 15, occupied: false }
             ];
             saveData();
         }
 
         function saveData() {
-            localStorage.setItem(`${DB_KEY}_tables`, JSON.stringify(tables));
-            localStorage.setItem(`${DB_KEY}_audits`, JSON.stringify(audits));
+            localStorage.setItem(`${DB_PREFIX}_tables`, JSON.stringify(tables));
+            localStorage.setItem(`${DB_PREFIX}_audits`, JSON.stringify(audits));
         }
 
         init();
