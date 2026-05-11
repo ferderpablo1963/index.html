@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#020617">
+    
+    <title>SPOT CHECK - ZOOM & REPORTES</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            overscroll-behavior: none; 
+            -webkit-tap-highlight-color: transparent; 
+            background-color: #f1f5f9;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #map-wrapper {
+            flex: 1;
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+            background-color: #cbd5e1;
+            touch-action: none;
+        }
+
+        #map-container { 
+            height: 2500px; 
+            width: 2500px; 
+            position: absolute;
+            background-color: #ffffff;
+            transform-origin: 0 0;
+            will-change: transform;
+        }
+
+        .design-grid {
+            background-image: 
+                linear-gradient(to right, #f1f5f9 2px, transparent 2px),
+                linear-gradient(to bottom, #f1f5f9 2px, transparent 2px);
+            background-size: 50px 50px;
+        }
+
+        .mesa, .area-vip {
+            position: absolute;
+            z-index: 20;
+            touch-action: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            user-select: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .mesa { border-radius: 14px; border: 2px solid #e2e8f0; font-size: 14px; }
+        .area-vip { border: 3px dashed #94a3b8; border-radius: 20px; text-transform: uppercase; font-size: 18px; }
+
+        .item-free { background-color: #ffffff; color: #1e293b; }
+        .item-doubt { background-color: #fbbf24 !important; color: #000000 !important; border: 3px solid #d97706 !important; }
+        .item-occupied { background-color: #020617 !important; color: #ffffff !important; border-color: #020617 !important; }
+
+        .selected-design { 
+            outline: 4px solid #3b82f6; 
+            outline-offset: 4px; 
+            z-index: 50 !important; 
+        }
+
+        /* CONSOLA DE LAYOUT */
+        .layout-console {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 400;
+            width: 90%;
+            max-width: 400px;
+            background: #020617;
+            padding: 15px;
+            border-radius: 30px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+        }
+
+        .layout-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            color: white;
+            font-weight: 900;
+            font-size: 10px;
+        }
+
+        .layout-btn-icon {
+            width: 50px;
+            height: 50px;
+            background: #2563eb;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 24px); }
+        
+        /* SCROLLBAR CUSTOM PARA HISTORIAL */
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    </style>
+</head>
+<body class="text-slate-900">
+
+    <!-- HEADER -->
+    <header class="bg-slate-950 text-white p-4 pt-10 flex justify-between items-center shrink-0 z-[500] shadow-xl">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center rotate-3 shadow-lg">
+                <i class="fa-solid fa-bolt-lightning text-white"></i>
+            </div>
+            <div>
+                <h1 class="font-black text-lg italic uppercase leading-tight">SPOT CHECK</h1>
+                <p class="text-[8px] text-blue-400 font-bold tracking-widest uppercase">Zoom & Reportes Pro</p>
+            </div>
+        </div>
+        
+        <div id="design-edit-top" class="hidden flex items-center gap-2 bg-blue-600 p-2 rounded-2xl shadow-lg">
+            <input id="label-input" type="text" class="w-12 bg-white/20 text-white font-black outline-none rounded-lg text-sm text-center py-1" maxlength="5">
+            <div class="flex gap-1 h-8">
+                <button onclick="changeSize(10)" class="w-8 bg-blue-500 rounded-lg flex items-center justify-center"><i class="fa-solid fa-plus text-[10px]"></i></button>
+                <button onclick="changeSize(-10)" class="w-8 bg-blue-500 rounded-lg flex items-center justify-center"><i class="fa-solid fa-minus text-[10px]"></i></button>
+                <button onclick="rotateSelected()" class="w-8 bg-blue-500 rounded-lg flex items-center justify-center"><i class="fa-solid fa-rotate"></i></button>
+                <button onclick="deleteSelected()" class="w-8 bg-red-500 rounded-lg flex items-center justify-center"><i class="fa-solid fa-trash-can text-[10px]"></i></button>
+            </div>
+        </div>
+
+        <button onclick="toggleLock()" id="lock-btn" class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center border border-slate-800 transition-all">
+            <i class="fa-solid fa-lock text-red-500 text-lg" id="lock-icon"></i>
+        </button>
+    </header>
+
+    <!-- NAVIGATION -->
+    <nav class="bg-white border-b border-slate-200 p-2 flex gap-2 z-[450] shrink-0 shadow-sm">
+        <button onclick="setMode('audit')" id="nav-audit" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase bg-slate-950 text-white">Control</button>
+        <button onclick="setMode('design')" id="nav-design" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400">Layout</button>
+        <button onclick="setMode('history')" id="nav-history" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400">Reportes</button>
+    </nav>
+
+    <!-- MAP VIEW -->
+    <main class="flex-1 relative overflow-hidden" id="main-view">
+        <div id="layout-console" class="layout-console hidden">
+            <button onclick="addTable()" class="layout-btn">
+                <div class="layout-btn-icon"><i class="fa-solid fa-plus"></i></div>
+                <span>Mesa</span>
+            </button>
+            <button onclick="addVIP()" class="layout-btn">
+                <div class="layout-btn-icon bg-purple-600"><i class="fa-solid fa-vector-square"></i></div>
+                <span>VIP</span>
+            </button>
+            <button onclick="toggleLock()" class="layout-btn">
+                <div class="layout-btn-icon bg-emerald-600"><i class="fa-solid fa-check"></i></div>
+                <span>Cerrar</span>
+            </button>
+        </div>
+
+        <div id="map-wrapper">
+            <div id="map-container" class="design-grid">
+                <div id="mesas-layer" class="w-full h-full relative"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER AUDIT -->
+    <footer id="audit-footer" class="p-4 bg-white border-t border-slate-200 z-[450] safe-bottom shrink-0">
+        <button onclick="openSaveModal()" class="w-full bg-slate-950 text-white py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest active:scale-95 transition-all shadow-xl">
+            Finalizar y Guardar Reporte
+        </button>
+    </footer>
+
+    <!-- MODAL DE GUARDADO CON TODOS LOS CAMPOS -->
+    <div id="modal-save" class="fixed inset-0 bg-slate-950/95 z-[1000] hidden items-center justify-center p-6 backdrop-blur-md">
+        <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 shadow-2xl">
+            <h3 class="text-2xl font-black uppercase text-center italic tracking-tighter">Cerrar Auditoría</h3>
+            <div class="space-y-3">
+                <input id="aud-resp" type="text" class="w-full p-4 bg-slate-100 rounded-2xl font-bold border-2 border-transparent focus:border-blue-500 outline-none uppercase text-xs" placeholder="Auditor / Responsable">
+                <input id="aud-lugar" type="text" class="w-full p-4 bg-slate-100 rounded-2xl font-bold border-2 border-transparent focus:border-blue-500 outline-none uppercase text-xs" placeholder="Sector o Salón">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-100 rounded-2xl p-2">
+                        <label class="text-[8px] font-black uppercase text-slate-400 block ml-2">Pax In Situ</label>
+                        <input id="aud-insitu" type="number" class="w-full p-2 bg-transparent font-black outline-none text-center" placeholder="0">
+                    </div>
+                    <div class="bg-slate-100 rounded-2xl p-2">
+                        <label class="text-[8px] font-black uppercase text-slate-400 block ml-2">Pax Micros</label>
+                        <input id="aud-micros" type="number" class="w-full p-2 bg-transparent font-black outline-none text-center" placeholder="0">
+                    </div>
+                </div>
+                <textarea id="aud-obs" class="w-full p-4 bg-slate-100 rounded-2xl font-bold border-2 border-transparent focus:border-blue-500 outline-none uppercase text-[10px]" rows="2" placeholder="Observaciones del servicio..."></textarea>
+            </div>
+            <button onclick="confirmSave()" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black uppercase shadow-lg shadow-blue-200">Guardar Reporte</button>
+            <button onclick="closeSaveModal()" class="w-full text-slate-400 font-bold uppercase text-[10px] text-center">Volver al mapa</button>
+        </div>
+    </div>
+
+    <!-- PANTALLA DE HISTORIAL ESTILO ORIGINAL -->
+    <div id="history-screen" class="fixed inset-0 bg-slate-50 z-[900] hidden flex-col p-6 overflow-hidden pt-32">
+        <div class="flex justify-between items-center mb-6 px-2">
+            <h2 class="text-xl font-black italic uppercase">Historial Pro</h2>
+            <button onclick="if(confirm('¿Borrar todo?')) { audits=[]; save(); renderHistory(); }" class="text-red-500 text-[10px] font-black uppercase tracking-widest">Limpiar</button>
+        </div>
+        <div id="history-list" class="space-y-4 overflow-y-auto pb-40 custom-scroll flex-1"></div>
+    </div>
+
+    <script>
+        const DB_KEY = 'SPOTCHECK_AUDIT_PRO'; // Prefijo unificado para evitar pérdidas
+        let tables = JSON.parse(localStorage.getItem(`${DB_KEY}_tables`)) || [];
+        let audits = JSON.parse(localStorage.getItem(`${DB_KEY}_audits`)) || [];
+        let currentMode = 'audit';
+        let isLocked = true;
+        let selectedId = null;
+
+        // ESTADO DE ZOOM Y PAN
+        let scale = 0.5;
+        let posX = 0;
+        let posY = 0;
+        
+        // Variables para gestos
+        let lastTouchDistance = 0;
+        let isDraggingMap = false;
+        let lastMouseX, lastMouseY;
+
+        function init() {
+            if (tables.length === 0) {
+                // Layout por defecto si está vacío
+                for(let i=1; i<=15; i++) {
+                    tables.push({ id: i, x: 200 + (i%5)*150, y: 200 + Math.floor(i/5)*150, label: i.toString().padStart(2,'0'), type: 'mesa', status: 'free', w: 100, h: 100 });
+                }
+            }
+            initTouchControls();
+            render();
+            updateUI();
+        }
+
+        function initTouchControls() {
+            const wrapper = document.getElementById('map-wrapper');
+            const container = document.getElementById('map-container');
+
+            wrapper.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 2) {
+                    lastTouchDistance = Math.hypot(
+                        e.touches[0].pageX - e.touches[1].pageX,
+                        e.touches[0].pageY - e.touches[1].pageY
+                    );
+                } else if (e.touches.length === 1) {
+                    if (e.target === wrapper || e.target === container || isLocked) {
+                        isDraggingMap = true;
+                        lastMouseX = e.touches[0].pageX;
+                        lastMouseY = e.touches[0].pageY;
+                    }
+                }
+            }, { passive: false });
+
+            wrapper.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (e.touches.length === 2) {
+                    const currentDistance = Math.hypot(
+                        e.touches[0].pageX - e.touches[1].pageX,
+                        e.touches[0].pageY - e.touches[1].pageY
+                    );
+                    const delta = currentDistance / lastTouchDistance;
+                    scale = Math.min(Math.max(0.15, scale * delta), 2.5);
+                    lastTouchDistance = currentDistance;
+                    render();
+                } else if (e.touches.length === 1 && isDraggingMap) {
+                    posX += e.touches[0].pageX - lastMouseX;
+                    posY += e.touches[0].pageY - lastMouseY;
+                    lastMouseX = e.touches[0].pageX;
+                    lastMouseY = e.touches[0].pageY;
+                    render();
+                }
+            }, { passive: false });
+
+            wrapper.addEventListener('touchend', () => {
+                isDraggingMap = false;
+                lastTouchDistance = 0;
+            });
+
+            wrapper.addEventListener('mousedown', (e) => {
+                if (e.target === wrapper || e.target === container || isLocked) {
+                    isDraggingMap = true;
+                    lastMouseX = e.pageX;
+                    lastMouseY = e.pageY;
+                }
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (isDraggingMap) {
+                    posX += e.pageX - lastMouseX;
+                    posY += e.pageY - lastMouseY;
+                    lastMouseX = e.pageX;
+                    lastMouseY = e.pageY;
+                    render();
+                }
+            });
+
+            window.addEventListener('mouseup', () => isDraggingMap = false);
+
+            wrapper.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                scale = Math.min(Math.max(0.15, scale * delta), 2.5);
+                render();
+            }, { passive: false });
+        }
+
+        function render() {
+            const layer = document.getElementById('mesas-layer');
+            const container = document.getElementById('map-container');
+            layer.innerHTML = '';
+            
+            container.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+            container.className = (currentMode === 'design' && !isLocked) ? 'design-grid' : '';
+
+            tables.forEach(t => {
+                const el = document.createElement('div');
+                let statusClass = t.status === 'doubt' ? 'item-doubt' : (t.status === 'occupied' ? 'item-occupied' : 'item-free');
+                const baseClass = t.type === 'vip' ? 'area-vip' : 'mesa';
+                const selectClass = (selectedId === t.id && currentMode === 'design') ? 'selected-design' : '';
+                
+                el.className = `${baseClass} ${statusClass} ${selectClass}`;
+                el.style.width = t.w + 'px'; el.style.height = t.h + 'px';
+                el.style.left = t.x + 'px'; el.style.top = t.y + 'px';
+                el.innerText = t.label;
+
+                el.onclick = (e) => {
+                    e.stopPropagation();
+                    if (currentMode === 'audit') {
+                        if (t.status === 'free') t.status = 'doubt';
+                        else if (t.status === 'doubt') t.status = 'occupied';
+                        else t.status = 'free';
+                        save(); render();
+                    } else if (currentMode === 'design' && !isLocked) {
+                        selectedId = t.id; updateUI(); render();
+                    }
+                };
+
+                if (currentMode === 'design' && !isLocked) {
+                    el.onpointerdown = (e) => { 
+                        if (e.pointerType === 'mouse' || e.isPrimary) {
+                            e.stopPropagation(); 
+                            selectedId = t.id; 
+                            updateUI(); 
+                            startDraggingTable(e, t, el); 
+                        }
+                    };
+                }
+                layer.appendChild(el);
+            });
+        }
+
+        function startDraggingTable(e, t, el) {
+            const startX = e.pageX;
+            const startY = e.pageY;
+            const initX = t.x;
+            const initY = t.y;
+
+            const moveH = (ev) => {
+                t.x = initX + (ev.pageX - startX) / scale;
+                t.y = initY + (ev.pageY - startY) / scale;
+                el.style.left = t.x + 'px'; el.style.top = t.y + 'px';
+            };
+
+            const stopH = () => {
+                window.removeEventListener('pointermove', moveH);
+                window.removeEventListener('pointerup', stopH);
+                save(); render();
+            };
+
+            window.addEventListener('pointermove', moveH);
+            window.addEventListener('pointerup', stopH);
+        }
+
+        function toggleLock() {
+            isLocked = !isLocked;
+            document.getElementById('lock-icon').className = isLocked ? 'fa-solid fa-lock text-red-500 text-lg' : 'fa-solid fa-unlock text-blue-500 text-lg';
+            setMode(currentMode);
+        }
+
+        function setMode(m) {
+            currentMode = m;
+            selectedId = null;
+            document.querySelectorAll('nav button').forEach(b => {
+                b.classList.remove('bg-slate-950', 'text-white');
+                b.classList.add('text-slate-400');
+            });
+            document.getElementById(`nav-${m}`).classList.add('bg-slate-950', 'text-white');
+            
+            document.getElementById('audit-footer').classList.toggle('hidden', m !== 'audit');
+            document.getElementById('layout-console').classList.toggle('hidden', m !== 'design' || isLocked);
+            document.getElementById('history-screen').classList.toggle('hidden', m !== 'history');
+            
+            if(m === 'history') renderHistory();
+            updateUI(); render();
+        }
+
+        function updateUI() {
+            const panel = document.getElementById('design-edit-top');
+            const item = tables.find(t => t.id === selectedId);
+            if (selectedId && currentMode === 'design' && !isLocked) {
+                panel.classList.remove('hidden');
+                const input = document.getElementById('label-input');
+                input.value = item.label;
+                input.oninput = (e) => { item.label = e.target.value.toUpperCase(); render(); save(); };
+            } else { panel.classList.add('hidden'); }
+        }
+
+        function addTable() {
+            const centerX = (-posX + (window.innerWidth/2)) / scale;
+            const centerY = (-posY + (window.innerHeight/2)) / scale;
+            const newT = { id: Date.now(), x: centerX - 50, y: centerY - 50, label: (tables.length + 1).toString(), type: 'mesa', status: 'free', w: 100, h: 100 };
+            tables.push(newT); selectedId = newT.id; save(); render(); updateUI();
+        }
+
+        function addVIP() {
+            const centerX = (-posX + (window.innerWidth/2)) / scale;
+            const centerY = (-posY + (window.innerHeight/2)) / scale;
+            const newV = { id: Date.now(), x: centerX - 125, y: centerY - 60, label: "VIP", type: 'vip', status: 'free', w: 250, h: 120 };
+            tables.push(newV); selectedId = newV.id; save(); render(); updateUI();
+        }
+
+        function changeSize(delta) {
+            const t = tables.find(x => x.id === selectedId);
+            if (t) { t.w = Math.max(40, t.w + delta); t.h = Math.max(40, t.h + delta); render(); save(); }
+        }
+        function rotateSelected() {
+            const t = tables.find(x => x.id === selectedId);
+            if(t) { [t.w, t.h] = [t.h, t.w]; render(); save(); }
+        }
+        function deleteSelected() {
+            if(confirm("¿Eliminar?")) { tables = tables.filter(t => t.id !== selectedId); selectedId = null; save(); render(); updateUI(); }
+        }
+
+        function openSaveModal() { document.getElementById('modal-save').style.display = 'flex'; }
+        function closeSaveModal() { document.getElementById('modal-save').style.display = 'none'; }
+
+        function confirmSave() {
+            const occupied = tables.filter(t => t.status === 'occupied').length;
+            const report = {
+                id: Date.now(),
+                resp: document.getElementById('aud-resp').value.toUpperCase() || 'USUARIO',
+                lugar: document.getElementById('aud-lugar').value.toUpperCase() || 'GENERAL',
+                insitu: document.getElementById('aud-insitu').value || 0,
+                micros: document.getElementById('aud-micros').value || 0,
+                obs: document.getElementById('aud-obs').value || '',
+                date: new Date().toLocaleDateString(),
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                occ: occupied, 
+                total: tables.length
+            };
+            audits.unshift(report);
+            tables.forEach(t => t.status = 'free');
+            save(); 
+            closeSaveModal(); 
+            
+            // Limpiar inputs
+            document.getElementById('aud-lugar').value = '';
+            document.getElementById('aud-insitu').value = '';
+            document.getElementById('aud-micros').value = '';
+            document.getElementById('aud-obs').value = '';
+            
+            setMode('history');
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = audits.map(a => `
+                <div class="bg-white p-6 rounded-[2.5rem] border-2 border-slate-100 shadow-sm relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-2.5 bg-slate-900"></div>
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest block">${a.date} · ${a.time}</span>
+                            <h4 class="text-xl font-black text-slate-900 italic">${a.resp}</h4>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-3xl font-black text-slate-950">${Math.round((a.occ/a.total)*100)}%</span>
+                            <p class="text-[8px] font-black text-emerald-500 uppercase">Ocupación</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-slate-400 font-bold uppercase text-[8px]">Sector:</span>
+                            <span class="font-black text-slate-700 italic uppercase text-[10px]">${a.lugar}</span>
+                        </div>
+                        <div class="grid grid-cols-2 bg-slate-50 p-3 rounded-2xl gap-4">
+                            <div>
+                                <span class="text-slate-400 font-black uppercase text-[7px] block">In Situ</span>
+                                <span class="font-black text-slate-800 text-lg">${a.insitu}</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 font-black uppercase text-[7px] block">Micros</span>
+                                <span class="font-black text-slate-800 text-lg">${a.micros}</span>
+                            </div>
+                        </div>
+                        ${a.obs ? `<div class="bg-blue-50 p-3 rounded-2xl border border-blue-100 text-[10px] font-bold text-blue-900 uppercase italic">"${a.obs}"</div>` : ''}
+                    </div>
+                </div>
+            `).join('') || '<div class="text-center py-20 uppercase font-black text-slate-300 text-[10px] tracking-widest">Sin reportes registrados</div>';
+        }
+
+        function save() {
+            localStorage.setItem(`${DB_KEY}_tables`, JSON.stringify(tables));
+            localStorage.setItem(`${DB_KEY}_audits`, JSON.stringify(audits));
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
