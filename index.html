@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#020617">
     
-    <title>SPOT CHECK - EDITOR RÁPIDO</title>
+    <title>SPOT CHECK - SUPER APP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -17,19 +17,27 @@
             overscroll-behavior: none; 
             -webkit-tap-highlight-color: transparent; 
             background-color: #f1f5f9;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
         
         #map-wrapper {
+            flex: 1;
             width: 100%;
-            height: 100%;
             overflow: auto;
             position: relative;
             background-color: #cbd5e1;
+            cursor: grab;
         }
+        #map-wrapper:active { cursor: grabbing; }
+        #map-wrapper::-webkit-scrollbar { display: none; }
 
         #map-container { 
-            height: 1200px; 
-            width: 1200px; 
+            height: 3000px; 
+            width: 3000px; 
             position: relative;
             background-color: #ffffff;
             transform-origin: 0 0;
@@ -45,154 +53,161 @@
 
         .mesa, .area-vip {
             position: absolute;
-            transform: translate(-50%, -50%);
             z-index: 20;
             touch-action: none;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 800;
+            font-weight: 900;
             user-select: none;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
+            transition: background-color 0.2s, border 0.2s, transform 0.1s;
         }
 
-        .mesa { border-radius: 12px; }
-        .area-vip { border: 3px dashed #94a3b8; border-radius: 16px; text-transform: uppercase; }
+        .mesa { border-radius: 14px; border: 2px solid #e2e8f0; font-size: 14px; }
+        .area-vip { border: 3px dashed #94a3b8; border-radius: 20px; text-transform: uppercase; font-size: 18px; }
 
-        /* ESTADOS DE AUDITORÍA */
-        .item-free { background-color: #ffffff; color: #1e293b; border: 2px solid #e2e8f0; }
-        
-        /* COLOR INTERMEDIO (Indefinida) */
-        .item-doubt { 
-            background-color: #facc15 !important; /* Amarillo Intenso */
-            color: #000000 !important; 
-            border: 3px solid #eab308 !important;
-            animation: pulse-yellow 2s infinite;
-        }
-
-        .item-occupied { 
-            background-color: #0f172a !important; 
-            color: #ffffff !important; 
-            border-color: #0f172a !important;
-        }
-
-        @keyframes pulse-yellow {
-            0% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(250, 204, 21, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }
-        }
+        .item-free { background-color: #ffffff; color: #1e293b; }
+        .item-doubt { background-color: #fbbf24 !important; color: #000000 !important; border: 3px solid #d97706 !important; }
+        .item-occupied { background-color: #020617 !important; color: #ffffff !important; border-color: #020617 !important; }
 
         .selected-design { 
             outline: 4px solid #3b82f6; 
             outline-offset: 4px; 
             z-index: 50 !important; 
-            box-shadow: 0 0 25px rgba(59, 130, 246, 0.6);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
         }
 
         .zoom-controls {
             position: fixed;
-            right: 16px;
-            top: 35%;
+            right: 20px;
+            top: 40%;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            z-index: 200;
+            gap: 10px;
+            z-index: 300;
         }
 
         .btn-zoom {
-            width: 54px;
-            height: 54px;
+            width: 50px;
+            height: 50px;
             background: white;
-            border-radius: 18px;
+            border-radius: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 10px 15px rgba(0,0,0,0.15);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
             color: #0f172a;
             border: 1px solid #e2e8f0;
+            font-size: 20px;
         }
 
-        .fab-container {
+        /* PANEL DE CREACIÓN SUPER VISIBLE */
+        .layout-console {
             position: fixed;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
+            z-index: 400;
+            width: 90%;
+            max-width: 400px;
+            background: #020617;
+            padding: 15px;
+            border-radius: 30px;
             display: flex;
-            gap: 15px;
-            z-index: 250;
-            background: rgba(15, 23, 42, 0.95);
-            padding: 14px 24px;
-            border-radius: 40px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 25px 30px -5px rgba(0,0,0,0.4);
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
             border: 1px solid rgba(255,255,255,0.1);
         }
 
-        .fab-btn {
-            padding: 10px 18px;
+        .layout-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
             color: white;
-            border-radius: 20px;
             font-weight: 900;
-            font-size: 11px;
+            font-size: 10px;
             text-transform: uppercase;
+        }
+
+        .layout-btn-icon {
+            width: 50px;
+            height: 50px;
+            background: #2563eb;
+            border-radius: 15px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 2px;
         }
 
         .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 24px); }
     </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden text-slate-900">
+<body class="text-slate-900">
 
-    <!-- CABECERA -->
-    <header class="bg-slate-950 text-white p-4 pt-10 flex justify-between items-center shrink-0 z-[140]">
-        <div class="flex items-center gap-2">
-            <h1 class="font-black text-lg italic tracking-tighter uppercase">SPOT CHECK</h1>
+    <!-- HEADER -->
+    <header class="bg-slate-950 text-white p-4 pt-10 flex justify-between items-center shrink-0 z-[500] shadow-xl">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center rotate-3 shadow-lg">
+                <i class="fa-solid fa-bolt-lightning text-white"></i>
+            </div>
+            <div>
+                <h1 class="font-black text-lg italic uppercase leading-tight">SPOT CHECK</h1>
+                <p class="text-[8px] text-blue-400 font-bold tracking-widest uppercase">Layout & Control</p>
+            </div>
         </div>
         
-        <!-- Panel Edición con Tamaño y Rotación -->
-        <div id="design-edit-top" class="hidden flex items-center gap-1 bg-blue-600 px-2 py-1.5 rounded-full animate-in slide-in-from-top">
-            <input id="label-input" type="text" class="w-12 bg-transparent text-white font-bold outline-none border-b border-blue-400 text-sm text-center" placeholder="ID">
-            <div class="h-6 w-[1px] bg-blue-400 mx-1"></div>
-            <!-- Ajuste de Tamaño -->
-            <button onclick="changeSize(10)" class="p-2 text-white bg-blue-500 rounded-lg active:scale-90"><i class="fa-solid fa-up-right-and-down-left-from-center text-[10px]"></i></button>
-            <button onclick="changeSize(-10)" class="p-2 text-white bg-blue-500 rounded-lg active:scale-90"><i class="fa-solid fa-minimize text-[10px]"></i></button>
-            <div class="h-6 w-[1px] bg-blue-400 mx-1"></div>
-            <button onclick="rotateSelected()" class="p-2 text-white active:rotate-45 transition-transform"><i class="fa-solid fa-rotate"></i></button>
-            <button onclick="deleteSelected()" class="p-2 text-white bg-red-500 rounded-lg ml-1"><i class="fa-solid fa-trash-can"></i></button>
+        <!-- Panel de edición rápida -->
+        <div id="design-edit-top" class="hidden flex items-center gap-2 bg-blue-600 p-2 rounded-2xl shadow-lg">
+            <input id="label-input" type="text" class="w-12 bg-white/20 text-white font-black outline-none rounded-lg text-sm text-center py-1" maxlength="5">
+            <div class="flex gap-1 h-8">
+                <button onclick="changeSize(10)" class="w-8 bg-blue-500 rounded-lg flex items-center justify-center"><i class="fa-solid fa-plus text-[10px]"></i></button>
+                <button onclick="changeSize(-10)" class="w-8 bg-blue-500 rounded-lg flex items-center justify-center"><i class="fa-solid fa-minus text-[10px]"></i></button>
+                <button onclick="rotateSelected()" class="w-8 bg-blue-500 rounded-lg flex items-center justify-center"><i class="fa-solid fa-rotate"></i></button>
+                <button onclick="deleteSelected()" class="w-8 bg-red-500 rounded-lg flex items-center justify-center"><i class="fa-solid fa-trash-can text-[10px]"></i></button>
+            </div>
         </div>
 
-        <button onclick="toggleLock()" id="lock-btn" class="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center border border-slate-800">
-            <i class="fa-solid fa-lock text-red-500" id="lock-icon"></i>
+        <button onclick="toggleLock()" id="lock-btn" class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center border border-slate-800 transition-all">
+            <i class="fa-solid fa-lock text-red-500 text-lg" id="lock-icon"></i>
         </button>
     </header>
 
-    <!-- NAV PRINCIPAL -->
-    <nav class="bg-white border-b border-slate-200 p-2 flex gap-1 z-[140]">
-        <button onclick="setMode('audit')" id="nav-audit" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase bg-slate-950 text-white shadow-lg transition-all">Auditar</button>
-        <button onclick="setMode('design')" id="nav-design" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 transition-all">Diseño</button>
-        <button onclick="setMode('history')" id="nav-history" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 transition-all">Historial</button>
+    <!-- NAVIGATION -->
+    <nav class="bg-white border-b border-slate-200 p-2 flex gap-2 z-[450] shrink-0">
+        <button onclick="setMode('audit')" id="nav-audit" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase bg-slate-950 text-white">Control</button>
+        <button onclick="setMode('design')" id="nav-design" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400">Layout</button>
+        <button onclick="setMode('history')" id="nav-history" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400">Reportes</button>
     </nav>
 
-    <!-- CONTENEDOR DE MAPA -->
-    <main class="flex-1 overflow-hidden bg-slate-200 relative" id="main-view">
+    <!-- MAP VIEW -->
+    <main class="flex-1 relative overflow-hidden" id="main-view">
         
+        <!-- Controles de Zoom -->
         <div class="zoom-controls">
-            <button onclick="applyZoom(0.1)" class="btn-zoom active:scale-90"><i class="fa-solid fa-plus"></i></button>
-            <button onclick="resetZoom()" class="btn-zoom text-[9px] font-black uppercase">Fit</button>
-            <button onclick="applyZoom(-0.1)" class="btn-zoom active:scale-90"><i class="fa-solid fa-minus"></i></button>
+            <button onclick="applyZoom(0.1)" class="btn-zoom"><i class="fa-solid fa-plus"></i></button>
+            <button onclick="resetZoom()" class="btn-zoom"><i class="fa-solid fa-expand"></i></button>
+            <button onclick="applyZoom(-0.1)" class="btn-zoom"><i class="fa-solid fa-minus"></i></button>
         </div>
 
-        <!-- FABs DE DISEÑO (Solo modo diseño + desbloqueado) -->
-        <div id="design-fabs" class="fab-container hidden">
-            <button onclick="addTable()" class="fab-btn bg-white !text-slate-950 border border-slate-200">
-                <i class="fa-solid fa-plus text-blue-600"></i> + MESA
+        <!-- CONSOLA DE LAYOUT (BOTONES PARA AGREGAR MESAS) -->
+        <div id="layout-console" class="layout-console hidden">
+            <button onclick="addTable()" class="layout-btn">
+                <div class="layout-btn-icon"><i class="fa-solid fa-plus"></i></div>
+                <span>Mesa</span>
             </button>
-            <button onclick="addVIP()" class="fab-btn bg-blue-600">
-                <i class="fa-solid fa-vector-square"></i> + ÁREA VIP
+            <button onclick="addVIP()" class="layout-btn">
+                <div class="layout-btn-icon bg-purple-600"><i class="fa-solid fa-vector-square"></i></div>
+                <span>Sector VIP</span>
+            </button>
+            <button onclick="toggleLock()" class="layout-btn">
+                <div class="layout-btn-icon bg-emerald-600"><i class="fa-solid fa-check"></i></div>
+                <span>Listo</span>
             </button>
         </div>
 
@@ -203,55 +218,82 @@
         </div>
     </main>
 
-    <!-- FOOTER ACCIÓN -->
-    <footer id="audit-footer" class="p-6 bg-white border-t border-slate-200 z-[140] shadow-2xl safe-bottom">
-        <button onclick="openSaveModal()" class="w-full bg-slate-950 text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest border-b-4 border-slate-800 active:translate-y-1 active:border-b-0 transition-all">Cerrar Auditoría</button>
+    <!-- FOOTER AUDIT -->
+    <footer id="audit-footer" class="p-4 bg-white border-t border-slate-200 z-[450] safe-bottom shrink-0">
+        <button onclick="openSaveModal()" class="w-full bg-slate-950 text-white py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest active:scale-95 transition-all shadow-xl">
+            Finalizar y Guardar Reporte
+        </button>
     </footer>
 
-    <!-- MODAL DE GUARDADO -->
-    <div id="modal-save" class="fixed inset-0 bg-slate-900/90 z-[300] hidden items-center justify-center p-6 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 space-y-5">
-            <h3 class="text-xl font-black uppercase text-center italic">Guardar Reporte</h3>
+    <!-- MODALES Y PANTALLAS (Sin cambios mayores en lógica, solo diseño) -->
+    <div id="modal-save" class="fixed inset-0 bg-slate-950/95 z-[1000] hidden items-center justify-center p-6 backdrop-blur-md">
+        <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 shadow-2xl">
+            <h3 class="text-2xl font-black uppercase text-center italic tracking-tighter">Cerrar Auditoría</h3>
             <div class="space-y-3">
-                <input id="aud-resp" type="text" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold" placeholder="Tu Nombre">
-                <input id="aud-lugar" type="text" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold" placeholder="Sector o Salón">
-                <div class="grid grid-cols-2 gap-2">
-                    <input id="aud-insitu" type="number" class="p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold" placeholder="Pax In Situ">
-                    <input id="aud-micros" type="number" class="p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold" placeholder="Pax Micros">
+                <input id="aud-resp" type="text" class="w-full p-4 bg-slate-100 rounded-2xl font-bold border-2 border-transparent focus:border-blue-500 outline-none" placeholder="Auditor">
+                <input id="aud-lugar" type="text" class="w-full p-4 bg-slate-100 rounded-2xl font-bold border-2 border-transparent focus:border-blue-500 outline-none" placeholder="Sector/Lugar">
+                <div class="grid grid-cols-2 gap-3">
+                    <input id="aud-insitu" type="number" class="w-full p-4 bg-slate-100 rounded-2xl font-bold outline-none" placeholder="Pax">
+                    <input id="aud-micros" type="number" class="w-full p-4 bg-slate-100 rounded-2xl font-bold outline-none" placeholder="Micros">
                 </div>
             </div>
-            <button onclick="confirmSave()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase shadow-lg">Finalizar y Limpiar</button>
-            <button onclick="closeSaveModal()" class="w-full text-slate-400 font-bold uppercase text-[10px] text-center">Volver al Mapa</button>
+            <button onclick="confirmSave()" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black uppercase shadow-lg shadow-blue-200">Guardar Ahora</button>
+            <button onclick="closeSaveModal()" class="w-full text-slate-400 font-bold uppercase text-[10px] text-center">Volver</button>
         </div>
     </div>
 
-    <!-- PANTALLA HISTORIAL -->
-    <div id="history-screen" class="fixed inset-0 bg-white z-[200] hidden flex-col p-6 overflow-y-auto pt-16">
-        <div class="flex justify-between items-center mb-8">
-            <h2 class="text-2xl font-black uppercase italic">Reportes Anteriores</h2>
-            <button onclick="setMode('audit')" class="text-slate-300 text-3xl active:scale-90"><i class="fa-solid fa-circle-xmark"></i></button>
+    <div id="history-screen" class="fixed inset-0 bg-slate-50 z-[900] hidden flex-col p-6 overflow-y-auto pt-24">
+        <div class="flex justify-between items-center mb-10">
+            <h2 class="text-3xl font-black uppercase italic tracking-tighter text-slate-950">Reportes</h2>
+            <button onclick="setMode('audit')" class="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center border border-slate-200"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div id="history-list" class="space-y-4 pb-20"></div>
+        <div id="history-list" class="space-y-4 pb-40"></div>
     </div>
 
     <script>
-        const DB_KEY = 'spotcheck_v15_stable';
+        const DB_KEY = 'SPOTCHECK_FINAL_V2';
         let tables = JSON.parse(localStorage.getItem(`${DB_KEY}_tables`)) || [];
         let audits = JSON.parse(localStorage.getItem(`${DB_KEY}_audits`)) || [];
         let currentMode = 'audit';
         let isLocked = true;
         let selectedId = null;
-        let zoomLevel = 0.85;
+        let zoomLevel = 0.8;
+
+        let isPanning = false;
+        let startX, startY, scrollLeft, scrollTop;
 
         function init() {
             if (tables.length === 0) {
                 tables = [
-                    { id: 1, x: 25, y: 20, label: "01", type: 'mesa', status: 'free', w: 60, h: 60 },
-                    { id: 2, x: 50, y: 30, label: "VIP 1", type: 'vip', status: 'free', w: 180, h: 90 }
+                    { id: 1, x: 100, y: 100, label: "01", type: 'mesa', status: 'free', w: 80, h: 80 },
+                    { id: 2, x: 250, y: 100, label: "02", type: 'mesa', status: 'free', w: 80, h: 80 }
                 ];
             }
+            initPanControls();
             render();
             updateUI();
+        }
+
+        function initPanControls() {
+            const wrapper = document.getElementById('map-wrapper');
+            wrapper.addEventListener('mousedown', (e) => {
+                if (e.target.id !== 'map-wrapper' && e.target.id !== 'map-container' && e.target.id !== 'mesas-layer') return;
+                isPanning = true;
+                startX = e.pageX - wrapper.offsetLeft;
+                startY = e.pageY - wrapper.offsetTop;
+                scrollLeft = wrapper.scrollLeft;
+                scrollTop = wrapper.scrollTop;
+            });
+            wrapper.addEventListener('mouseleave', () => isPanning = false);
+            wrapper.addEventListener('mouseup', () => isPanning = false);
+            wrapper.addEventListener('mousemove', (e) => {
+                if (!isPanning) return;
+                e.preventDefault();
+                const x = e.pageX - wrapper.offsetLeft;
+                const y = e.pageY - wrapper.offsetTop;
+                wrapper.scrollLeft = scrollLeft - (x - startX);
+                wrapper.scrollTop = scrollTop - (y - startY);
+            });
         }
 
         function render() {
@@ -264,187 +306,126 @@
 
             tables.forEach(t => {
                 const el = document.createElement('div');
-                
-                // Determinar clase de estado (Triple Ciclo)
-                let statusClass = 'item-free';
-                if (t.status === 'doubt') statusClass = 'item-doubt';
-                if (t.status === 'occupied') statusClass = 'item-occupied';
-
+                let statusClass = t.status === 'doubt' ? 'item-doubt' : (t.status === 'occupied' ? 'item-occupied' : 'item-free');
                 const baseClass = t.type === 'vip' ? 'area-vip' : 'mesa';
                 const selectClass = (selectedId === t.id && currentMode === 'design') ? 'selected-design' : '';
                 
                 el.className = `${baseClass} ${statusClass} ${selectClass}`;
-                
-                // Aplicar dimensiones guardadas
-                el.style.width = (t.w || 60) + 'px';
-                el.style.height = (t.h || 60) + 'px';
-                el.style.fontSize = Math.max(11, (t.w || 60) / 4) + 'px';
-                
-                el.style.left = t.x + '%';
-                el.style.top = t.y + '%';
+                el.style.width = t.w + 'px'; el.style.height = t.h + 'px';
+                el.style.left = t.x + 'px'; el.style.top = t.y + 'px';
                 el.innerText = t.label;
 
-                // Lógica de clic centralizada
                 el.onclick = (e) => {
                     e.stopPropagation();
                     if (currentMode === 'audit') {
-                        // CICLO TRIPLE: Free -> Doubt -> Occupied -> Free
-                        if (t.status === 'free' || !t.status) t.status = 'doubt';
+                        if (!t.status || t.status === 'free') t.status = 'doubt';
                         else if (t.status === 'doubt') t.status = 'occupied';
                         else t.status = 'free';
-                        
                         save(); render();
                     } else if (currentMode === 'design' && !isLocked) {
-                        selectedId = t.id;
-                        updateUI(); render();
+                        selectedId = t.id; updateUI(); render();
                     }
                 };
 
-                // Lógica de Drag & Drop (Solo Diseño)
                 if (currentMode === 'design' && !isLocked) {
-                    el.onpointerdown = (e) => {
-                        selectedId = t.id;
-                        updateUI();
-                        startDragging(e, t, el);
-                    };
+                    el.onpointerdown = (e) => { e.stopPropagation(); selectedId = t.id; updateUI(); startDragging(e, t, el); };
                 }
-
                 layer.appendChild(el);
             });
         }
 
-        function changeSize(delta) {
-            const t = tables.find(x => x.id === selectedId);
-            if (!t) return;
-            // Aumentar o disminuir proporcionalmente
-            t.w = Math.max(40, (t.w || 60) + delta);
-            t.h = Math.max(40, (t.h || 60) + delta);
-            render();
-            save();
-        }
-
-        function rotateSelected() {
-            const t = tables.find(x => x.id === selectedId);
-            if(t) { 
-                const temp = t.w;
-                t.w = t.h;
-                t.h = temp;
-                render(); save(); 
-            }
-        }
-
-        function applyZoom(delta) {
-            zoomLevel = Math.max(0.3, Math.min(2.5, zoomLevel + delta));
-            render();
-        }
-
-        function resetZoom() { zoomLevel = 0.85; render(); }
-
         function startDragging(e, t, el) {
             const container = document.getElementById('map-container');
             const rect = container.getBoundingClientRect();
-            
-            function onMove(ev) {
-                let newX = ((ev.clientX - rect.left) / rect.width) * 100;
-                let newY = ((ev.clientY - rect.top) / rect.height) * 100;
-                t.x = Math.max(1, Math.min(99, newX));
-                t.y = Math.max(1, Math.min(99, newY));
-                el.style.left = t.x + '%';
-                el.style.top = t.y + '%';
-            }
-
-            function stop() {
-                window.removeEventListener('pointermove', onMove);
-                window.removeEventListener('pointerup', stop);
+            const moveHandler = (ev) => {
+                t.x = ((ev.clientX - rect.left) / zoomLevel) - (t.w / 2);
+                t.y = ((ev.clientY - rect.top) / zoomLevel) - (t.h / 2);
+                el.style.left = t.x + 'px'; el.style.top = t.y + 'px';
+            };
+            const stopHandler = () => {
+                window.removeEventListener('pointermove', moveHandler);
+                window.removeEventListener('pointerup', stopHandler);
                 save(); render();
-            }
+            };
+            window.addEventListener('pointermove', moveHandler);
+            window.addEventListener('pointerup', stopHandler);
+        }
 
-            window.addEventListener('pointermove', onMove);
-            window.addEventListener('pointerup', stop);
+        function applyZoom(delta) { zoomLevel = Math.max(0.1, Math.min(2, zoomLevel + delta)); render(); }
+        function resetZoom() { zoomLevel = 0.8; render(); }
+
+        function toggleLock() {
+            isLocked = !isLocked;
+            document.getElementById('lock-icon').className = isLocked ? 'fa-solid fa-lock text-red-500 text-lg' : 'fa-solid fa-unlock text-blue-500 text-lg';
+            setMode(currentMode);
         }
 
         function setMode(m) {
             currentMode = m;
             selectedId = null;
-            
             document.querySelectorAll('nav button').forEach(b => {
-                b.classList.remove('bg-slate-950', 'text-white', 'shadow-lg');
+                b.classList.remove('bg-slate-950', 'text-white');
                 b.classList.add('text-slate-400');
             });
-            document.getElementById(`nav-${m}`).classList.add('bg-slate-950', 'text-white', 'shadow-lg');
+            document.getElementById(`nav-${m}`).classList.add('bg-slate-950', 'text-white');
             
             document.getElementById('audit-footer').classList.toggle('hidden', m !== 'audit');
-            document.getElementById('design-fabs').classList.toggle('hidden', m !== 'design' || isLocked);
+            document.getElementById('layout-console').classList.toggle('hidden', m !== 'design' || isLocked);
             document.getElementById('history-screen').classList.toggle('hidden', m !== 'history');
             
             if(m === 'history') renderHistory();
-            updateUI();
-            render();
-        }
-
-        function toggleLock() {
-            isLocked = !isLocked;
-            const icon = document.getElementById('lock-icon');
-            icon.className = isLocked ? 'fa-solid fa-lock text-red-500' : 'fa-solid fa-unlock text-blue-500';
-            setMode(currentMode);
+            updateUI(); render();
         }
 
         function updateUI() {
-            const topPanel = document.getElementById('design-edit-top');
+            const panel = document.getElementById('design-edit-top');
             const item = tables.find(t => t.id === selectedId);
-
             if (selectedId && currentMode === 'design' && !isLocked) {
-                topPanel.classList.remove('hidden');
+                panel.classList.remove('hidden');
                 const input = document.getElementById('label-input');
                 input.value = item.label;
                 input.oninput = (e) => { item.label = e.target.value.toUpperCase(); render(); save(); };
-            } else {
-                topPanel.classList.add('hidden');
-            }
+            } else { panel.classList.add('hidden'); }
         }
 
         function addTable() {
-            const num = tables.filter(x => x.type === 'mesa').length + 1;
-            const newT = { id: Date.now(), x: 50, y: 50, label: num.toString().padStart(2, '0'), type: 'mesa', status: 'free', w: 60, h: 60 };
-            tables.push(newT);
-            selectedId = newT.id;
-            save(); render(); updateUI();
+            const wrapper = document.getElementById('map-wrapper');
+            const newT = { id: Date.now(), x: wrapper.scrollLeft + 100, y: wrapper.scrollTop + 100, label: (tables.length + 1).toString().padStart(2, '0'), type: 'mesa', status: 'free', w: 80, h: 80 };
+            tables.push(newT); selectedId = newT.id; save(); render(); updateUI();
         }
 
         function addVIP() {
-            const newV = { id: Date.now(), x: 50, y: 50, label: "VIP", type: 'vip', status: 'free', w: 180, h: 90 };
-            tables.push(newV);
-            selectedId = newV.id;
-            save(); render(); updateUI();
+            const wrapper = document.getElementById('map-wrapper');
+            const newV = { id: Date.now(), x: wrapper.scrollLeft + 100, y: wrapper.scrollTop + 100, label: "VIP", type: 'vip', status: 'free', w: 250, h: 120 };
+            tables.push(newV); selectedId = newV.id; save(); render(); updateUI();
         }
 
+        function changeSize(delta) {
+            const t = tables.find(x => x.id === selectedId);
+            if (t) { t.w = Math.max(40, t.w + delta); t.h = Math.max(40, t.h + delta); render(); save(); }
+        }
+        function rotateSelected() {
+            const t = tables.find(x => x.id === selectedId);
+            if(t) { [t.w, t.h] = [t.h, t.w]; render(); save(); }
+        }
         function deleteSelected() {
-            if(confirm("¿Eliminar este elemento definitivamente?")) {
-                tables = tables.filter(t => t.id !== selectedId);
-                selectedId = null; save(); render(); updateUI();
-            }
+            if(confirm("¿Eliminar?")) { tables = tables.filter(t => t.id !== selectedId); selectedId = null; save(); render(); updateUI(); }
         }
 
         function openSaveModal() { document.getElementById('modal-save').style.display = 'flex'; }
         function closeSaveModal() { document.getElementById('modal-save').style.display = 'none'; }
 
         function confirmSave() {
-            const occ = tables.filter(t => t.status === 'occupied').length;
-            const dbt = tables.filter(t => t.status === 'doubt').length;
-            
-            const audit = {
+            const report = {
                 id: Date.now(),
-                resp: document.getElementById('aud-resp').value || 'Sin Nombre',
-                lugar: document.getElementById('aud-lugar').value || 'Salón Principal',
-                insitu: document.getElementById('aud-insitu').value || '0',
-                micros: document.getElementById('aud-micros').value || '0',
+                resp: document.getElementById('aud-resp').value || 'User',
+                lugar: document.getElementById('aud-lugar').value || 'Salón',
+                insitu: document.getElementById('aud-insitu').value || 0,
+                micros: document.getElementById('aud-micros').value || 0,
                 date: new Date().toLocaleString([], {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}),
-                occ: occ,
-                doubt: dbt,
-                total: tables.length
+                occ: tables.filter(t => t.status === 'occupied').length, total: tables.length
             };
-            audits.unshift(audit);
-            // Limpiar estados para la próxima vuelta
+            audits.unshift(report);
             tables.forEach(t => t.status = 'free');
             save(); closeSaveModal(); setMode('history');
         }
@@ -452,24 +433,18 @@
         function renderHistory() {
             const list = document.getElementById('history-list');
             list.innerHTML = audits.map(a => `
-                <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm relative overflow-hidden flex justify-between items-center">
-                    <div class="absolute top-0 left-0 w-2 h-full bg-slate-950"></div>
+                <div class="bg-white p-6 rounded-[2.5rem] shadow-sm flex justify-between items-center border border-slate-100">
                     <div>
-                        <p class="text-[8px] font-black uppercase text-slate-400 mb-1">${a.date}</p>
-                        <p class="font-black text-slate-900 uppercase text-sm">${a.resp}</p>
-                        <p class="text-[10px] text-slate-500 font-bold uppercase mt-1 italic">${a.lugar}</p>
-                        <div class="flex gap-2 mt-2">
-                             <span class="text-[9px] bg-slate-100 px-2 py-0.5 rounded font-bold">IN SITU: ${a.insitu}</span>
-                             <span class="text-[9px] bg-slate-100 px-2 py-0.5 rounded font-bold">MICROS: ${a.micros}</span>
-                        </div>
+                        <p class="text-[8px] font-black text-slate-400 uppercase">${a.date}</p>
+                        <p class="font-black text-lg text-slate-900">${a.resp}</p>
+                        <p class="text-[9px] font-bold text-blue-600 uppercase">${a.lugar} · Pax: ${parseInt(a.insitu) + parseInt(a.micros)}</p>
                     </div>
                     <div class="text-right">
-                        <span class="text-[10px] font-black block text-slate-400">OCUPACIÓN</span>
-                        <span class="text-3xl font-black text-blue-600 leading-none">${Math.round((a.occ/a.total)*100)}%</span>
-                        ${a.doubt > 0 ? `<p class="text-[8px] font-black text-yellow-600 mt-1">${a.doubt} DUDAS</p>` : ''}
+                        <span class="text-3xl font-black text-slate-950">${Math.round((a.occ/a.total)*100)}%</span>
+                        <p class="text-[8px] font-black text-slate-400 uppercase">Ocupación</p>
                     </div>
                 </div>
-            `).join('') || '<p class="text-center text-slate-300 py-20 uppercase text-[10px] font-black">Historial Vacío</p>';
+            `).join('') || '<div class="text-center py-20 text-slate-300 font-black uppercase text-xs">Sin registros</div>';
         }
 
         function save() {
@@ -477,7 +452,7 @@
             localStorage.setItem(`${DB_KEY}_audits`, JSON.stringify(audits));
         }
 
-        init();
+        window.onload = init;
     </script>
 </body>
 </html>
