@@ -66,8 +66,15 @@
         .area-vip { border: 3px dashed #94a3b8; border-radius: 20px; text-transform: uppercase; font-size: 18px; }
 
         .item-free { background-color: #ffffff; color: #1e293b; }
-        .item-doubt { background-color: #fbbf24 !important; color: #000000 !important; border: 3px solid #d97706 !important; }
+        /* CAMBIO A ROJO PARA INDETERMINADAS */
+        .item-doubt { background-color: #ef4444 !important; color: #ffffff !important; border: 3px solid #b91c1c !important; animation: pulse-red 2s infinite; }
         .item-occupied { background-color: #020617 !important; color: #ffffff !important; border-color: #020617 !important; }
+
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
 
         .selected-design { 
             outline: 4px solid #3b82f6; 
@@ -75,7 +82,6 @@
             z-index: 50 !important; 
         }
 
-        /* CONSOLA DE LAYOUT */
         .layout-console {
             position: fixed;
             bottom: 30px;
@@ -114,9 +120,7 @@
             font-size: 20px;
         }
 
-        .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 24px); }
-        
-        /* SCROLLBAR CUSTOM PARA HISTORIAL */
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 20px); }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
     </style>
@@ -131,7 +135,7 @@
             </div>
             <div>
                 <h1 class="font-black text-lg italic uppercase leading-tight">SPOT CHECK</h1>
-                <p class="text-[8px] text-blue-400 font-bold tracking-widest uppercase">Zoom & Reportes Pro</p>
+                <p class="text-[8px] text-blue-400 font-black tracking-widest uppercase">Intelligent Control</p>
             </div>
         </div>
         
@@ -150,12 +154,37 @@
         </button>
     </header>
 
-    <!-- NAVIGATION -->
-    <nav class="bg-white border-b border-slate-200 p-2 flex gap-2 z-[450] shrink-0 shadow-sm">
-        <button onclick="setMode('audit')" id="nav-audit" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase bg-slate-950 text-white">Control</button>
-        <button onclick="setMode('design')" id="nav-design" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400">Layout</button>
-        <button onclick="setMode('history')" id="nav-history" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400">Reportes</button>
-    </nav>
+    <!-- NAVIGATION & STATS BAR -->
+    <div class="bg-white border-b border-slate-200 z-[450] shrink-0 shadow-sm">
+        <nav class="p-2 flex gap-2">
+            <button onclick="setMode('audit')" id="nav-audit" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase bg-slate-950 text-white">Control</button>
+            <button onclick="setMode('design')" id="nav-design" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400">Layout</button>
+            <button onclick="setMode('history')" id="nav-history" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400">Reportes</button>
+        </nav>
+        
+        <!-- DASHBOARD DE ESTADÍSTICAS EN TIEMPO REAL -->
+        <div id="stats-bar" class="px-4 pb-3 flex justify-between items-center border-t border-slate-50 pt-2 overflow-x-auto whitespace-nowrap gap-4">
+            <div class="flex flex-col">
+                <span class="text-[18px] font-black leading-none" id="stat-perc">0%</span>
+                <span class="text-[7px] font-black uppercase text-slate-400">Ocupación</span>
+            </div>
+            <div class="h-6 w-[1px] bg-slate-200"></div>
+            <div class="flex gap-4">
+                <div class="flex items-center gap-1.5">
+                    <div class="w-2 h-2 rounded-full bg-slate-200"></div>
+                    <span class="text-[10px] font-black" id="stat-free">0</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <div class="w-2 h-2 rounded-full bg-slate-950"></div>
+                    <span class="text-[10px] font-black" id="stat-occ">0</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                    <span class="text-[10px] font-black text-red-600" id="stat-doubt">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- MAP VIEW -->
     <main class="flex-1 relative overflow-hidden" id="main-view">
@@ -181,14 +210,14 @@
         </div>
     </main>
 
-    <!-- FOOTER AUDIT -->
-    <footer id="audit-footer" class="p-4 bg-white border-t border-slate-200 z-[450] safe-bottom shrink-0">
+    <!-- FOOTER AUDIT - AJUSTADO PARA QUE NO TAPE -->
+    <footer id="audit-footer" class="p-4 bg-white border-t border-slate-200 z-[450] safe-bottom shrink-0 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
         <button onclick="openSaveModal()" class="w-full bg-slate-950 text-white py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest active:scale-95 transition-all shadow-xl">
             Finalizar y Guardar Reporte
         </button>
     </footer>
 
-    <!-- MODAL DE GUARDADO CON TODOS LOS CAMPOS -->
+    <!-- MODAL DE GUARDADO -->
     <div id="modal-save" class="fixed inset-0 bg-slate-950/95 z-[1000] hidden items-center justify-center p-6 backdrop-blur-md">
         <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 shadow-2xl">
             <h3 class="text-2xl font-black uppercase text-center italic tracking-tighter">Cerrar Auditoría</h3>
@@ -212,8 +241,8 @@
         </div>
     </div>
 
-    <!-- PANTALLA DE HISTORIAL ESTILO ORIGINAL -->
-    <div id="history-screen" class="fixed inset-0 bg-slate-50 z-[900] hidden flex-col p-6 overflow-hidden pt-32">
+    <!-- PANTALLA DE HISTORIAL -->
+    <div id="history-screen" class="fixed inset-0 bg-slate-50 z-[900] hidden flex-col p-6 overflow-hidden pt-40">
         <div class="flex justify-between items-center mb-6 px-2">
             <h2 class="text-xl font-black italic uppercase">Historial Pro</h2>
             <button onclick="if(confirm('¿Borrar todo?')) { audits=[]; save(); renderHistory(); }" class="text-red-500 text-[10px] font-black uppercase tracking-widest">Limpiar</button>
@@ -222,26 +251,22 @@
     </div>
 
     <script>
-        const DB_KEY = 'SPOTCHECK_AUDIT_PRO'; // Prefijo unificado para evitar pérdidas
+        const DB_KEY = 'SPOTCHECK_AUDIT_PRO';
         let tables = JSON.parse(localStorage.getItem(`${DB_KEY}_tables`)) || [];
         let audits = JSON.parse(localStorage.getItem(`${DB_KEY}_audits`)) || [];
         let currentMode = 'audit';
         let isLocked = true;
         let selectedId = null;
 
-        // ESTADO DE ZOOM Y PAN
         let scale = 0.5;
         let posX = 0;
         let posY = 0;
-        
-        // Variables para gestos
         let lastTouchDistance = 0;
         let isDraggingMap = false;
         let lastMouseX, lastMouseY;
 
         function init() {
             if (tables.length === 0) {
-                // Layout por defecto si está vacío
                 for(let i=1; i<=15; i++) {
                     tables.push({ id: i, x: 200 + (i%5)*150, y: 200 + Math.floor(i/5)*150, label: i.toString().padStart(2,'0'), type: 'mesa', status: 'free', w: 100, h: 100 });
                 }
@@ -249,6 +274,7 @@
             initTouchControls();
             render();
             updateUI();
+            updateStats();
         }
 
         function initTouchControls() {
@@ -257,15 +283,11 @@
 
             wrapper.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 2) {
-                    lastTouchDistance = Math.hypot(
-                        e.touches[0].pageX - e.touches[1].pageX,
-                        e.touches[0].pageY - e.touches[1].pageY
-                    );
+                    lastTouchDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
                 } else if (e.touches.length === 1) {
                     if (e.target === wrapper || e.target === container || isLocked) {
                         isDraggingMap = true;
-                        lastMouseX = e.touches[0].pageX;
-                        lastMouseY = e.touches[0].pageY;
+                        lastMouseX = e.touches[0].pageX; lastMouseY = e.touches[0].pageY;
                     }
                 }
             }, { passive: false });
@@ -273,10 +295,7 @@
             wrapper.addEventListener('touchmove', (e) => {
                 e.preventDefault();
                 if (e.touches.length === 2) {
-                    const currentDistance = Math.hypot(
-                        e.touches[0].pageX - e.touches[1].pageX,
-                        e.touches[0].pageY - e.touches[1].pageY
-                    );
+                    const currentDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
                     const delta = currentDistance / lastTouchDistance;
                     scale = Math.min(Math.max(0.15, scale * delta), 2.5);
                     lastTouchDistance = currentDistance;
@@ -284,43 +303,45 @@
                 } else if (e.touches.length === 1 && isDraggingMap) {
                     posX += e.touches[0].pageX - lastMouseX;
                     posY += e.touches[0].pageY - lastMouseY;
-                    lastMouseX = e.touches[0].pageX;
-                    lastMouseY = e.touches[0].pageY;
+                    lastMouseX = e.touches[0].pageX; lastMouseY = e.touches[0].pageY;
                     render();
                 }
             }, { passive: false });
 
-            wrapper.addEventListener('touchend', () => {
-                isDraggingMap = false;
-                lastTouchDistance = 0;
-            });
+            wrapper.addEventListener('touchend', () => { isDraggingMap = false; lastTouchDistance = 0; });
 
             wrapper.addEventListener('mousedown', (e) => {
                 if (e.target === wrapper || e.target === container || isLocked) {
-                    isDraggingMap = true;
-                    lastMouseX = e.pageX;
-                    lastMouseY = e.pageY;
+                    isDraggingMap = true; lastMouseX = e.pageX; lastMouseY = e.pageY;
                 }
             });
 
             window.addEventListener('mousemove', (e) => {
                 if (isDraggingMap) {
-                    posX += e.pageX - lastMouseX;
-                    posY += e.pageY - lastMouseY;
-                    lastMouseX = e.pageX;
-                    lastMouseY = e.pageY;
+                    posX += e.pageX - lastMouseX; posY += e.pageY - lastMouseY;
+                    lastMouseX = e.pageX; lastMouseY = e.pageY;
                     render();
                 }
             });
 
             window.addEventListener('mouseup', () => isDraggingMap = false);
-
             wrapper.addEventListener('wheel', (e) => {
                 e.preventDefault();
-                const delta = e.deltaY > 0 ? 0.9 : 1.1;
-                scale = Math.min(Math.max(0.15, scale * delta), 2.5);
+                scale = Math.min(Math.max(0.15, scale * (e.deltaY > 0 ? 0.9 : 1.1)), 2.5);
                 render();
             }, { passive: false });
+        }
+
+        function updateStats() {
+            const total = tables.length || 1;
+            const occ = tables.filter(t => t.status === 'occupied').length;
+            const doubt = tables.filter(t => t.status === 'doubt').length;
+            const free = tables.filter(t => t.status === 'free').length;
+            
+            document.getElementById('stat-perc').innerText = Math.round((occ / total) * 100) + '%';
+            document.getElementById('stat-occ').innerText = occ;
+            document.getElementById('stat-doubt').innerText = doubt;
+            document.getElementById('stat-free').innerText = free;
         }
 
         function render() {
@@ -348,7 +369,7 @@
                         if (t.status === 'free') t.status = 'doubt';
                         else if (t.status === 'doubt') t.status = 'occupied';
                         else t.status = 'free';
-                        save(); render();
+                        save(); render(); updateStats();
                     } else if (currentMode === 'design' && !isLocked) {
                         selectedId = t.id; updateUI(); render();
                     }
@@ -357,10 +378,7 @@
                 if (currentMode === 'design' && !isLocked) {
                     el.onpointerdown = (e) => { 
                         if (e.pointerType === 'mouse' || e.isPrimary) {
-                            e.stopPropagation(); 
-                            selectedId = t.id; 
-                            updateUI(); 
-                            startDraggingTable(e, t, el); 
+                            e.stopPropagation(); selectedId = t.id; updateUI(); startDraggingTable(e, t, el); 
                         }
                     };
                 }
@@ -369,23 +387,18 @@
         }
 
         function startDraggingTable(e, t, el) {
-            const startX = e.pageX;
-            const startY = e.pageY;
-            const initX = t.x;
-            const initY = t.y;
-
+            const startX = e.pageX; const startY = e.pageY;
+            const initX = t.x; const initY = t.y;
             const moveH = (ev) => {
                 t.x = initX + (ev.pageX - startX) / scale;
                 t.y = initY + (ev.pageY - startY) / scale;
                 el.style.left = t.x + 'px'; el.style.top = t.y + 'px';
             };
-
             const stopH = () => {
                 window.removeEventListener('pointermove', moveH);
                 window.removeEventListener('pointerup', stopH);
                 save(); render();
             };
-
             window.addEventListener('pointermove', moveH);
             window.addEventListener('pointerup', stopH);
         }
@@ -400,14 +413,14 @@
             currentMode = m;
             selectedId = null;
             document.querySelectorAll('nav button').forEach(b => {
-                b.classList.remove('bg-slate-950', 'text-white');
-                b.classList.add('text-slate-400');
+                b.classList.remove('bg-slate-950', 'text-white'); b.classList.add('text-slate-400');
             });
             document.getElementById(`nav-${m}`).classList.add('bg-slate-950', 'text-white');
             
             document.getElementById('audit-footer').classList.toggle('hidden', m !== 'audit');
             document.getElementById('layout-console').classList.toggle('hidden', m !== 'design' || isLocked);
             document.getElementById('history-screen').classList.toggle('hidden', m !== 'history');
+            document.getElementById('stats-bar').classList.toggle('hidden', m === 'history');
             
             if(m === 'history') renderHistory();
             updateUI(); render();
@@ -428,14 +441,14 @@
             const centerX = (-posX + (window.innerWidth/2)) / scale;
             const centerY = (-posY + (window.innerHeight/2)) / scale;
             const newT = { id: Date.now(), x: centerX - 50, y: centerY - 50, label: (tables.length + 1).toString(), type: 'mesa', status: 'free', w: 100, h: 100 };
-            tables.push(newT); selectedId = newT.id; save(); render(); updateUI();
+            tables.push(newT); selectedId = newT.id; save(); render(); updateUI(); updateStats();
         }
 
         function addVIP() {
             const centerX = (-posX + (window.innerWidth/2)) / scale;
             const centerY = (-posY + (window.innerHeight/2)) / scale;
             const newV = { id: Date.now(), x: centerX - 125, y: centerY - 60, label: "VIP", type: 'vip', status: 'free', w: 250, h: 120 };
-            tables.push(newV); selectedId = newV.id; save(); render(); updateUI();
+            tables.push(newV); selectedId = newV.id; save(); render(); updateUI(); updateStats();
         }
 
         function changeSize(delta) {
@@ -447,7 +460,7 @@
             if(t) { [t.w, t.h] = [t.h, t.w]; render(); save(); }
         }
         function deleteSelected() {
-            if(confirm("¿Eliminar?")) { tables = tables.filter(t => t.id !== selectedId); selectedId = null; save(); render(); updateUI(); }
+            if(confirm("¿Eliminar?")) { tables = tables.filter(t => t.id !== selectedId); selectedId = null; save(); render(); updateUI(); updateStats(); }
         }
 
         function openSaveModal() { document.getElementById('modal-save').style.display = 'flex'; }
@@ -469,16 +482,10 @@
             };
             audits.unshift(report);
             tables.forEach(t => t.status = 'free');
-            save(); 
-            closeSaveModal(); 
-            
-            // Limpiar inputs
-            document.getElementById('aud-lugar').value = '';
-            document.getElementById('aud-insitu').value = '';
-            document.getElementById('aud-micros').value = '';
-            document.getElementById('aud-obs').value = '';
-            
-            setMode('history');
+            save(); closeSaveModal(); 
+            document.getElementById('aud-lugar').value = ''; document.getElementById('aud-insitu').value = '';
+            document.getElementById('aud-micros').value = ''; document.getElementById('aud-obs').value = '';
+            updateStats(); setMode('history');
         }
 
         function renderHistory() {
@@ -502,14 +509,8 @@
                             <span class="font-black text-slate-700 italic uppercase text-[10px]">${a.lugar}</span>
                         </div>
                         <div class="grid grid-cols-2 bg-slate-50 p-3 rounded-2xl gap-4">
-                            <div>
-                                <span class="text-slate-400 font-black uppercase text-[7px] block">In Situ</span>
-                                <span class="font-black text-slate-800 text-lg">${a.insitu}</span>
-                            </div>
-                            <div>
-                                <span class="text-slate-400 font-black uppercase text-[7px] block">Micros</span>
-                                <span class="font-black text-slate-800 text-lg">${a.micros}</span>
-                            </div>
+                            <div><span class="text-slate-400 font-black uppercase text-[7px] block">In Situ</span><span class="font-black text-slate-800 text-lg">${a.insitu}</span></div>
+                            <div><span class="text-slate-400 font-black uppercase text-[7px] block">Micros</span><span class="font-black text-slate-800 text-lg">${a.micros}</span></div>
                         </div>
                         ${a.obs ? `<div class="bg-blue-50 p-3 rounded-2xl border border-blue-100 text-[10px] font-bold text-blue-900 uppercase italic">"${a.obs}"</div>` : ''}
                     </div>
