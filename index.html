@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#020617">
     
-    <title>SPOT CHECK - CONTROL PROFESIONAL</title>
+    <title>SPOT CHECK - EDITOR RÁPIDO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -19,16 +19,28 @@
             background-color: #f1f5f9;
         }
         
-        #map-container { 
-            height: 1400px; 
+        #map-wrapper {
             width: 100%;
+            height: 100%;
+            overflow: auto;
             position: relative;
-            background-color: #ffffff;
-            transition: all 0.3s;
+            background-color: #cbd5e1;
         }
 
+        #map-container { 
+            height: 1200px; 
+            width: 1000px; 
+            position: relative;
+            background-color: #ffffff;
+            transform-origin: 0 0;
+            transition: transform 0.2s ease-out;
+        }
+
+        /* Rejilla más visible para alinear fácil */
         .design-grid {
-            background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px);
+            background-image: 
+                linear-gradient(to right, #f1f5f9 1px, transparent 1px),
+                linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
             background-size: 40px 40px;
         }
 
@@ -38,16 +50,15 @@
             z-index: 20;
             touch-action: none;
             cursor: pointer;
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 800;
-            font-size: 14px;
+            font-size: 13px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.2s, transform 0.1s;
         }
 
         .area-vip {
@@ -62,11 +73,9 @@
             font-size: 11px;
             text-transform: uppercase;
             touch-action: none;
-            border-radius: 16px;
+            border-radius: 12px;
             cursor: pointer;
-            transition: width 0.3s ease, height 0.3s ease, background-color 0.2s;
             text-align: center;
-            padding: 10px;
         }
 
         .item-free { background-color: #ffffff; color: #1e293b; border: 2px solid #e2e8f0; }
@@ -74,199 +83,176 @@
             background-color: #0f172a !important; 
             color: #ffffff !important; 
             border-color: #0f172a !important;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-            z-index: 25;
         }
 
         .selected-design { 
             outline: 4px solid #3b82f6; 
-            outline-offset: 4px; 
+            outline-offset: 2px; 
             z-index: 50 !important; 
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
         }
 
-        .screen-overlay {
+        /* Botones laterales de Zoom */
+        .zoom-bar {
             position: fixed;
-            left: 0; right: 0; bottom: 0; top: 0;
-            background-color: #f8fafc;
-            z-index: 150; overflow-y: auto; display: none;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
         }
-        .screen-overlay.active { display: flex; }
 
-        #modal-save {
-            position: fixed;
-            inset: 0;
-            background: rgba(2, 6, 23, 0.98);
-            z-index: 300;
-            display: none;
+        .zoom-btn {
+            width: 44px;
+            height: 44px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            color: #475569;
+            font-size: 18px;
         }
 
-        .btn-main {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            transition: all 0.2s ease;
+        /* Panel de herramientas rápido (Flotante) */
+        .fab-container {
+            position: fixed;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 130;
         }
-        .btn-main:active { transform: scale(0.96); }
 
-        .audit-input-group {
-            background: #f8fafc;
-            padding: 12px 16px;
+        .fab-add {
+            padding: 12px 20px;
+            background: #0f172a;
+            color: white;
             border-radius: 20px;
-            border: 1px solid #e2e8f0;
-        }
-        .audit-label {
-            font-size: 8px;
             font-weight: 900;
+            font-size: 11px;
             text-transform: uppercase;
-            color: #94a3b8;
-            letter-spacing: 0.1em;
-            margin-bottom: 4px;
-            display: block;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .audit-field {
-            width: 100%;
-            background: transparent;
-            font-weight: 800;
-            font-size: 14px;
-            outline: none;
-            color: #0f172a;
-        }
+
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 20px); }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden text-slate-900">
 
     <!-- CABECERA -->
-    <header class="bg-slate-950 text-white p-4 pt-10 flex justify-between items-center shrink-0 z-[110] shadow-xl">
+    <header class="bg-slate-950 text-white p-4 pt-10 flex justify-between items-center shrink-0 z-[140]">
         <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg transform rotate-3">
-                <i class="fa-solid fa-bolt text-sm"></i>
-            </div>
             <h1 class="font-black text-lg italic tracking-tighter uppercase">SPOT CHECK</h1>
         </div>
-        <button onclick="toggleLock()" id="lock-btn" class="px-4 py-2 bg-slate-900 rounded-xl border border-slate-800 flex items-center gap-2 btn-main">
-            <span id="lock-text" class="text-[9px] font-bold uppercase text-slate-400">Bloqueado</span>
+        <div id="design-edit-top" class="hidden flex items-center gap-2 bg-blue-600 px-3 py-1.5 rounded-full animate-in fade-in">
+            <input id="label-input" type="text" class="w-20 bg-transparent text-white font-bold outline-none border-b border-blue-400 text-sm" placeholder="Mesa...">
+            <button onclick="rotateSelected()" id="rotate-btn" class="p-1 text-white"><i class="fa-solid fa-rotate"></i></button>
+            <button onclick="deleteSelected()" class="p-1 text-white"><i class="fa-solid fa-trash-can"></i></button>
+        </div>
+        <button onclick="toggleLock()" id="lock-btn" class="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center border border-slate-800">
             <i class="fa-solid fa-lock text-red-500" id="lock-icon"></i>
         </button>
     </header>
 
     <!-- NAVEGACIÓN -->
-    <nav class="bg-white border-b border-slate-200 p-2 flex gap-1 z-[110]">
-        <button onclick="setMode('audit')" id="nav-audit" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase bg-slate-950 text-white transition-all">Auditar</button>
+    <nav class="bg-white border-b border-slate-200 p-2 flex gap-1 z-[140]">
+        <button onclick="setMode('audit')" id="nav-audit" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase bg-slate-950 text-white shadow-lg transition-all">Auditar</button>
         <button onclick="setMode('design')" id="nav-design" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 transition-all">Diseño</button>
-        <button onclick="setMode('history')" id="nav-history" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 transition-all">Notas</button>
+        <button onclick="setMode('history')" id="nav-history" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 transition-all">Reportes</button>
     </nav>
 
+    <!-- CONTROLES ZOOM -->
+    <div class="zoom-bar">
+        <button onclick="changeZoom(0.2)" class="zoom-btn active:scale-90"><i class="fa-solid fa-plus"></i></button>
+        <button onclick="changeZoom(-0.2)" class="zoom-btn active:scale-90"><i class="fa-solid fa-minus"></i></button>
+        <button onclick="resetZoom()" class="zoom-btn text-[9px] font-bold">1:1</button>
+    </div>
+
+    <!-- BOTONES RÁPIDOS DE CREACIÓN (SOLO EN DISEÑO) -->
+    <div id="design-fabs" class="fab-container hidden">
+        <button onclick="addTable()" class="fab-add bg-slate-900">
+            <i class="fa-solid fa-square-plus text-lg"></i> + MESA
+        </button>
+        <button onclick="addVIP()" class="fab-add bg-blue-700">
+            <i class="fa-solid fa-vector-square text-lg"></i> + VIP
+        </button>
+    </div>
+
     <!-- ÁREA DE MAPA -->
-    <main class="flex-1 overflow-auto bg-slate-100 relative" id="main-scroll">
-        <div id="map-container">
-            <div id="mesas-layer" class="w-full h-full relative"></div>
+    <main class="flex-1 overflow-hidden bg-slate-200 relative" id="main-view">
+        <div id="map-wrapper">
+            <div id="map-container">
+                <div id="mesas-layer" class="w-full h-full relative"></div>
+            </div>
         </div>
     </main>
 
-    <!-- PANEL INFERIOR (DISEÑO) -->
-    <footer id="design-footer" class="hidden p-5 bg-white border-t border-slate-200 z-[120] shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
-        <div id="edit-controls" class="hidden mb-4 p-4 bg-blue-50 rounded-2xl border-2 border-blue-100 space-y-3">
-            <div class="flex gap-2">
-                <input id="label-input" type="text" class="flex-1 p-4 rounded-xl border-2 border-blue-200 font-bold text-base outline-none focus:border-blue-500" placeholder="Nombre...">
-                <button id="rotate-btn" onclick="rotateSelected()" class="bg-blue-600 text-white p-4 rounded-xl w-14 btn-main shadow-lg hidden">
-                    <i class="fa-solid fa-rotate"></i>
-                </button>
-                <button onclick="deleteSelected()" class="bg-red-500 text-white p-4 rounded-xl w-14 btn-main shadow-lg">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
-            </div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-            <button onclick="addTable()" class="bg-slate-900 text-white py-4 rounded-xl font-black text-[10px] uppercase italic btn-main">
-                <i class="fa-solid fa-plus mr-1"></i> Mesa 1x1
-            </button>
-            <button onclick="addVIP('gran')" class="bg-blue-700 text-white py-4 rounded-xl font-black text-[10px] uppercase italic btn-main">
-                <i class="fa-solid fa-vector-square mr-1"></i> VIP Tetris 1x4
-            </button>
-        </div>
-    </footer>
-
     <!-- PANEL INFERIOR (AUDITORÍA) -->
-    <footer id="audit-footer" class="p-6 bg-white border-t border-slate-200 z-[120] shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
-        <button onclick="openSaveModal()" class="w-full bg-slate-950 text-white py-6 rounded-[2rem] font-black text-sm uppercase italic tracking-widest shadow-2xl btn-main border-b-4 border-slate-800">Finalizar Reporte</button>
+    <footer id="audit-footer" class="p-6 bg-white border-t border-slate-200 z-[140] shadow-2xl safe-bottom">
+        <button onclick="openSaveModal()" class="w-full bg-slate-950 text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest border-b-4 border-slate-800 active:translate-y-1 active:border-b-0 transition-all">Finalizar Auditoría</button>
     </footer>
 
     <!-- MODAL DE GUARDADO -->
-    <div id="modal-save">
-        <div class="bg-white w-full max-w-sm rounded-[3rem] p-6 space-y-4 shadow-2xl overflow-y-auto max-h-[90vh]">
-            <div class="text-center mb-2">
-                <h3 class="text-2xl font-black italic uppercase tracking-tighter text-slate-950">Documentar</h3>
-                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Cerrar Auditoría In Situ</p>
-            </div>
-            
-            <div class="space-y-3">
-                <div class="audit-input-group">
-                    <span class="audit-label">Responsable (Firma)</span>
-                    <input id="aud-resp" type="text" class="audit-field" placeholder="Nombre...">
-                </div>
-                <div class="audit-input-group">
-                    <span class="audit-label">Lugar / Sector</span>
-                    <input id="aud-lugar" type="text" class="audit-field" placeholder="Especifique lugar...">
-                </div>
-                <div class="grid grid-cols-1 gap-3">
-                    <div class="audit-input-group">
-                        <span class="audit-label">MESAS ABIERTAS REGISTRADAS (Sistema)</span>
-                        <input id="aud-abiertas" type="number" class="audit-field" placeholder="0">
-                    </div>
-                    <div class="audit-input-group">
-                        <span class="audit-label">IN SITU SE OBSERVAN (Conteo Real)</span>
-                        <input id="aud-insitu" type="number" class="audit-field" placeholder="0">
-                    </div>
-                    <div class="audit-input-group">
-                        <span class="audit-label">MESAS ABIERTAS EN MICROS (Captura)</span>
-                        <input id="aud-micros" type="number" class="audit-field" placeholder="0">
-                    </div>
-                </div>
-                <div class="audit-input-group">
-                    <span class="audit-label">Observaciones</span>
-                    <textarea id="aud-obs" rows="2" class="audit-field resize-none" placeholder="Detalles relevantes..."></textarea>
+    <div id="modal-save" class="fixed inset-0 bg-slate-900/90 z-[300] hidden items-center justify-center p-6 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 space-y-5 shadow-2xl">
+            <h3 class="text-xl font-black uppercase italic text-center">Cerrar Reporte</h3>
+            <div class="space-y-4">
+                <input id="aud-resp" type="text" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold" placeholder="Tu Nombre">
+                <input id="aud-lugar" type="text" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold" placeholder="Sector">
+                <div class="grid grid-cols-2 gap-2">
+                    <input id="aud-insitu" type="number" class="p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-sm" placeholder="In Situ">
+                    <input id="aud-micros" type="number" class="p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-sm" placeholder="Micros">
                 </div>
             </div>
-
-            <div class="pt-2 space-y-3">
-                <button onclick="confirmSave()" class="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black text-xs uppercase shadow-xl btn-main">Confirmar y Guardar</button>
-                <button onclick="closeSaveModal()" class="w-full py-2 text-slate-400 font-bold text-[10px] uppercase tracking-widest text-center">Cancelar</button>
-            </div>
+            <button onclick="confirmSave()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase shadow-lg shadow-blue-200">Guardar Ahora</button>
+            <button onclick="closeSaveModal()" class="w-full text-slate-400 font-bold uppercase text-[10px] tracking-widest">Cancelar</button>
         </div>
     </div>
 
-    <!-- PANTALLA NOTAS -->
-    <div id="history-screen" class="screen-overlay flex-col p-6">
+    <!-- PANTALLA REPORTES -->
+    <div id="history-screen" class="fixed inset-0 bg-white z-[200] hidden flex-col p-6 overflow-y-auto">
         <div class="flex justify-between items-center mb-8 pt-10">
-            <div>
-                <h2 class="text-2xl font-black italic uppercase tracking-tighter">Historial de Notas</h2>
-                <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Reportes de Auditoría</p>
-            </div>
-            <button onclick="setMode('audit')" class="bg-slate-100 w-12 h-12 rounded-full flex items-center justify-center text-slate-400 shadow-sm"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h2 class="text-2xl font-black uppercase italic">Historial</h2>
+            <button onclick="setMode('audit')" class="text-slate-300 text-3xl"><i class="fa-solid fa-circle-xmark"></i></button>
         </div>
-        <div id="history-list" class="space-y-6 pb-20"></div>
+        <div id="history-list" class="space-y-4 pb-10"></div>
     </div>
 
     <script>
-        const DB_PREFIX = 'spotcheck_v7_tetris';
-        let tables = JSON.parse(localStorage.getItem(`${DB_PREFIX}_tables`)) || [];
-        let audits = JSON.parse(localStorage.getItem(`${DB_PREFIX}_audits`)) || [];
-        let isLocked = true;
+        const DB_KEY = 'spotcheck_v9_fast';
+        let tables = JSON.parse(localStorage.getItem(`${DB_KEY}_tables`)) || [];
+        let audits = JSON.parse(localStorage.getItem(`${DB_KEY}_audits`)) || [];
         let currentMode = 'audit';
+        let isLocked = true;
         let selectedId = null;
+        let zoomLevel = 0.8; // Empezamos con un poco de zoom out para ver más
 
         function init() {
-            if (tables.length === 0) resetLayout();
+            if (tables.length === 0) {
+                tables = [
+                    { id: 1, x: 20, y: 20, label: "01", type: 'mesa', occupied: false },
+                    { id: 2, x: 50, y: 20, label: "VIP 1", type: 'vip', w: 160, h: 60, occupied: false }
+                ];
+            }
             render();
-            window.addEventListener('pointerup', () => { if(currentMode === 'design') saveData(); });
+            resetZoom();
         }
 
         function render() {
             const layer = document.getElementById('mesas-layer');
             const container = document.getElementById('map-container');
             layer.innerHTML = '';
+            
             container.className = currentMode === 'design' ? 'design-grid' : '';
+            container.style.transform = `scale(${zoomLevel})`;
 
             tables.forEach(t => {
                 const el = document.createElement('div');
@@ -285,179 +271,169 @@
                 el.innerText = t.label;
 
                 el.onclick = (e) => {
+                    e.stopPropagation();
                     if (currentMode === 'audit') {
                         t.occupied = !t.occupied;
-                        saveData();
-                        render();
+                        save(); render();
                     } else if (currentMode === 'design' && !isLocked) {
                         selectedId = t.id;
-                        updateEditPanel();
+                        updateUI();
                         render();
                     }
                 };
 
-                el.onpointerdown = (e) => {
-                    if (currentMode === 'design' && !isLocked) {
+                if (currentMode === 'design' && !isLocked) {
+                    el.onpointerdown = (e) => {
                         selectedId = t.id;
-                        updateEditPanel();
+                        updateUI();
                         startDragging(e, t, el);
-                    }
-                };
+                    };
+                }
 
                 layer.appendChild(el);
             });
         }
 
+        function changeZoom(delta) {
+            zoomLevel = Math.max(0.4, Math.min(2.0, zoomLevel + delta));
+            render();
+        }
+
+        function resetZoom() { zoomLevel = 0.8; render(); }
+
         function startDragging(e, t, el) {
             const rect = document.getElementById('map-container').getBoundingClientRect();
-            function moveAt(clientX, clientY) {
-                let newX = ((clientX - rect.left) / rect.width) * 100;
-                let newY = ((clientY - rect.top) / rect.height) * 100;
+            
+            function onMove(ev) {
+                // Cálculo de coordenadas ajustado al Zoom
+                let newX = ((ev.clientX - rect.left) / rect.width) * 100;
+                let newY = ((ev.clientY - rect.top) / rect.height) * 100;
                 t.x = Math.max(2, Math.min(98, newX));
-                t.y = Math.max(1, Math.min(99, newY));
+                t.y = Math.max(2, Math.min(98, newY));
                 el.style.left = t.x + '%';
                 el.style.top = t.y + '%';
             }
-            function onMove(ev) { moveAt(ev.clientX, ev.clientY); }
-            window.addEventListener('pointermove', onMove);
-            window.addEventListener('pointerup', () => {
-                window.removeEventListener('pointermove', onMove);
-                saveData();
-                render();
-            }, { once: true });
-        }
 
-        function setMode(m) {
-            currentMode = m; selectedId = null;
-            document.querySelectorAll('nav button').forEach(b => b.className = "flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 transition-all");
-            document.getElementById(`nav-${m}`).className = "flex-1 py-3 rounded-xl font-black text-[10px] uppercase bg-slate-950 text-white shadow-xl transition-all";
-            
-            document.getElementById('design-footer').classList.toggle('hidden', m !== 'design');
-            document.getElementById('audit-footer').classList.toggle('hidden', m !== 'audit');
-            document.getElementById('history-screen').classList.toggle('active', m === 'history');
-            
-            if (m === 'history') renderHistory();
-            updateEditPanel();
-            render();
+            function stop() {
+                window.removeEventListener('pointermove', onMove);
+                window.removeEventListener('pointerup', stop);
+                save();
+                render();
+            }
+
+            window.addEventListener('pointermove', onMove);
+            window.addEventListener('pointerup', stop);
         }
 
         function toggleLock() {
             isLocked = !isLocked;
             document.getElementById('lock-icon').className = isLocked ? 'fa-solid fa-lock text-red-500' : 'fa-solid fa-unlock text-blue-500';
-            document.getElementById('lock-text').innerText = isLocked ? 'Bloqueado' : 'Editor Activo';
-            updateEditPanel();
+            selectedId = null;
+            updateUI();
             render();
         }
 
-        function updateEditPanel() {
-            const controls = document.getElementById('edit-controls');
-            const item = tables.find(t => t.id === selectedId);
-            const rotateBtn = document.getElementById('rotate-btn');
-
-            if (selectedId && currentMode === 'design' && !isLocked) {
-                controls.classList.remove('hidden');
-                document.getElementById('label-input').value = item.label;
-                document.getElementById('label-input').oninput = (e) => { item.label = e.target.value; render(); };
-                
-                // Mostrar botón rotar solo si es VIP
-                if (item.type === 'vip') rotateBtn.classList.remove('hidden');
-                else rotateBtn.classList.add('hidden');
-            } else {
-                controls.classList.add('hidden');
-            }
+        function setMode(m) {
+            currentMode = m; selectedId = null;
+            document.querySelectorAll('nav button').forEach(b => b.classList.replace('bg-slate-950', 'text-slate-400'));
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('text-white', 'shadow-lg'));
+            document.getElementById(`nav-${m}`).classList.add('bg-slate-950', 'text-white', 'shadow-lg');
+            
+            document.getElementById('audit-footer').classList.toggle('hidden', m !== 'audit');
+            document.getElementById('design-fabs').classList.toggle('hidden', m !== 'design' || isLocked);
+            document.getElementById('history-screen').classList.toggle('hidden', m !== 'history');
+            
+            if(m === 'history') renderHistory();
+            updateUI();
+            render();
         }
 
-        function rotateSelected() {
+        function updateUI() {
+            const topPanel = document.getElementById('design-edit-top');
+            const fabs = document.getElementById('design-fabs');
             const item = tables.find(t => t.id === selectedId);
-            if (item && item.type === 'vip') {
-                const oldW = item.w;
-                item.w = item.h;
-                item.h = oldW;
-                render();
-                saveData();
+
+            fabs.classList.toggle('hidden', currentMode !== 'design' || isLocked);
+
+            if (selectedId && currentMode === 'design' && !isLocked) {
+                topPanel.classList.remove('hidden');
+                document.getElementById('label-input').value = item.label;
+                document.getElementById('label-input').oninput = (e) => { item.label = e.target.value; render(); };
+                document.getElementById('rotate-btn').classList.toggle('hidden', item.type !== 'vip');
+            } else {
+                topPanel.classList.add('hidden');
             }
         }
 
         function addTable() {
-            tables.push({ id: Date.now(), x: 50, y: 50, label: (tables.filter(t=>t.type!=='vip').length + 1).toString(), type: 'mesa', occupied: false });
-            render(); saveData();
+            const nextLabel = (tables.filter(x => x.type === 'mesa').length + 1).toString().padStart(2, '0');
+            const newTable = { id: Date.now(), x: 50, y: 40, label: nextLabel, type: 'mesa', occupied: false };
+            tables.push(newTable);
+            selectedId = newTable.id;
+            updateUI(); render(); save();
         }
 
-        function addVIP(type) {
-            tables.push({ id: Date.now(), x: 50, y: 30, label: "VIP", type: 'vip', w: 240, h: 60, occupied: false });
-            render(); saveData();
+        function addVIP() {
+            const newVIP = { id: Date.now(), x: 50, y: 40, label: "VIP", type: 'vip', w: 200, h: 60, occupied: false };
+            tables.push(newVIP);
+            selectedId = newVIP.id;
+            updateUI(); render(); save();
+        }
+
+        function rotateSelected() {
+            const t = tables.find(x => x.id === selectedId);
+            if(t && t.type === 'vip') { [t.w, t.h] = [t.h, t.w]; render(); save(); }
         }
 
         function deleteSelected() {
             tables = tables.filter(t => t.id !== selectedId);
-            selectedId = null; updateEditPanel(); render(); saveData();
+            selectedId = null; updateUI(); render(); save();
         }
 
         function openSaveModal() { document.getElementById('modal-save').style.display = 'flex'; }
         function closeSaveModal() { document.getElementById('modal-save').style.display = 'none'; }
 
         function confirmSave() {
-            const auditData = {
+            const audit = {
                 id: Date.now(),
-                date: new Date().toLocaleDateString(),
-                time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-                resp: document.getElementById('aud-resp').value || 'Sin Firma',
-                lugar: document.getElementById('aud-lugar').value || 'S/D',
-                abiertas: document.getElementById('aud-abiertas').value || '0',
-                insitu: document.getElementById('aud-insitu').value || '0',
-                micros: document.getElementById('aud-micros').value || '0',
-                obs: document.getElementById('aud-obs').value || '',
-                perc: 0
+                resp: document.getElementById('aud-resp').value || 'S/F',
+                lugar: document.getElementById('aud-lugar').value || 'Gral',
+                insitu: document.getElementById('aud-insitu').value || '-',
+                micros: document.getElementById('aud-micros').value || '-',
+                date: new Date().toLocaleString([], {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}),
+                occ: tables.filter(t => t.occupied).length,
+                total: tables.length
             };
-
-            const total = tables.length;
-            const occ = tables.filter(t => t.occupied).length;
-            auditData.perc = total > 0 ? Math.round((occ/total)*100) : 0;
-            
-            audits.unshift(auditData);
+            audits.unshift(audit);
             tables.forEach(t => t.occupied = false);
-            saveData();
-            closeSaveModal();
-            setMode('history');
+            save(); closeSaveModal(); setMode('history');
         }
 
         function renderHistory() {
             const list = document.getElementById('history-list');
             list.innerHTML = audits.map(a => `
-                <div class="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-2.5 h-full bg-slate-900"></div>
-                    <div class="flex justify-between items-start mb-4">
+                <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-2 h-full bg-blue-600"></div>
+                    <div class="flex justify-between items-start mb-3">
                         <div>
-                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">HORA: ${a.time} · ${a.date}</p>
-                            <p class="font-black text-sm uppercase text-slate-950">Firma: ${a.resp}</p>
+                            <p class="text-[8px] font-black uppercase text-slate-400 mb-1">${a.date}</p>
+                            <p class="font-black text-slate-900 uppercase leading-none">${a.resp}</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-2xl font-black text-blue-600 leading-none">${a.perc}%</p>
+                            <span class="text-2xl font-black text-blue-600">${Math.round((a.occ/a.total)*100)}%</span>
                         </div>
                     </div>
-                    <div class="space-y-3 bg-slate-50 p-4 rounded-3xl border border-slate-100">
-                        <div>
-                           <span class="text-[8px] font-black text-slate-400 uppercase block mb-1">M. Abiertas Registradas: ${a.abiertas}</span>
-                           <span class="text-[8px] font-black text-slate-400 uppercase block mb-1">In Situ (Sector: ${a.lugar}): ${a.insitu}</span>
-                           <span class="text-[8px] font-black text-slate-400 uppercase block mb-1">Captura Micros: ${a.micros}</span>
-                        </div>
-                        ${a.obs ? `<p class="text-[10px] text-slate-600 italic border-t border-slate-200 pt-2">${a.obs}</p>` : ''}
+                    <div class="grid grid-cols-2 gap-2 text-[10px] font-bold text-slate-500 uppercase mt-2 pt-2 border-t border-slate-50">
+                        <div>Situ: <span class="text-slate-900">${a.insitu}</span></div>
+                        <div>Micro: <span class="text-slate-900">${a.micros}</span></div>
                     </div>
                 </div>
-            `).join('') || '<p class="text-center py-20 text-slate-300 font-black uppercase text-[10px]">No hay reportes</p>';
+            `).join('') || '<p class="text-center text-slate-300 py-10 uppercase text-[10px] font-black">Historial Vacío</p>';
         }
 
-        function resetLayout() {
-            tables = [
-                { id: 1, x: 20, y: 15, label: "1", type: 'mesa', occupied: false },
-                { id: 3, x: 50, y: 50, label: "VIP TETRIS", type: 'vip', w: 240, h: 60, occupied: false }
-            ];
-            saveData();
-        }
-
-        function saveData() {
-            localStorage.setItem(`${DB_PREFIX}_tables`, JSON.stringify(tables));
-            localStorage.setItem(`${DB_PREFIX}_audits`, JSON.stringify(audits));
+        function save() {
+            localStorage.setItem(`${DB_KEY}_tables`, JSON.stringify(tables));
+            localStorage.setItem(`${DB_KEY}_audits`, JSON.stringify(audits));
         }
 
         init();
