@@ -47,7 +47,7 @@
             font-weight: 800;
             font-size: 14px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: all 0.1s ease;
+            transition: background-color 0.2s, transform 0.1s;
         }
 
         .area-vip {
@@ -64,12 +64,11 @@
             touch-action: none;
             border-radius: 16px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: width 0.3s ease, height 0.3s ease, background-color 0.2s;
             text-align: center;
-            padding: 5px;
+            padding: 10px;
         }
 
-        /* Estados de Auditoría */
         .item-free { background-color: #ffffff; color: #1e293b; border: 2px solid #e2e8f0; }
         .item-occupied { 
             background-color: #0f172a !important; 
@@ -110,7 +109,6 @@
         }
         .btn-main:active { transform: scale(0.96); }
 
-        /* Estilos de inputs de auditoría */
         .audit-input-group {
             background: #f8fafc;
             padding: 12px 16px;
@@ -155,8 +153,8 @@
     <!-- NAVEGACIÓN -->
     <nav class="bg-white border-b border-slate-200 p-2 flex gap-1 z-[110]">
         <button onclick="setMode('audit')" id="nav-audit" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase bg-slate-950 text-white transition-all">Auditar</button>
-        <button onclick="setMode('design')" id="nav-design" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 transition-all">Diseño Completo</button>
-        <button onclick="setMode('history')" id="nav-history" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 transition-all">Historial</button>
+        <button onclick="setMode('design')" id="nav-design" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 transition-all">Diseño</button>
+        <button onclick="setMode('history')" id="nav-history" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 transition-all">Notas</button>
     </nav>
 
     <!-- ÁREA DE MAPA -->
@@ -171,16 +169,21 @@
         <div id="edit-controls" class="hidden mb-4 p-4 bg-blue-50 rounded-2xl border-2 border-blue-100 space-y-3">
             <div class="flex gap-2">
                 <input id="label-input" type="text" class="flex-1 p-4 rounded-xl border-2 border-blue-200 font-bold text-base outline-none focus:border-blue-500" placeholder="Nombre...">
-                <button onclick="deleteSelected()" class="bg-red-500 text-white p-4 rounded-xl w-14 btn-main shadow-lg"><i class="fa-solid fa-trash"></i></button>
+                <button id="rotate-btn" onclick="rotateSelected()" class="bg-blue-600 text-white p-4 rounded-xl w-14 btn-main shadow-lg hidden">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
+                <button onclick="deleteSelected()" class="bg-red-500 text-white p-4 rounded-xl w-14 btn-main shadow-lg">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
             </div>
         </div>
-        <div class="grid grid-cols-2 gap-3 mb-2">
-            <button onclick="addTable()" class="bg-slate-900 text-white py-4 rounded-xl font-black text-[10px] uppercase italic btn-main">+ Mesa Común</button>
-            <button onclick="addVIP('gran')" class="bg-blue-700 text-white py-4 rounded-xl font-black text-[10px] uppercase italic btn-main">+ VIP Mesa Larga (1x4)</button>
-        </div>
         <div class="grid grid-cols-2 gap-3">
-            <button onclick="addVIP('h')" class="bg-slate-200 text-slate-700 py-4 rounded-xl font-black text-[10px] uppercase italic btn-main">+ VIP Cuadrado</button>
-            <button onclick="addVIP('v')" class="bg-slate-200 text-slate-700 py-4 rounded-xl font-black text-[10px] uppercase italic btn-main">+ VIP Vertical</button>
+            <button onclick="addTable()" class="bg-slate-900 text-white py-4 rounded-xl font-black text-[10px] uppercase italic btn-main">
+                <i class="fa-solid fa-plus mr-1"></i> Mesa 1x1
+            </button>
+            <button onclick="addVIP('gran')" class="bg-blue-700 text-white py-4 rounded-xl font-black text-[10px] uppercase italic btn-main">
+                <i class="fa-solid fa-vector-square mr-1"></i> VIP Tetris 1x4
+            </button>
         </div>
     </footer>
 
@@ -194,31 +197,35 @@
         <div class="bg-white w-full max-w-sm rounded-[3rem] p-6 space-y-4 shadow-2xl overflow-y-auto max-h-[90vh]">
             <div class="text-center mb-2">
                 <h3 class="text-2xl font-black italic uppercase tracking-tighter text-slate-950">Documentar</h3>
-                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Notas de Auditoría</p>
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Cerrar Auditoría In Situ</p>
             </div>
             
             <div class="space-y-3">
                 <div class="audit-input-group">
-                    <span class="audit-label">Responsable</span>
+                    <span class="audit-label">Responsable (Firma)</span>
                     <input id="aud-resp" type="text" class="audit-field" placeholder="Nombre...">
                 </div>
                 <div class="audit-input-group">
                     <span class="audit-label">Lugar / Sector</span>
-                    <input id="aud-lugar" type="text" class="audit-field" placeholder="Sector auditado...">
+                    <input id="aud-lugar" type="text" class="audit-field" placeholder="Especifique lugar...">
                 </div>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 gap-3">
                     <div class="audit-input-group">
-                        <span class="audit-label">In Situ</span>
+                        <span class="audit-label">MESAS ABIERTAS REGISTRADAS (Sistema)</span>
+                        <input id="aud-abiertas" type="number" class="audit-field" placeholder="0">
+                    </div>
+                    <div class="audit-input-group">
+                        <span class="audit-label">IN SITU SE OBSERVAN (Conteo Real)</span>
                         <input id="aud-insitu" type="number" class="audit-field" placeholder="0">
                     </div>
                     <div class="audit-input-group">
-                        <span class="audit-label">Micros</span>
+                        <span class="audit-label">MESAS ABIERTAS EN MICROS (Captura)</span>
                         <input id="aud-micros" type="number" class="audit-field" placeholder="0">
                     </div>
                 </div>
                 <div class="audit-input-group">
                     <span class="audit-label">Observaciones</span>
-                    <textarea id="aud-obs" rows="3" class="audit-field resize-none" placeholder="Novedades del campo..."></textarea>
+                    <textarea id="aud-obs" rows="2" class="audit-field resize-none" placeholder="Detalles relevantes..."></textarea>
                 </div>
             </div>
 
@@ -229,17 +236,20 @@
         </div>
     </div>
 
-    <!-- PANTALLA HISTORIAL -->
+    <!-- PANTALLA NOTAS -->
     <div id="history-screen" class="screen-overlay flex-col p-6">
         <div class="flex justify-between items-center mb-8 pt-10">
-            <h2 class="text-2xl font-black italic uppercase tracking-tighter">Historial de Notas</h2>
+            <div>
+                <h2 class="text-2xl font-black italic uppercase tracking-tighter">Historial de Notas</h2>
+                <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Reportes de Auditoría</p>
+            </div>
             <button onclick="setMode('audit')" class="bg-slate-100 w-12 h-12 rounded-full flex items-center justify-center text-slate-400 shadow-sm"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
         <div id="history-list" class="space-y-6 pb-20"></div>
     </div>
 
     <script>
-        const DB_PREFIX = 'spotcheck_v6_final';
+        const DB_PREFIX = 'spotcheck_v7_tetris';
         let tables = JSON.parse(localStorage.getItem(`${DB_PREFIX}_tables`)) || [];
         let audits = JSON.parse(localStorage.getItem(`${DB_PREFIX}_audits`)) || [];
         let isLocked = true;
@@ -274,16 +284,18 @@
                 el.style.top = t.y + '%';
                 el.innerText = t.label;
 
-                // Soporte para pintar en modo auditoría (VIP y Mesas)
                 el.onclick = (e) => {
                     if (currentMode === 'audit') {
                         t.occupied = !t.occupied;
                         saveData();
                         render();
+                    } else if (currentMode === 'design' && !isLocked) {
+                        selectedId = t.id;
+                        updateEditPanel();
+                        render();
                     }
                 };
 
-                // Soporte para arrastre en modo diseño
                 el.onpointerdown = (e) => {
                     if (currentMode === 'design' && !isLocked) {
                         selectedId = t.id;
@@ -340,12 +352,29 @@
         function updateEditPanel() {
             const controls = document.getElementById('edit-controls');
             const item = tables.find(t => t.id === selectedId);
+            const rotateBtn = document.getElementById('rotate-btn');
+
             if (selectedId && currentMode === 'design' && !isLocked) {
                 controls.classList.remove('hidden');
                 document.getElementById('label-input').value = item.label;
                 document.getElementById('label-input').oninput = (e) => { item.label = e.target.value; render(); };
+                
+                // Mostrar botón rotar solo si es VIP
+                if (item.type === 'vip') rotateBtn.classList.remove('hidden');
+                else rotateBtn.classList.add('hidden');
             } else {
                 controls.classList.add('hidden');
+            }
+        }
+
+        function rotateSelected() {
+            const item = tables.find(t => t.id === selectedId);
+            if (item && item.type === 'vip') {
+                const oldW = item.w;
+                item.w = item.h;
+                item.h = oldW;
+                render();
+                saveData();
             }
         }
 
@@ -355,11 +384,7 @@
         }
 
         function addVIP(type) {
-            let w = 120, h = 120, label = "VIP";
-            if(type === 'v') { w = 80; h = 160; }
-            if(type === 'gran') { w = 240; h = 60; label = "MESA LARGA VIP"; } // Proporción 1x4 aproximada
-            
-            tables.push({ id: Date.now(), x: 50, y: 30, label: label, type: 'vip', w, h, occupied: false });
+            tables.push({ id: Date.now(), x: 50, y: 30, label: "VIP", type: 'vip', w: 240, h: 60, occupied: false });
             render(); saveData();
         }
 
@@ -376,8 +401,9 @@
                 id: Date.now(),
                 date: new Date().toLocaleDateString(),
                 time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-                resp: document.getElementById('aud-resp').value || 'Sin nombre',
-                lugar: document.getElementById('aud-lugar').value || 'Sin sector',
+                resp: document.getElementById('aud-resp').value || 'Sin Firma',
+                lugar: document.getElementById('aud-lugar').value || 'S/D',
+                abiertas: document.getElementById('aud-abiertas').value || '0',
                 insitu: document.getElementById('aud-insitu').value || '0',
                 micros: document.getElementById('aud-micros').value || '0',
                 obs: document.getElementById('aud-obs').value || '',
@@ -402,48 +428,29 @@
                     <div class="absolute top-0 left-0 w-2.5 h-full bg-slate-900"></div>
                     <div class="flex justify-between items-start mb-4">
                         <div>
-                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">${a.date} · ${a.time}</p>
-                            <p class="font-black text-sm uppercase text-slate-950">${a.resp}</p>
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">HORA: ${a.time} · ${a.date}</p>
+                            <p class="font-black text-sm uppercase text-slate-950">Firma: ${a.resp}</p>
                         </div>
                         <div class="text-right">
                             <p class="text-2xl font-black text-blue-600 leading-none">${a.perc}%</p>
-                            <p class="text-[7px] font-black uppercase text-blue-400 mt-1 italic">Ocupación</p>
                         </div>
                     </div>
-                    
-                    <!-- SECCION NOTAS Y DETALLES -->
-                    <div class="space-y-3 border-t border-slate-100 pt-4">
-                        <div class="flex justify-between items-center">
-                            <span class="text-[9px] font-bold text-slate-400 uppercase">Sector:</span>
-                            <span class="text-[11px] font-black uppercase text-slate-700 italic">${a.lugar}</span>
+                    <div class="space-y-3 bg-slate-50 p-4 rounded-3xl border border-slate-100">
+                        <div>
+                           <span class="text-[8px] font-black text-slate-400 uppercase block mb-1">M. Abiertas Registradas: ${a.abiertas}</span>
+                           <span class="text-[8px] font-black text-slate-400 uppercase block mb-1">In Situ (Sector: ${a.lugar}): ${a.insitu}</span>
+                           <span class="text-[8px] font-black text-slate-400 uppercase block mb-1">Captura Micros: ${a.micros}</span>
                         </div>
-                        
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                                <span class="audit-label" style="margin-bottom:0">In Situ</span>
-                                <span class="font-black text-slate-900">${a.insitu}</span>
-                            </div>
-                            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                                <span class="audit-label" style="margin-bottom:0">Micros</span>
-                                <span class="font-black text-slate-900">${a.micros}</span>
-                            </div>
-                        </div>
-
-                        ${a.obs ? `
-                        <div class="mt-2 p-3 bg-blue-50/50 rounded-2xl border border-blue-100/50">
-                             <span class="audit-label">Observaciones</span>
-                             <p class="text-[11px] text-slate-600 italic font-medium leading-relaxed">${a.obs}</p>
-                        </div>` : ''}
+                        ${a.obs ? `<p class="text-[10px] text-slate-600 italic border-t border-slate-200 pt-2">${a.obs}</p>` : ''}
                     </div>
                 </div>
-            `).join('') || '<p class="text-center py-20 text-slate-300 font-black uppercase text-[10px]">No hay reportes guardados</p>';
+            `).join('') || '<p class="text-center py-20 text-slate-300 font-black uppercase text-[10px]">No hay reportes</p>';
         }
 
         function resetLayout() {
             tables = [
                 { id: 1, x: 20, y: 15, label: "1", type: 'mesa', occupied: false },
-                { id: 2, x: 40, y: 15, label: "2", type: 'mesa', occupied: false },
-                { id: 3, x: 50, y: 50, label: "MESA LARGA VIP", type: 'vip', w: 240, h: 60, occupied: false }
+                { id: 3, x: 50, y: 50, label: "VIP TETRIS", type: 'vip', w: 240, h: 60, occupied: false }
             ];
             saveData();
         }
