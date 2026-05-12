@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#020617">
+    
     <title>SPOT CHECK - CONTROL PROFESIONAL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,14 +15,15 @@
         body { 
             font-family: system-ui, -apple-system, sans-serif; 
             overscroll-behavior: none; 
-            background-color: #0f172a;
+            -webkit-tap-highlight-color: transparent; 
+            background-color: #f8fafc;
         }
         
         #viewport {
             overflow: hidden;
             touch-action: none;
             position: relative;
-            background-color: #1e293b;
+            background-color: #e2e8f0;
             flex: 1;
         }
 
@@ -28,7 +33,12 @@
             position: absolute;
             background-color: #ffffff;
             transform-origin: 0 0;
-            box-shadow: 0 0 50px rgba(0,0,0,0.3);
+            box-shadow: 0 0 50px rgba(0,0,0,0.1);
+        }
+
+        .design-grid {
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 20px 20px;
         }
 
         .mesa {
@@ -39,15 +49,21 @@
             font-weight: 900;
             font-size: 14px;
             border: 2px solid #cbd5e1;
-            transition: all 0.15s ease;
+            transition: transform 0.1s, box-shadow 0.1s;
             cursor: pointer;
             user-select: none;
+            touch-action: none;
+        }
+
+        .mesa.dragging {
+            opacity: 0.7;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
         }
 
         .mesa.circulo { border-radius: 50%; }
         .mesa.cuadrado { border-radius: 8px; }
 
-        /* Estados */
         .status-free { background-color: #ffffff; color: #1e293b; border-color: #e2e8f0; }
         .status-occupied { background-color: #000000; color: #ffffff; border-color: #000000; }
         .status-undefined { background-color: #ef4444; color: #ffffff; border-color: #b91c1c; }
@@ -55,188 +71,194 @@
         .screen-overlay {
             position: fixed;
             inset: 0;
+            top: 140px; /* Debajo de los tabs */
             background-color: #f8fafc;
             z-index: 200;   
             display: none;
             flex-direction: column;
-            padding-top: 20px;
+            padding: 20px;
+            overflow-y: auto;
         }
         .screen-overlay.active { display: flex; }
 
-        .zoom-btn {
-            width: 44px;
-            height: 44px;
+        .tab-btn {
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            border-bottom-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .zoom-ctrl {
+            position: fixed;
+            right: 20px;
+            bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .btn-round {
+            width: 45px;
+            height: 45px;
             background: white;
-            border-radius: 12px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            color: #0f172a;
-        }
-
-        .tab-btn.active {
-            background-color: #0f172a;
-            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            color: #1e293b;
         }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
 
-    <!-- HEADER -->
-    <header class="bg-slate-950 text-white p-4 pt-8 flex justify-between items-center z-[300]">
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center italic font-black">SC</div>
-            <div>
-                <h1 class="font-black text-lg tracking-tighter uppercase italic leading-none">SPOT CHECK</h1>
-                <p class="text-[7px] text-slate-400 font-bold uppercase tracking-widest">Plano Real v2.0</p>
+    <!-- HEADER & TABS SUPERIORES -->
+    <header class="bg-slate-950 text-white p-4 pt-8 shrink-0">
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center italic font-black text-xs">SC</div>
+                <div>
+                    <h1 class="font-black text-lg tracking-tighter uppercase italic leading-none">SPOT CHECK</h1>
+                </div>
             </div>
+            <button onclick="openModal('save-modal')" class="bg-red-600 px-4 py-2 rounded-full text-[10px] font-black uppercase italic shadow-lg shadow-red-900/40">Finalizar</button>
         </div>
-        <button onclick="openModal('save-modal')" class="bg-red-600 px-5 py-2 rounded-full text-[10px] font-black uppercase italic">Finalizar</button>
+        
+        <div class="flex gap-4 overflow-x-auto no-scrollbar">
+            <button onclick="switchTab('map')" id="btn-map" class="tab-btn active px-2 py-2 font-black text-[10px] uppercase italic whitespace-nowrap">MAPA</button>
+            <button onclick="switchTab('notes')" id="btn-notes" class="tab-btn text-slate-500 px-2 py-2 font-black text-[10px] uppercase italic whitespace-nowrap">NOTAS</button>
+            <button onclick="switchTab('report')" id="btn-report" class="tab-btn text-slate-500 px-2 py-2 font-black text-[10px] uppercase italic whitespace-nowrap">REPORTES</button>
+            <button onclick="switchTab('design')" id="btn-design" class="tab-btn text-slate-500 px-2 py-2 font-black text-[10px] uppercase italic whitespace-nowrap text-amber-500">DISEÑO</button>
+        </div>
     </header>
 
-    <!-- RESUMEN RÁPIDO -->
-    <div class="bg-white border-b border-slate-200 px-4 py-2 flex justify-between items-center z-[250]">
+    <!-- ESTADÍSTICAS RÁPIDAS -->
+    <div class="bg-white border-b border-slate-200 px-4 py-2 flex justify-between items-center z-10 shrink-0">
         <div class="flex gap-4">
             <div class="flex items-center gap-1"><div class="w-2 h-2 bg-slate-200 rounded-full"></div><span id="c-free" class="text-[10px] font-black italic">0</span></div>
             <div class="flex items-center gap-1"><div class="w-2 h-2 bg-black rounded-full"></div><span id="c-occ" class="text-[10px] font-black italic">0</span></div>
             <div class="flex items-center gap-1"><div class="w-2 h-2 bg-red-500 rounded-full"></div><span id="c-und" class="text-[10px] font-black italic text-red-600">0</span></div>
         </div>
-        <div class="text-[9px] font-black uppercase text-slate-400">Salón Principal</div>
+        <div id="mode-indicator" class="text-[8px] font-black uppercase text-slate-400 bg-slate-100 px-2 py-1 rounded">Modo Lectura</div>
     </div>
 
-    <!-- VISTA MAPA -->
+    <!-- ÁREA DE MAPA -->
     <main id="viewport">
         <div id="map-container">
-            <div class="absolute bg-slate-100 border border-slate-200 flex items-center justify-center font-black text-slate-300 italic" style="left: 450px; top: 20px; width: 450px; height: 100px;">BARRA</div>
+            <!-- Barra de referencia -->
+            <div class="absolute bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center font-black text-slate-200 italic text-2xl" style="left: 450px; top: 20px; width: 450px; height: 80px; border-radius: 40px;">BARRA PRINCIPAL</div>
             <div id="mesas-layer" class="w-full h-full relative"></div>
         </div>
-        <div class="fixed right-4 bottom-24 flex flex-col gap-2 z-[100]">
-            <button onclick="changeZoom(0.1)" class="zoom-btn"><i class="fa-solid fa-plus"></i></button>
-            <button onclick="changeZoom(-0.1)" class="zoom-btn"><i class="fa-solid fa-minus"></i></button>
-            <button onclick="resetZoom()" class="zoom-btn"><i class="fa-solid fa-expand"></i></button>
+        
+        <div class="zoom-ctrl">
+            <button onclick="changeZoom(0.1)" class="btn-round"><i class="fa-solid fa-plus"></i></button>
+            <button onclick="changeZoom(-0.1)" class="btn-round"><i class="fa-solid fa-minus"></i></button>
+            <button onclick="resetZoom()" class="btn-round"><i class="fa-solid fa-compress"></i></button>
         </div>
     </main>
 
-    <!-- PANTALLA NOTAS -->
-    <div id="notes-screen" class="screen-overlay p-4 overflow-y-auto">
-        <div class="max-w-md mx-auto space-y-4 pt-10">
-            <h2 class="font-black text-2xl italic uppercase tracking-tighter mb-6">Notas del Turno</h2>
-            <div class="bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-100">
-                <textarea id="main-notes" placeholder="Escribe aquí observaciones generales..." class="w-full h-64 p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 ring-red-500 font-medium text-slate-700 uppercase text-sm"></textarea>
-                <p class="text-[9px] text-slate-400 mt-4 font-bold uppercase tracking-widest text-center italic">Estas notas se incluirán en el próximo reporte guardado</p>
-            </div>
+    <!-- PANTALLAS OVERLAY -->
+    <div id="notes-screen" class="screen-overlay">
+        <div class="max-w-md mx-auto w-full">
+            <h2 class="font-black text-xl italic uppercase tracking-tighter mb-4 text-slate-800">Notas de Turno</h2>
+            <textarea id="main-notes" placeholder="Escribe observaciones aquí..." class="w-full h-80 p-5 bg-white rounded-3xl border-2 border-slate-100 focus:border-red-500 outline-none font-bold text-slate-600 uppercase text-xs shadow-inner"></textarea>
         </div>
     </div>
 
-    <!-- PANTALLA HISTORIAL -->
-    <div id="report-screen" class="screen-overlay p-4 overflow-y-auto">
-        <div class="max-w-md mx-auto space-y-4 pt-10">
+    <div id="report-screen" class="screen-overlay">
+        <div class="max-w-md mx-auto w-full">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="font-black text-2xl italic uppercase tracking-tighter">Historial</h2>
-                <button onclick="clearHistory()" class="text-red-500 text-[10px] font-black uppercase italic">Borrar Todo</button>
+                <h2 class="font-black text-xl italic uppercase tracking-tighter text-slate-800">Historial</h2>
+                <button onclick="clearHistory()" class="text-red-500 text-[10px] font-black uppercase italic">Limpiar</button>
             </div>
-            <div id="history-list" class="space-y-4 pb-24"></div>
+            <div id="history-list" class="space-y-4 pb-10"></div>
         </div>
     </div>
 
-    <!-- PANTALLA DISEÑO -->
-    <div id="design-screen" class="screen-overlay p-4 overflow-y-auto">
-        <div class="max-w-md mx-auto space-y-6 pt-10">
-            <h2 class="font-black text-2xl italic uppercase tracking-tighter">Configuración</h2>
-            <div class="bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-100 space-y-4">
-                <button onclick="resetLayout()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase italic text-sm">Restaurar Plano Original</button>
-                <button onclick="exportData()" class="w-full py-4 bg-slate-100 text-slate-900 rounded-2xl font-black uppercase italic text-sm">Exportar Datos (JSON)</button>
+    <div id="design-screen" class="screen-overlay">
+        <div class="max-w-md mx-auto w-full space-y-6">
+            <div class="bg-amber-50 border-2 border-amber-200 p-5 rounded-3xl">
+                <h3 class="font-black text-amber-800 uppercase italic text-sm mb-2">Modo Editor Activo</h3>
+                <p class="text-[10px] text-amber-700 font-bold leading-tight">En este modo puedes arrastrar las mesas para ubicarlas exactamente. El mapa mostrará una cuadrícula de referencia.</p>
+            </div>
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4">
+                <button onclick="resetLayout()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase italic text-xs">Restablecer Plano Base</button>
+                <button onclick="switchTab('map')" class="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase italic text-xs text-center">Volver al Mapa</button>
             </div>
         </div>
     </div>
 
-    <!-- NAVBAR (BOTONERA PRINCIPAL) -->
-    <nav class="bg-white border-t border-slate-200 flex p-3 gap-2 z-[300] pb-8">
-        <button onclick="switchTab('map')" id="btn-map" class="tab-btn active flex-1 py-4 rounded-2xl font-black text-[10px] uppercase italic transition-all flex flex-col items-center gap-1">
-            <i class="fa-solid fa-map"></i><span>Mapa</span>
-        </button>
-        <button onclick="switchTab('notes')" id="btn-notes" class="tab-btn bg-slate-50 text-slate-400 flex-1 py-4 rounded-2xl font-black text-[10px] uppercase italic transition-all flex flex-col items-center gap-1">
-            <i class="fa-solid fa-pen"></i><span>Notas</span>
-        </button>
-        <button onclick="switchTab('report')" id="btn-report" class="tab-btn bg-slate-50 text-slate-400 flex-1 py-4 rounded-2xl font-black text-[10px] uppercase italic transition-all flex flex-col items-center gap-1">
-            <i class="fa-solid fa-clock-rotate-left"></i><span>Reportes</span>
-        </button>
-        <button onclick="switchTab('design')" id="btn-design" class="tab-btn bg-slate-50 text-slate-400 flex-1 py-4 rounded-2xl font-black text-[10px] uppercase italic transition-all flex flex-col items-center gap-1">
-            <i class="fa-solid fa-gear"></i><span>Diseño</span>
-        </button>
-    </nav>
-
-    <!-- MODAL FINALIZAR -->
-    <div id="save-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden z-[500] items-center justify-center p-6">
-        <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl overflow-y-auto max-h-[90vh]">
-            <div class="text-center mb-6">
-                <h3 class="text-xl font-black uppercase italic">Cerrar Auditoría</h3>
-                <p class="text-[9px] font-bold text-slate-400 uppercase italic">Confirmación de datos</p>
-            </div>
-            
+    <!-- MODAL DE GUARDADO -->
+    <div id="save-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden z-[500] items-center justify-center p-6">
+        <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl">
+            <h3 class="text-center font-black uppercase italic text-lg mb-6">Auditoría Spot Check</h3>
             <div class="space-y-4 mb-8">
-                <input id="f-auditor" type="text" placeholder="NOMBRE DEL AUDITOR" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black uppercase text-xs focus:border-red-500 outline-none">
+                <input id="f-auditor" type="text" placeholder="Auditor" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black uppercase text-xs">
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1">
-                        <label class="text-[8px] font-black text-slate-400 uppercase italic ml-2">In Situ (Físico)</label>
-                        <input id="f-fisico" type="number" placeholder="0" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-sm">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[8px] font-black text-red-400 uppercase italic ml-2">Micros (Sistema)</label>
-                        <input id="f-sistema" type="number" placeholder="0" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-sm">
-                    </div>
+                    <input id="f-fisico" type="number" placeholder="In Situ" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-xs">
+                    <input id="f-sistema" type="number" placeholder="Micros" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-xs">
                 </div>
             </div>
-
-            <button onclick="confirmSave()" class="w-full py-5 bg-red-600 text-white rounded-2xl font-black uppercase italic shadow-xl shadow-red-900/40 mb-4">Guardar Reporte</button>
+            <button onclick="confirmSave()" class="w-full py-5 bg-red-600 text-white rounded-2xl font-black uppercase italic shadow-xl shadow-red-900/40 mb-4">Guardar y Cerrar</button>
             <button onclick="closeModal('save-modal')" class="w-full text-slate-400 font-black text-[10px] uppercase italic tracking-widest">Cancelar</button>
         </div>
     </div>
 
     <script>
-        const DB = 'AUDITORIA_V3_FINAL';
+        const DB_PREFIX = 'SC_PROFESSIONAL_V4';
         let tables = [];
-        let audits = JSON.parse(localStorage.getItem(`${DB}_audits`)) || [];
-
+        let audits = JSON.parse(localStorage.getItem(`${DB_PREFIX}_audits`)) || [];
+        let isDesignMode = false;
+        
+        // Coordenadas iniciales para 40 mesas
         function createInitialLayout() {
             const layout = [];
-            // Fila 1-10: Cuadradas pequeñas cerca de barra
+            // Fila 1-10: Superiores (Barra)
             for(let i=0; i<10; i++) layout.push({ id: i+1, label: `${i+1}`, x: 450 + (i*52), y: 140, w: 45, h: 45, type: 'cuadrado', status: 'free' });
-            // Fila 11-20: Cuadradas medianas
-            for(let i=0; i<10; i++) layout.push({ id: 11+i, label: `${11+i}`, x: 50 + (i*92), y: 350, w: 75, h: 75, type: 'cuadrado', status: 'free' });
+            // Fila 11-20: Centrales Sup
+            for(let i=0; i<10; i++) layout.push({ id: 11+i, label: `${11+i}`, x: 50 + (i*92), y: 350, w: 70, h: 70, type: 'cuadrado', status: 'free' });
             // Fila 21-25: Redondas Grandes
-            for(let i=0; i<5; i++) layout.push({ id: 21+i, label: `${21+i}`, x: 100 + (i*180), y: 550, w: 110, h: 110, type: 'circulo', status: 'free' });
-            // Fila 26-30: Redondas medianas
-            for(let i=0; i<5; i++) layout.push({ id: 26+i, label: `${26+i}`, x: 150 + (i*160), y: 800, w: 90, h: 90, type: 'circulo', status: 'free' });
-            // Fila 31-40: Cuadradas entrada
-            for(let i=0; i<10; i++) layout.push({ id: 31+i, label: `${31+i}`, x: 50 + (i*92), y: 1050, w: 75, h: 75, type: 'cuadrado', status: 'free' });
+            for(let i=0; i<5; i++) layout.push({ id: 21+i, label: `${21+i}`, x: 100 + (i*180), y: 550, w: 100, h: 100, type: 'circulo', status: 'free' });
+            // Fila 26-30: Redondas Medianas
+            for(let i=0; i<5; i++) layout.push({ id: 26+i, label: `${26+i}`, x: 150 + (i*160), y: 780, w: 80, h: 80, type: 'circulo', status: 'free' });
+            // Fila 31-40: Entrada
+            for(let i=0; i<10; i++) layout.push({ id: 31+i, label: `${31+i}`, x: 50 + (i*92), y: 1000, w: 70, h: 70, type: 'cuadrado', status: 'free' });
             tables = layout;
-            save();
+            saveTables();
         }
 
         let scale = 0.5, tx = 0, ty = 0;
-        let isPanning = false, start = { x: 0, y: 0 };
+        let isPanning = false, startP = { x: 0, y: 0 };
         const view = document.getElementById('viewport');
         const map = document.getElementById('map-container');
 
         function init() {
-            const saved = localStorage.getItem(`${DB}_tables`);
+            const saved = localStorage.getItem(`${DB_PREFIX}_tables`);
             if(saved) tables = JSON.parse(saved); else createInitialLayout();
             render();
-            setupGestures();
+            setupInteractions();
             resetZoom();
         }
 
-        function setupGestures() {
-            view.onpointerdown = e => { if(e.target.closest('.mesa')) return; isPanning = true; start = { x: e.clientX - tx, y: e.clientY - ty }; };
-            window.onpointermove = e => { if(!isPanning) return; tx = e.clientX - start.x; ty = e.clientY - start.y; applyTransform(); };
-            window.onpointerup = () => isPanning = false;
+        function setupInteractions() {
+            // Paneo
+            view.onpointerdown = e => { 
+                if(e.target.closest('.mesa')) return;
+                isPanning = true; 
+                startP = { x: e.clientX - tx, y: e.clientY - ty }; 
+                view.setPointerCapture(e.pointerId);
+            };
+            view.onpointermove = e => { 
+                if(!isPanning) return; 
+                tx = e.clientX - startP.x; 
+                ty = e.clientY - startP.y; 
+                applyTransform(); 
+            };
+            view.onpointerup = e => { isPanning = false; view.releasePointerCapture(e.pointerId); };
         }
-
-        function changeZoom(d) { scale = Math.min(Math.max(scale + d, 0.1), 3); applyTransform(); }
-        function resetZoom() { scale = (view.clientWidth / 1000) * 0.9; tx = 10; ty = 10; applyTransform(); }
-        function applyTransform() { map.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`; }
 
         function render() {
             const layer = document.getElementById('mesas-layer');
@@ -245,15 +267,26 @@
             
             tables.forEach(t => {
                 if(t.status === 'free') f++; else if(t.status === 'occupied') o++; else u++;
+                
                 const div = document.createElement('div');
                 div.className = `mesa ${t.type} status-${t.status}`;
-                div.style.left = t.x + 'px'; div.style.top = t.y + 'px';
-                div.style.width = t.w + 'px'; div.style.height = t.h + 'px';
+                div.style.left = t.x + 'px';
+                div.style.top = t.y + 'px';
+                div.style.width = t.w + 'px';
+                div.style.height = t.h + 'px';
                 div.innerText = t.label;
-                div.onclick = () => {
-                    t.status = t.status === 'free' ? 'occupied' : (t.status === 'occupied' ? 'undefined' : 'free');
-                    save(); render();
+
+                // Eventos de la mesa
+                div.onpointerdown = (e) => {
+                    if(!isDesignMode) {
+                        t.status = t.status === 'free' ? 'occupied' : (t.status === 'occupied' ? 'undefined' : 'free');
+                        saveTables(); render();
+                    } else {
+                        startDragging(e, t, div);
+                    }
+                    e.stopPropagation();
                 };
+
                 layer.appendChild(div);
             });
             document.getElementById('c-free').innerText = f;
@@ -261,37 +294,75 @@
             document.getElementById('c-und').innerText = u;
         }
 
+        function startDragging(e, tableObj, element) {
+            let startX = e.clientX;
+            let startY = e.clientY;
+            let initialTableX = tableObj.x;
+            let initialTableY = tableObj.y;
+            
+            element.classList.add('dragging');
+            
+            const onMove = (moveEv) => {
+                const dx = (moveEv.clientX - startX) / scale;
+                const dy = (moveEv.clientY - startY) / scale;
+                
+                // Ajustar a rejilla de 10px en modo diseño
+                tableObj.x = Math.round((initialTableX + dx) / 10) * 10;
+                tableObj.y = Math.round((initialTableY + dy) / 10) * 10;
+                
+                element.style.left = tableObj.x + 'px';
+                element.style.top = tableObj.y + 'px';
+            };
+
+            const onUp = () => {
+                element.classList.remove('dragging');
+                saveTables();
+                window.removeEventListener('pointermove', onMove);
+                window.removeEventListener('pointerup', onUp);
+            };
+
+            window.addEventListener('pointermove', onMove);
+            window.addEventListener('pointerup', onUp);
+        }
+
         function switchTab(tab) {
             const screens = ['notes-screen', 'report-screen', 'design-screen'];
             screens.forEach(s => document.getElementById(s).classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             
-            document.querySelectorAll('.tab-btn').forEach(b => {
-                b.classList.remove('active', 'bg-slate-900', 'text-white');
-                b.classList.add('bg-slate-50', 'text-slate-400');
-            });
-
-            if(tab !== 'map') {
-                document.getElementById(`${tab}-screen`).classList.add('active');
-                if(tab === 'report') renderHistory();
+            isDesignMode = (tab === 'design');
+            const indicator = document.getElementById('mode-indicator');
+            
+            if(isDesignMode) {
+                map.classList.add('design-grid');
+                indicator.innerText = "Modo Editor";
+                indicator.classList.replace('bg-slate-100', 'bg-amber-100');
+                indicator.classList.replace('text-slate-400', 'text-amber-600');
+            } else {
+                map.classList.remove('design-grid');
+                indicator.innerText = "Modo Lectura";
+                indicator.classList.replace('bg-amber-100', 'bg-slate-100');
+                indicator.classList.replace('text-amber-600', 'text-slate-400');
             }
+
+            if(tab !== 'map') document.getElementById(`${tab}-screen`).classList.add('active');
+            if(tab === 'report') renderHistory();
             
-            const btn = document.getElementById(`btn-${tab}`);
-            btn.classList.add('active', 'bg-slate-900', 'text-white');
-            btn.classList.remove('bg-slate-50', 'text-slate-400');
+            document.getElementById(`btn-${tab}`).classList.add('active');
         }
 
         function confirmSave() {
-            const audit = {
+            const a = {
                 id: Date.now(),
                 fecha: new Date().toLocaleString(),
-                auditor: document.getElementById('f-auditor').value.toUpperCase() || 'ANÓNIMO',
-                fisico: document.getElementById('f-fisico').value || '0',
-                sistema: document.getElementById('f-sistema').value || '0',
-                notas: document.getElementById('main-notes').value || 'Sin notas adicionales',
+                auditor: document.getElementById('f-auditor').value || 'S/N',
+                insitu: document.getElementById('f-fisico').value || '0',
+                micros: document.getElementById('f-sistema').value || '0',
+                obs: document.getElementById('main-notes').value || 'Sin observaciones',
                 stats: { o: tables.filter(t => t.status === 'occupied').length, i: tables.filter(t => t.status === 'undefined').length }
             };
-            audits.unshift(audit);
-            localStorage.setItem(`${DB}_audits`, JSON.stringify(audits));
+            audits.unshift(a);
+            localStorage.setItem(`${DB_PREFIX}_audits`, JSON.stringify(audits));
             closeModal('save-modal');
             switchTab('report');
         }
@@ -299,46 +370,45 @@
         function renderHistory() {
             const list = document.getElementById('history-list');
             list.innerHTML = audits.map(a => `
-                <div class="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm relative">
-                    <div class="flex justify-between items-start mb-3">
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 relative">
+                    <div class="flex justify-between mb-4">
                         <div>
-                            <p class="text-[7px] font-black text-slate-300 uppercase leading-none">${a.fecha}</p>
-                            <h4 class="font-black text-slate-800 text-sm italic uppercase tracking-tighter">${a.auditor}</h4>
+                            <p class="text-[7px] font-black text-slate-300 uppercase">${a.fecha}</p>
+                            <h4 class="font-black text-slate-800 text-sm uppercase italic">${a.auditor}</h4>
                         </div>
-                        <div class="bg-slate-950 text-white px-3 py-1 rounded-full text-[8px] font-black uppercase italic italic">Reporte</div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 mb-3">
-                        <div class="bg-slate-50 p-2 rounded-xl border border-slate-100">
-                            <span class="text-[7px] font-bold text-slate-400 uppercase block italic">Físico</span>
-                            <span class="font-black text-slate-800">${a.fisico}</span>
-                        </div>
-                        <div class="bg-red-50 p-2 rounded-xl border border-red-100">
-                            <span class="text-[7px] font-bold text-red-400 uppercase block italic">Micros</span>
-                            <span class="font-black text-red-600">${a.sistema}</span>
+                        <div class="flex flex-col items-end">
+                             <span class="text-[9px] font-black text-slate-400">MESAS: ${a.stats.o}</span>
+                             <span class="text-[9px] font-black text-red-400">INCID: ${a.stats.i}</span>
                         </div>
                     </div>
-                    <div class="bg-slate-50 p-3 rounded-xl mb-3">
-                        <p class="text-[7px] font-black text-slate-400 uppercase mb-1 italic">Observaciones:</p>
-                        <p class="text-[10px] text-slate-600 font-bold leading-tight uppercase italic">${a.notas}</p>
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <div class="bg-slate-50 p-2 rounded-xl border border-slate-100 text-center">
+                            <span class="text-[7px] font-bold text-slate-400 uppercase block">In Situ</span>
+                            <span class="font-black text-slate-800">${a.insitu}</span>
+                        </div>
+                        <div class="bg-red-50 p-2 rounded-xl border border-red-100 text-center">
+                            <span class="text-[7px] font-bold text-red-400 uppercase block">Micros</span>
+                            <span class="font-black text-red-600">${a.micros}</span>
+                        </div>
                     </div>
-                    <div class="flex justify-between items-center text-[9px] font-black uppercase">
-                        <span class="text-slate-400">Mesas: O-${a.stats.o} | I-${a.stats.i}</span>
-                        <button onclick="copyAudit(${a.id})" class="text-red-500 italic">Copiar Reporte</button>
-                    </div>
+                    <p class="text-[9px] text-slate-500 font-medium italic border-t pt-3 uppercase leading-tight">${a.obs}</p>
+                    <button onclick="copyRaw(${a.id})" class="mt-3 w-full py-2 bg-slate-50 rounded-xl text-[8px] font-black uppercase text-slate-400 hover:text-slate-600">Copiar Datos</button>
                 </div>
-            `).join('');
+            `).join('') || '<p class="text-center text-slate-300 py-10 uppercase font-black text-xs">No hay reportes</p>';
         }
 
-        function copyAudit(id) {
+        function copyRaw(id) {
             const a = audits.find(x => x.id === id);
-            const text = `*SPOT CHECK*\n👤 Auditor: ${a.auditor}\n📅 ${a.fecha}\n📍 Físico: ${a.fisico}\n🖥️ Micros: ${a.sistema}\n📝 Notas: ${a.notas}`;
+            const text = `AUDITORIA: ${a.fecha}\nAUDITOR: ${a.auditor}\nIN SITU: ${a.insitu}\nMICROS: ${a.micros}\nNOTAS: ${a.obs}`;
             navigator.clipboard.writeText(text);
-            alert("Copiado!");
         }
 
-        function resetLayout() { if(confirm("¿Restaurar plano original?")) { createInitialLayout(); render(); switchTab('map'); } }
-        function clearHistory() { if(confirm("¿Borrar todo el historial?")) { audits=[]; localStorage.removeItem(`${DB}_audits`); renderHistory(); } }
-        function save() { localStorage.setItem(`${DB}_tables`, JSON.stringify(tables)); }
+        function changeZoom(d) { scale = Math.min(Math.max(scale + d, 0.1), 3); applyTransform(); }
+        function resetZoom() { scale = (view.clientWidth / 1000) * 0.9; tx = 20; ty = 20; applyTransform(); }
+        function applyTransform() { map.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`; }
+        function saveTables() { localStorage.setItem(`${DB_PREFIX}_tables`, JSON.stringify(tables)); }
+        function resetLayout() { if(confirm("¿Restablecer plano base?")) { createInitialLayout(); render(); } }
+        function clearHistory() { if(confirm("¿Borrar todo?")) { audits=[]; localStorage.removeItem(`${DB_PREFIX}_audits`); renderHistory(); } }
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
 
