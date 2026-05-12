@@ -115,6 +115,12 @@
             padding-bottom: 100px; 
         }
         .screen-overlay.active { display: flex; }
+
+        @media print {
+            header, nav, footer, .no-print { display: none !important; }
+            .screen-overlay { position: static; display: block; top: 0; }
+            body { background: white; }
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden select-none text-slate-900">
@@ -172,7 +178,7 @@
 
     <!-- PANTALLA REPORTE SEGÚN PLANTILLA -->
     <div id="notes-screen" class="screen-overlay flex-col p-4">
-        <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-200 max-w-md mx-auto w-full space-y-6">
+        <div id="printable-area" class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-200 max-w-md mx-auto w-full space-y-6">
             <div class="text-center border-b border-slate-100 pb-4">
                 <h3 class="text-sm font-black uppercase italic text-slate-900">IMPRESION DE REPORTE</h3>
                 <p class="text-[10px] text-slate-400 font-bold uppercase">(Open Checks)</p>
@@ -214,7 +220,7 @@
                 </div>
             </div>
 
-            <button onclick="openModal('audit-modal')" class="w-full bg-slate-950 text-white py-5 rounded-[2rem] font-black text-sm uppercase shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3">
+            <button onclick="openModal('audit-modal')" class="w-full bg-slate-950 text-white py-5 rounded-[2rem] font-black text-sm uppercase shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3 no-print">
                 <i class="fa-solid fa-cloud-arrow-up"></i> Guardar Reporte
             </button>
         </div>
@@ -291,7 +297,7 @@
         let draggingId = null;
         let resizingId = null;
         let rotatingId = null;
-        let isFitted = false; // Estado del botón FIT
+        let isFitted = false; 
 
         let startPos = { x: 0, y: 0 };
         let startMesaPos = { x: 0, y: 0 };
@@ -306,24 +312,19 @@
             window.addEventListener('pointerup', handlePointerUp);
         }
 
-        // --- LÓGICA DEL BOTÓN FIT (MODIFICADA SEGÚN SOLICITUD) ---
         function toggleFit() {
             const container = document.getElementById('map-container');
             const main = document.getElementById('main-scroll');
             const btn = document.getElementById('btn-fit');
-
             if (!isFitted) {
-                // Cálculo para encajar todo el plano (2000px ancho) en el visor
                 const scaleX = main.clientWidth / container.offsetWidth;
                 const scaleY = main.clientHeight / container.offsetHeight;
-                const finalScale = Math.min(scaleX, scaleY, 1) * 0.95; // Un poco de margen
-                
+                const finalScale = Math.min(scaleX, scaleY, 1) * 0.95;
                 container.style.transform = `scale(${finalScale})`;
                 btn.classList.replace('bg-slate-100', 'bg-emerald-500');
                 btn.classList.replace('text-slate-600', 'text-white');
                 showToast("Vista Encajada");
             } else {
-                // Volver a tamaño normal (100%)
                 container.style.transform = `scale(1)`;
                 btn.classList.replace('bg-emerald-500', 'bg-slate-100');
                 btn.classList.replace('text-white', 'text-slate-600');
@@ -400,12 +401,8 @@
             let activeCount = 0;
             tables.forEach(t => {
                 if(t.status === 'occupied' || t.status === 'indet') activeCount++;
-                
                 const div = document.createElement('div');
-                let statusClass = 'mesa-free';
-                if(t.status === 'occupied') statusClass = 'mesa-occupied';
-                if(t.status === 'indet') statusClass = 'mesa-indet';
-
+                let statusClass = t.status === 'occupied' ? 'mesa-occupied' : (t.status === 'indet' ? 'mesa-indet' : 'mesa-free');
                 div.className = `mesa ${statusClass} ${selectedId === t.id && currentMode === 'design' ? 'selected-design' : ''}`;
                 div.setAttribute('data-id', t.id);
                 div.style.left = `${t.x}%`;
@@ -414,7 +411,6 @@
                 div.style.height = `${t.h}px`;
                 div.style.transform = `translate(-50%, -50%) rotate(${t.rotation || 0}deg)`;
                 div.style.fontSize = `${Math.min(t.w, t.h) * 0.35}px`;
-
                 div.innerHTML = `<span style="transform: rotate(-${t.rotation || 0}deg)">${t.label}</span>`;
                 
                 if (currentMode === 'design' && !isLocked) {
@@ -423,7 +419,6 @@
                     resizer.innerHTML = '<i class="fa-solid fa-maximize text-[10px]"></i>';
                     resizer.onpointerdown = (e) => { e.stopPropagation(); resizingId = t.id; startPos = { x: e.clientX, y: e.clientY }; startMesaSize = { w: t.w, h: t.h }; };
                     div.appendChild(resizer);
-
                     const rotator = document.createElement('div');
                     rotator.className = 'handle rotator-handle';
                     rotator.innerHTML = '<i class="fa-solid fa-rotate text-[10px]"></i>';
@@ -438,17 +433,14 @@
                         startPos = { x: e.clientX, y: e.clientY }; startMesaPos = { x: t.x, y: t.y };
                         updateDesignPanel(); render();
                     } else if (currentMode === 'audit') {
-                        // CICLO DE 3 TOQUES: free (blanca) -> occupied (negra) -> indet (roja) -> free
                         if (t.status === 'free' || !t.status) t.status = 'occupied';
                         else if (t.status === 'occupied') t.status = 'indet';
                         else t.status = 'free';
-                        
                         saveData(); render();
                     }
                 };
                 layer.appendChild(div);
             });
-
             document.getElementById('stat-occupied').innerText = activeCount;
             document.getElementById('stat-percent').innerText = (tables.length > 0 ? Math.round((activeCount / tables.length) * 100) : 0) + '%';
             document.getElementById('note-abiertas').value = tables.length;
@@ -467,14 +459,12 @@
             document.getElementById('notes-screen').classList.toggle('active', m === 'notes');
             document.getElementById('history-screen').classList.toggle('active', m === 'history');
             if (m === 'history') renderHistory();
-            updateDesignPanel();
-            render();
+            updateDesignPanel(); render();
         }
 
         function toggleLock() { 
             isLocked = !isLocked; 
-            updateLockUI(); 
-            saveData(); 
+            updateLockUI(); saveData(); 
             showToast(isLocked ? "Cerrado para Auditoría" : "Modo Edición Activado");
             render();
         }
@@ -500,53 +490,34 @@
 
         function deselectTable() { if(!draggingId && !resizingId && !rotatingId) { selectedId = null; updateDesignPanel(); render(); } }
         function deleteSelected() { tables = tables.filter(t => t.id !== selectedId); deselectTable(); saveData(); }
-        
         function addTable(type) { 
-            tables.push({ 
-                id: Date.now(), x: 50, y: 50, label: (tables.length + 1).toString(), status: 'free',
-                w: type === 'vip' ? 140 : 70, h: type === 'vip' ? 80 : 70, rotation: 0
-            }); 
+            tables.push({ id: Date.now(), x: 50, y: 50, label: (tables.length + 1).toString(), status: 'free', w: type === 'vip' ? 140 : 70, h: type === 'vip' ? 80 : 70, rotation: 0 }); 
             saveData(); render(); 
         }
 
-        function clearCurrentAudit() {
-            if(!confirm("¿Resetear el control actual?")) return;
-            tables.forEach(t => t.status = 'free');
-            saveData(); render();
-            showToast("Plano Reiniciado");
-        }
+        function clearCurrentAudit() { if(!confirm("¿Resetear el control actual?")) return; tables.forEach(t => t.status = 'free'); saveData(); render(); showToast("Plano Reiniciado"); }
 
         function saveAudit() {
             const occupied = tables.filter(t => t.status === 'occupied').length;
             const indet = tables.filter(t => t.status === 'indet').length;
             const totalActive = occupied + indet;
-
             audits.unshift({
-                id: Date.now(),
-                date: new Date().toLocaleDateString(),
-                time: document.getElementById('note-hora').value,
-                abiertas: tables.length,
-                lugar: document.getElementById('note-lugar').value || 'Sin Sector',
-                insitu: document.getElementById('note-insitu').value || totalActive,
-                micros: document.getElementById('note-micros').value || '-',
-                firma: (document.getElementById('note-firma').value || 'ADMIN').toUpperCase(),
-                obs: document.getElementById('note-observaciones').value || 'Ninguna',
-                percent: Math.round((totalActive / tables.length) * 100)
+                id: Date.now(), date: new Date().toLocaleDateString(), time: document.getElementById('note-hora').value, abiertas: tables.length, lugar: document.getElementById('note-lugar').value || 'Sin Sector',
+                insitu: document.getElementById('note-insitu').value || totalActive, micros: document.getElementById('note-micros').value || '-', firma: (document.getElementById('note-firma').value || 'ADMIN').toUpperCase(),
+                obs: document.getElementById('note-observaciones').value || 'Ninguna', percent: Math.round((totalActive / tables.length) * 100)
             });
-            
             tables.forEach(t => t.status = 'free');
-            saveData();
-            closeModal('audit-modal');
-            setMode('history');
-            showToast("Reporte Finalizado");
+            saveData(); closeModal('audit-modal'); setMode('history'); showToast("Reporte Finalizado");
         }
 
         function renderHistory() {
             document.getElementById('history-list').innerHTML = audits.map((a) => `
-                <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 relative overflow-hidden">
+                <div id="audit-card-${a.id}" class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-2 h-full bg-emerald-500"></div>
-                    <button onclick="deleteAudit(${a.id})" class="absolute top-6 right-6 w-8 h-8 text-slate-200 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
-                    
+                    <div class="absolute top-6 right-6 flex gap-2 no-print">
+                         <button onclick="exportAuditAsTxt(${a.id})" class="w-8 h-8 text-slate-400 hover:text-emerald-500 transition-colors" title="Exportar TXT"><i class="fa-solid fa-file-export"></i></button>
+                         <button onclick="deleteAudit(${a.id})" class="w-8 h-8 text-slate-200 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
                     <div class="border-b border-slate-50 pb-3 mb-4 flex justify-between items-end">
                         <div>
                             <h4 class="text-[10px] font-black text-slate-900 uppercase italic">REPORTE SPOT CHECK</h4>
@@ -557,7 +528,6 @@
                              <p class="text-[6px] font-black text-slate-300 uppercase">Ocupación</p>
                         </div>
                     </div>
-
                     <div class="space-y-2 text-[10px]">
                         <div class="flex justify-between border-b border-slate-50 pb-1">
                             <span class="text-slate-400 font-bold uppercase">Mesas Registradas:</span>
@@ -580,10 +550,45 @@
                                 <span class="text-slate-400 font-bold uppercase text-[7px] block">Responsable</span>
                                 <span class="font-black text-slate-900 uppercase italic">${a.firma}</span>
                             </div>
+                            <button onclick="window.print()" class="no-print bg-slate-100 text-slate-500 px-4 py-2 rounded-xl text-[8px] font-black uppercase">Compartir PDF</button>
                         </div>
                     </div>
                 </div>
             `).join('') || '<p class="text-center text-slate-300 py-20 uppercase font-black text-[10px] italic">No hay reportes guardados</p>';
+        }
+
+        // --- NUEVA FUNCIÓN: EXPORTAR A TXT ---
+        function exportAuditAsTxt(id) {
+            const a = audits.find(x => x.id === id);
+            if(!a) return;
+            const content = `
+========================================
+       REPORTE SPOT CHECK (TXT)
+========================================
+FECHA: ${a.date}
+HORA: ${a.time}
+RESPONSABLE: ${a.firma}
+----------------------------------------
+MESAS REGISTRADAS: ${a.abiertas}
+SECTOR EVALUADO: ${a.lugar}
+MESAS OCUPADAS (IN SITU): ${a.insitu}
+OCUPACIÓN PERCENTUAL: ${a.percent}%
+CAPTURA MICROS: ${a.micros}
+----------------------------------------
+OBSERVACIONES:
+${a.obs}
+========================================
+Generado por SPOT CHECK System
+            `.trim();
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `SPOTCHECK_Reporte_${a.date.replace(/\//g, '-')}_${a.time.replace(/:/g, '')}.txt`;
+            link.click();
+            URL.revokeObjectURL(url);
+            showToast("Archivo TXT Descargado");
         }
 
         function deleteAudit(id) { if(confirm("¿Eliminar este reporte?")) { audits = audits.filter(a => a.id !== id); saveData(); renderHistory(); } }
