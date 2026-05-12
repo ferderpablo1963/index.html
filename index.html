@@ -85,7 +85,6 @@
         
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
-        /* Animación para rotación */
         .mesa-inner-label {
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -155,7 +154,7 @@
                 <input id="note-lugar" type="text" placeholder="Sector / Sala" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-sm outline-none">
                 <div class="grid grid-cols-2 gap-2">
                     <div class="relative">
-                        <span class="absolute top-2 left-4 text-[7px] font-black text-slate-400 uppercase">Ocupadas</span>
+                        <span class="absolute top-2 left-4 text-[7px] font-black text-slate-400 uppercase">Mesa Aud.</span>
                         <input id="note-abiertas" type="number" readonly class="w-full pt-6 pb-3 px-4 bg-slate-100 border border-slate-200 rounded-2xl font-black text-sm text-center">
                     </div>
                     <div class="relative">
@@ -202,7 +201,6 @@
                         <button onclick="updateShape('rect')" id="shape-rect" class="w-16 h-12 flex items-center justify-center rounded-xl text-slate-400"><div class="w-7 h-4 border-2 border-current rounded-sm"></div></button>
                     </div>
                     
-                    <!-- BOTÓN ROTAR -->
                     <button onclick="rotateTable()" class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0 shadow-sm active:scale-90 transition-transform">
                         <i class="fa-solid fa-arrows-rotate"></i>
                     </button>
@@ -255,7 +253,7 @@
 
         let tables = JSON.parse(localStorage.getItem(`${DB_PREFIX}_tables`)) || [];
         let audits = JSON.parse(localStorage.getItem(`${DB_PREFIX}_audits`)) || [];
-        let isLocked = JSON.parse(localStorage.getItem(`${DB_PREFIX}_locked`)) ?? true; 
+        let isLocked = JSON.parse(localStorage.getItem(`${DB_PREFIX}_locked`) ?? "true"); 
         
         let currentMode = 'audit';
         let selectedId = null;
@@ -271,13 +269,54 @@
             window.addEventListener('pointerup', handlePointerUp);
         }
 
+        // PLANTILLA SEGÚN MAPA DE REFERENCIA
         function createInitialLayout() {
-            tables = Array.from({ length: 9 }, (_, i) => ({
-                id: Date.now() + i,
-                x: 20 + (i % 3) * 25, y: 15 + Math.floor(i / 3) * 15,
-                sizeLabel: 'M', w: 75, h: 75, shape: 'square', rotation: 0,
-                label: (i + 1).toString(), status: 'free'
-            }));
+            const tempTables = [];
+            
+            // Fila Superior (Rectangulares horizontales)
+            for(let i=0; i<4; i++) {
+                tempTables.push({
+                    id: Date.now() + i, x: 15 + (i * 22), y: 15,
+                    sizeLabel: 'M', w: 110, h: 60, shape: 'rect', rotation: 0,
+                    label: `M${i+1}`, status: 'free'
+                });
+            }
+
+            // Área Central (Cuadradas)
+            for(let row=0; row<2; row++) {
+                for(let col=0; col<3; col++) {
+                    const idx = 4 + (row * 3) + col;
+                    tempTables.push({
+                        id: Date.now() + idx, x: 25 + (col * 25), y: 40 + (row * 20),
+                        sizeLabel: 'M', w: 75, h: 75, shape: 'square', rotation: 0,
+                        label: `M${idx+1}`, status: 'free'
+                    });
+                }
+            }
+
+            // Columna Derecha (Rectangulares verticales)
+            for(let i=0; i<3; i++) {
+                const idx = 10 + i;
+                tempTables.push({
+                    id: Date.now() + idx, x: 88, y: 35 + (i * 20),
+                    sizeLabel: 'M', w: 60, h: 110, shape: 'rect', rotation: 90,
+                    label: `B${i+1}`, status: 'free'
+                });
+            }
+
+            // Mesas Circulares (VIP o Lounge)
+            tempTables.push({
+                id: Date.now() + 14, x: 15, y: 75,
+                sizeLabel: 'L', w: 100, h: 100, shape: 'circle', rotation: 0,
+                label: `V1`, status: 'free'
+            });
+            tempTables.push({
+                id: Date.now() + 15, x: 40, y: 85,
+                sizeLabel: 'L', w: 100, h: 100, shape: 'circle', rotation: 0,
+                label: `V2`, status: 'free'
+            });
+
+            tables = tempTables;
             saveData();
         }
 
@@ -294,22 +333,20 @@
                 div.id = `mesa-${t.id}`;
                 
                 const statusClass = t.status === 'occupied' ? 'mesa-occupied' : 'mesa-free';
-                const shapeClass = t.shape === 'circle' ? 'rounded-full' : 'rounded-2xl';
+                const shapeClass = t.shape === 'circle' ? 'rounded-full' : (t.shape === 'rect' ? 'rounded-lg' : 'rounded-2xl');
 
                 div.className = `mesa ${statusClass} ${shapeClass} ${selectedId === t.id && currentMode === 'design' ? 'selected-design' : ''}`;
                 
-                // Aplicar Posición y Rotación
                 div.style.left = `${t.x}%`;
                 div.style.top = `${t.y}%`;
                 div.style.width = `${t.w}px`;
                 div.style.height = `${t.h}px`;
                 div.style.transform = `translate(-50%, -50%) rotate(${t.rotation || 0}deg)`;
                 
-                // Sincronizar etiqueta para que NO rote con la mesa (opcional, o que rote con ella)
                 const label = document.createElement('span');
                 label.className = "mesa-inner-label";
                 label.innerText = t.label;
-                label.style.transform = `rotate(${- (t.rotation || 0)}deg)`; // El texto siempre derecho
+                label.style.transform = `rotate(${- (t.rotation || 0)}deg)`;
                 div.appendChild(label);
                 
                 div.style.fontSize = `${Math.min(t.w, t.h) * 0.35}px`;
@@ -343,7 +380,7 @@
             document.getElementById('stat-occupied').innerText = occCount;
             const perc = tables.length > 0 ? Math.round((occCount / tables.length) * 100) : 0;
             document.getElementById('stat-percent').innerText = perc + '%';
-            if(document.getElementById('note-abiertas')) document.getElementById('note-abiertas').value = tables.length;
+            if(document.getElementById('note-abiertas')) document.getElementById('note-abiertas').value = occCount;
         }
 
         function handlePointerMove(e) {
@@ -382,13 +419,15 @@
                 input.oninput = (e) => { mesa.label = e.target.value.toUpperCase(); render(); saveData(); };
                 
                 ['square', 'circle', 'rect'].forEach(s => {
-                    document.getElementById(`shape-${s}`).className = mesa.shape === s ? 
+                    const btn = document.getElementById(`shape-${s}`);
+                    if(btn) btn.className = mesa.shape === s ? 
                         'w-12 h-12 flex items-center justify-center rounded-xl bg-slate-950 text-white shadow-lg' : 
                         'w-12 h-12 flex items-center justify-center rounded-xl text-slate-400';
                 });
                 
                 ['S', 'M', 'L', 'XL'].forEach(label => {
-                    document.getElementById(`size-${label}`).className = (mesa.sizeLabel === label) ? 
+                    const btn = document.getElementById(`size-${label}`);
+                    if(btn) btn.className = (mesa.sizeLabel === label) ? 
                         'flex-1 py-3 rounded-xl font-black text-[10px] size-btn-active' : 
                         'flex-1 py-3 rounded-xl font-black text-[10px] text-slate-400';
                 });
@@ -432,7 +471,8 @@
         function setMode(m) {
             selectedId = null; currentMode = m;
             ['audit', 'design', 'notes', 'history'].forEach(mode => {
-                document.getElementById(`nav-${mode}`).className = `flex-1 py-3 rounded-xl font-black text-[10px] uppercase transition-all ${mode === m ? 'bg-white shadow-sm text-slate-900 border-b-2 border-emerald-500' : 'text-slate-400'}`;
+                const btn = document.getElementById(`nav-${mode}`);
+                if(btn) btn.className = `flex-1 py-3 rounded-xl font-black text-[10px] uppercase transition-all ${mode === m ? 'bg-white shadow-sm text-slate-900 border-b-2 border-emerald-500' : 'text-slate-400'}`;
             });
             document.getElementById('main-footer').classList.toggle('hidden', m === 'notes' || m === 'history');
             document.getElementById('audit-controls').classList.toggle('hidden', m !== 'audit');
@@ -475,7 +515,7 @@
 
         function saveAudit() {
             const occupied = tables.filter(t => t.status === 'occupied').length;
-            const percent = Math.round((occupied / tables.length) * 100);
+            const percent = tables.length > 0 ? Math.round((occupied / tables.length) * 100) : 0;
             audits.unshift({
                 id: Date.now(),
                 name: (document.getElementById('note-firma').value || 'AUDITOR').toUpperCase(),
@@ -485,8 +525,8 @@
                 count: `${occupied}/${tables.length}`,
                 details: {
                     lugar: document.getElementById('note-lugar').value || 'GENERAL',
-                    insitu: document.getElementById('note-insitu').value || '-',
-                    micros: document.getElementById('note-micros').value || '-',
+                    insitu: document.getElementById('note-insitu').value || '0',
+                    micros: document.getElementById('note-micros').value || '0',
                     obs: document.getElementById('note-observaciones').value || 'Sin observaciones'
                 }
             });
