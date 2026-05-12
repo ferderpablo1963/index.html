@@ -48,43 +48,47 @@
             background: #cbd5e1;
             overflow: auto;
             position: relative;
-            padding: 40px 20px;
+            padding: 40px;
             display: block;
-            touch-action: none;
+            /* Evitamos que el scroll del contenedor interfiera con el drag */
+            touch-action: pan-x pan-y; 
         }
 
         #map-canvas { 
-            width: 1000px; 
-            height: 1500px; 
+            width: 1200px; 
+            height: 1600px; 
             background: white;
             position: relative; 
-            border-radius: 1rem; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
-            background-size: 25px 25px;
+            border-radius: 1.5rem; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px);
+            background-size: 30px 30px;
             margin: 0 auto;
         }
 
         .mesa {
             position: absolute;
             display: flex; align-items: center; justify-content: center;
-            font-weight: 900; font-size: 14px; user-select: none;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            border-radius: 12px;
+            font-weight: 900; font-size: 16px; user-select: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 14px;
             z-index: 10;
-            touch-action: none;
+            touch-action: none; /* Crucial para drag manual */
             cursor: move;
+            transition: transform 0.1s, box-shadow 0.1s;
         }
+        .mesa:active { transform: scale(1.05); z-index: 100; }
+        
         .mesa-disponible { background: white; border: 2px solid #cbd5e1; color: #64748b; }
         .mesa-ocupada { background: #0f172a; border: 2px solid #0f172a; color: #10b981; }
         .mesa-discrepante { background: #ef4444; border: 2px solid #b91c1c; color: white; }
 
         .resize-handle {
             position: absolute; 
-            right: -12px; 
-            bottom: -12px;
-            width: 36px; 
-            height: 36px; 
+            right: -10px; 
+            bottom: -10px;
+            width: 32px; 
+            height: 32px; 
             background: #3b82f6;
             border: 3px solid white; 
             border-radius: 50%;
@@ -92,16 +96,17 @@
             align-items: center; 
             justify-content: center;
             color: white; 
-            z-index: 100;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 110;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            cursor: nwse-resize;
         }
 
         .btn-delete {
             position: absolute;
-            top: -15px;
-            right: -15px;
-            width: 30px;
-            height: 30px;
+            top: -12px;
+            right: -12px;
+            width: 28px;
+            height: 28px;
             background: #ef4444;
             color: white;
             border-radius: 50%;
@@ -110,7 +115,8 @@
             justify-content: center;
             font-size: 12px;
             border: 2px solid white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            z-index: 110;
         }
 
         .floating-action-container {
@@ -121,21 +127,15 @@
             z-index: 2000;
             width: 90%;
             max-width: 400px;
-            padding-bottom: env(safe-area-inset-bottom);
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
 
-        .report-card {
-            background: white; padding: 20px; border-radius: 24px;
-            border: 1px solid #e2e8f0; margin-bottom: 12px;
-        }
-
         .modal {
-            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8);
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85);
             display: none; align-items: center; justify-content: center; z-index: 3000;
-            padding: 20px; backdrop-filter: blur(4px);
+            padding: 20px; backdrop-filter: blur(5px);
         }
         .modal.active { display: flex; }
     </style>
@@ -173,10 +173,10 @@
         </div>
         <div id="design-controls" class="hidden floating-action-container">
             <div class="flex gap-2">
-                <button onclick="confirmReset()" class="bg-red-600 text-white p-4 rounded-2xl font-black text-sm uppercase shadow-2xl border-4 border-white/20 active:scale-95 transition-transform flex items-center justify-center">
+                <button onclick="confirmReset()" class="bg-red-600 text-white p-4 rounded-2xl font-black text-sm uppercase shadow-2xl border-4 border-white/20 active:scale-95 flex items-center justify-center">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
-                <button onclick="addTable()" class="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-black text-sm uppercase shadow-2xl border-4 border-white/20 active:scale-95 transition-transform">
+                <button onclick="addTable()" class="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-black text-sm uppercase shadow-2xl border-4 border-white/20 active:scale-95">
                     <i class="fa-solid fa-plus-circle mr-2"></i> Agregar Mesa
                 </button>
             </div>
@@ -190,28 +190,14 @@
                 <div id="layer-audit" class="w-full h-full relative"></div>
             </div>
         </div>
-        <div class="floating-action-container">
-            <button onclick="setTab('notes')" class="w-full bg-emerald-500 text-white py-4 rounded-2xl font-black text-sm uppercase shadow-2xl active:scale-95 transition-transform">
-                Confirmar y Ver Resumen
-            </button>
-        </div>
     </section>
 
-    <!-- PANTALLA: FINALIZAR -->
+    <!-- PANTALLA: FINALIZAR (Formulario) -->
     <section id="screen-notes" class="screen overflow-y-auto p-6 bg-slate-50">
         <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 max-w-md mx-auto mb-20">
-            <h2 class="text-[10px] font-black uppercase text-slate-400 mb-6 tracking-widest border-b pb-2">Información del Reporte</h2>
-            <div class="space-y-4">
-                <input type="text" id="lugar-sector" placeholder="SECTOR / SALÓN" class="w-full p-4 rounded-xl border-2 border-slate-100 font-bold uppercase outline-none focus:border-blue-500">
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="number" id="mesas-insitu" placeholder="FÍSICO" class="w-full p-4 rounded-xl border-2 border-slate-100 font-bold">
-                    <input type="number" id="mesas-micros" placeholder="MICROS" class="w-full p-4 rounded-xl border-2 border-slate-100 font-bold">
-                </div>
-                <input type="text" id="firma-auditor" placeholder="AUDITOR" class="w-full p-4 rounded-xl border-2 border-slate-100 font-bold uppercase">
-                <button onclick="saveFinalReport()" class="w-full bg-slate-900 text-white p-5 rounded-2xl font-black uppercase text-xs mt-4">
-                    Guardar Reporte Oficial
-                </button>
-            </div>
+            <h2 class="text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest">Datos Reporte</h2>
+            <input type="text" id="lugar-sector" placeholder="SECTOR" class="w-full p-4 rounded-xl border-2 border-slate-100 font-bold uppercase mb-4">
+            <button onclick="saveFinalReport()" class="w-full bg-slate-900 text-white p-5 rounded-2xl font-black uppercase text-xs">Guardar Reporte</button>
         </div>
     </section>
 
@@ -220,26 +206,18 @@
         <div id="report-list" class="max-w-md mx-auto pb-24"></div>
     </section>
 
-    <!-- MODAL CONFIRMACIÓN RESET -->
+    <!-- MODAL RESET -->
     <div id="reset-modal" class="modal">
         <div class="bg-white w-full max-w-xs rounded-3xl p-6 shadow-2xl text-center">
             <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
             </div>
-            <h3 class="font-black text-slate-900 uppercase text-sm mb-2">¿Borrar diseño?</h3>
-            <p class="text-xs text-slate-500 mb-6">Se eliminarán todas las mesas del mapa actual. Esta acción no se puede deshacer.</p>
+            <h3 class="font-black text-slate-900 uppercase text-sm mb-2">¿Vaciar Diseño?</h3>
+            <p class="text-[10px] text-slate-500 mb-6 uppercase">Se perderán todas las mesas creadas.</p>
             <div class="flex flex-col gap-2">
-                <button onclick="resetCanvas()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black uppercase text-[10px]">Confirmar Reset</button>
+                <button onclick="resetCanvas()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black uppercase text-[10px]">Borrar Todo</button>
                 <button onclick="closeResetModal()" class="w-full bg-slate-100 text-slate-500 py-4 rounded-xl font-black uppercase text-[10px]">Cancelar</button>
             </div>
-        </div>
-    </div>
-
-    <!-- MODAL DETALLE -->
-    <div id="report-modal" class="modal" onclick="closeModal(event)">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl" onclick="event.stopPropagation()">
-            <div id="modal-content-inner"></div>
-            <button onclick="closeModal()" class="w-full mt-6 bg-slate-100 py-4 rounded-xl font-bold text-slate-600">Cerrar</button>
         </div>
     </div>
 
@@ -276,13 +254,8 @@
             renderAll();
         }
 
-        function confirmReset() {
-            document.getElementById('reset-modal').classList.add('active');
-        }
-
-        function closeResetModal() {
-            document.getElementById('reset-modal').classList.remove('active');
-        }
+        function confirmReset() { document.getElementById('reset-modal').classList.add('active'); }
+        function closeResetModal() { document.getElementById('reset-modal').classList.remove('active'); }
 
         function resetCanvas() {
             tables = [];
@@ -291,18 +264,15 @@
             save();
             renderAll();
             closeResetModal();
-            showToast("MAPA RESETEADO");
+            showToast("DISEÑO RESETEADO");
         }
 
         function addTable() {
-            const viewport = document.getElementById('viewport');
-            const scrollX = viewport.scrollLeft;
-            const scrollY = viewport.scrollTop;
-            
+            const vp = document.getElementById('viewport');
             const newTable = {
-                id: 'id_' + Date.now(),
-                x: scrollX + 100,
-                y: scrollY + 100,
+                id: 't_' + Date.now(),
+                x: vp.scrollLeft + 50,
+                y: vp.scrollTop + 50,
                 w: 80,
                 h: 80,
                 label: (tables.length + 1).toString()
@@ -311,7 +281,6 @@
             selectedId = newTable.id;
             save();
             renderAll();
-            showToast("MESA AGREGADA");
         }
 
         function save() {
@@ -333,8 +302,10 @@
                 const status = auditStatus[t.id] || 0;
                 
                 div.className = `mesa ${isAudit ? (status === 1 ? 'mesa-ocupada' : (status === 2 ? 'mesa-discrepante' : 'mesa-disponible')) : 'mesa-disponible'}`;
+                
                 if(!isAudit && selectedId === t.id && !isLocked) {
-                    div.style.border = '4px solid #3b82f6';
+                    div.style.outline = '4px solid #3b82f6';
+                    div.style.outlineOffset = '2px';
                     div.style.zIndex = '100';
                 }
                 
@@ -351,10 +322,12 @@
                         renderMap(layerId, true); 
                     };
                 } else {
+                    // Lógica de Movimiento (Drag) mejorada
                     div.onpointerdown = (e) => {
                         if(isLocked) return;
                         if(e.target.closest('.resize-handle') || e.target.closest('.btn-delete')) return;
                         
+                        e.preventDefault();
                         selectedId = t.id;
                         renderAll();
 
@@ -374,16 +347,18 @@
 
                         div.onpointerup = () => {
                             div.onpointermove = null;
+                            div.onpointerup = null;
                             div.releasePointerCapture(e.pointerId);
                             save();
                         };
                     };
 
                     if (selectedId === t.id && !isLocked) {
+                        // Botón Borrar
                         const btnDel = document.createElement('div');
                         btnDel.className = 'btn-delete';
                         btnDel.innerHTML = '<i class="fa-solid fa-times"></i>';
-                        btnDel.onclick = (e) => {
+                        btnDel.onpointerdown = (e) => {
                             e.stopPropagation();
                             tables = tables.filter(x => x.id !== t.id);
                             selectedId = null;
@@ -392,11 +367,13 @@
                         };
                         div.appendChild(btnDel);
 
+                        // Handle de Redimensionar
                         const handle = document.createElement('div');
                         handle.className = 'resize-handle';
-                        handle.innerHTML = '<i class="fa-solid fa-expand"></i>';
+                        handle.innerHTML = '<i class="fa-solid fa-arrows-alt"></i>';
                         handle.onpointerdown = (e) => {
                             e.stopPropagation();
+                            e.preventDefault();
                             const sW = t.w;
                             const sH = t.h;
                             const sX = e.clientX;
@@ -404,8 +381,8 @@
                             
                             handle.setPointerCapture(e.pointerId);
                             handle.onpointermove = (em) => {
-                                t.w = Math.max(40, sW + (em.clientX - sX));
-                                t.h = Math.max(40, sH + (em.clientY - sY));
+                                t.w = Math.max(50, sW + (em.clientX - sX));
+                                t.h = Math.max(50, sH + (em.clientY - sY));
                                 div.style.width = t.w + 'px';
                                 div.style.height = t.h + 'px';
                             };
@@ -429,20 +406,9 @@
         }
 
         function saveFinalReport() {
-            let o = 0, d = 0, l = 0;
-            tables.forEach(t => {
-                const s = auditStatus[t.id] || 0;
-                if(s === 1) o++; else if(s === 2) d++; else l++;
-            });
-
             const r = {
                 id: Date.now(),
                 sector: document.getElementById('lugar-sector').value || "Sector Sin Nombre",
-                situ: document.getElementById('mesas-insitu').value || 0,
-                micros: document.getElementById('mesas-micros').value || 0,
-                mapOcupadas: o,
-                mapIndefinidas: d,
-                mapLibres: l,
                 total: tables.length,
                 fecha: new Date().toLocaleDateString(),
                 hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
@@ -456,80 +422,19 @@
         function renderReports() {
             const list = document.getElementById('report-list');
             list.innerHTML = reports.map(r => `
-                <div class="report-card" onclick="showReportDetail(${r.id})">
-                    <div class="flex justify-between text-[9px] font-black text-slate-400 mb-2">
-                        <span>${r.fecha}</span>
-                        <span>${r.hora}</span>
-                    </div>
-                    <h3 class="font-black text-slate-900 uppercase mb-4 text-sm">${r.sector}</h3>
-                    <div class="flex gap-2">
-                        <div class="flex-1 bg-slate-900 text-white p-3 rounded-2xl text-center">
-                            <p class="text-[7px] font-bold text-emerald-400 uppercase">Ocupadas</p>
-                            <p class="text-xs font-black">${r.mapOcupadas}</p>
-                        </div>
-                        <div class="flex-1 bg-red-500 text-white p-3 rounded-2xl text-center">
-                            <p class="text-[7px] font-bold uppercase">Diferencias</p>
-                            <p class="text-xs font-black">${r.mapIndefinidas}</p>
-                        </div>
-                        <div class="flex-1 bg-slate-100 p-3 rounded-2xl text-center">
-                            <p class="text-[7px] font-bold text-slate-400 uppercase">Total</p>
-                            <p class="text-xs font-black">${r.total}</p>
-                        </div>
-                    </div>
+                <div class="bg-white p-5 rounded-3xl border border-slate-200 mb-3">
+                    <h3 class="font-black text-slate-900 uppercase text-xs">${r.sector}</h3>
+                    <p class="text-[9px] font-bold text-slate-400">${r.fecha} - ${r.hora}</p>
+                    <p class="text-[10px] font-black mt-2 text-blue-600">${r.total} MESAS AUDITADAS</p>
                 </div>
-            `).join('') || '<div class="text-center py-20"><i class="fa-solid fa-folder-open text-slate-200 text-5xl mb-4"></i><p class="text-slate-400 font-bold uppercase text-[10px]">Sin reportes guardados</p></div>';
+            `).join('') || '<p class="text-center text-slate-400 text-xs">NO HAY REPORTES</p>';
         }
-
-        function showReportDetail(id) {
-            const r = reports.find(x => x.id === id);
-            const diff = Number(r.situ) - Number(r.micros);
-            document.getElementById('modal-content-inner').innerHTML = `
-                <h2 class="text-lg font-black uppercase text-slate-900">${r.sector}</h2>
-                <p class="text-[10px] font-bold text-emerald-500 mb-6">${r.fecha} - ${r.hora}</p>
-                
-                <div class="space-y-3">
-                    <div class="flex justify-between border-b pb-2">
-                        <span class="text-xs font-bold text-slate-500 uppercase">Capacidad Salón:</span>
-                        <span class="font-black">${r.total} Mesas</span>
-                    </div>
-                    <div class="flex justify-between border-b pb-2">
-                        <span class="text-xs font-bold text-slate-500 uppercase">Ocupación Mapa:</span>
-                        <span class="font-black text-emerald-600">${r.mapOcupadas}</span>
-                    </div>
-                    <div class="flex justify-between border-b pb-2">
-                        <span class="text-xs font-bold text-slate-500 uppercase">Alertas:</span>
-                        <span class="font-black text-red-500">${r.mapIndefinidas}</span>
-                    </div>
-                    <div class="mt-6 p-5 bg-slate-950 rounded-3xl text-white shadow-xl">
-                        <div class="flex justify-between mb-1">
-                            <span class="text-[10px] font-bold uppercase text-slate-500">Lectura Física:</span>
-                            <span class="font-black text-lg">${r.situ}</span>
-                        </div>
-                        <div class="flex justify-between mb-2">
-                            <span class="text-[10px] font-bold uppercase text-slate-500">Lectura Micros:</span>
-                            <span class="font-black text-lg">${r.micros}</span>
-                        </div>
-                        <div class="flex justify-between pt-3 border-t border-white/10 mt-2">
-                            <span class="text-xs font-black text-emerald-400 uppercase">Diferencia Neta:</span>
-                            <span class="text-2xl font-black ${diff != 0 ? 'text-red-400' : 'text-emerald-400'}">${diff}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('report-modal').classList.add('active');
-        }
-
-        function closeModal() { document.getElementById('report-modal').classList.remove('active'); }
 
         function showToast(m) { 
             const t = document.getElementById('toast'); 
             t.innerText = m; 
             t.style.opacity = '1'; 
-            t.style.transform = 'translate(-50%, -10px)';
-            setTimeout(() => {
-                t.style.opacity = '0';
-                t.style.transform = 'translate(-50%, 0)';
-            }, 2000); 
+            setTimeout(() => t.style.opacity = '0', 2000); 
         }
 
         window.onload = init;
