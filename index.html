@@ -70,7 +70,6 @@
             touch-action: none; 
             user-select: none;
             z-index: 10;
-            transition: transform 0.1s;
         }
         
         .mesa-disponible { background: white; border: 2px solid #cbd5e1; color: #64748b; }
@@ -100,6 +99,7 @@
             font-weight: 900;
             color: inherit;
             outline: none;
+            pointer-events: auto;
         }
 
         .floating-bar {
@@ -242,21 +242,24 @@
                 const status = auditStatus[t.id] || 0;
                 
                 div.className = `mesa ${currentTab === 'audit' ? (status === 1 ? 'mesa-ocupada' : (status === 2 ? 'mesa-discrepante' : 'mesa-disponible')) : 'mesa-disponible'}`;
-                if(currentTab === 'design' && selectedId === t.id && !isLocked) div.style.boxShadow = '0 0 0 4px #3b82f6';
+                
+                if(currentTab === 'design' && selectedId === t.id && !isLocked) {
+                    div.style.boxShadow = '0 0 0 4px #3b82f6';
+                }
                 
                 div.style.left = t.x + 'px';
                 div.style.top = t.y + 'px';
                 div.style.width = t.w + 'px';
                 div.style.height = t.h + 'px';
                 
-                // Contenido de la mesa (Label o Input)
+                // Contenido
                 if (currentTab === 'design' && selectedId === t.id && !isLocked) {
                     const input = document.createElement('input');
                     input.type = 'text';
                     input.className = 'edit-input';
                     input.value = t.label;
-                    input.oninput = (e) => { t.label = e.target.value.toUpperCase(); save(); };
                     input.onclick = (e) => e.stopPropagation();
+                    input.oninput = (e) => { t.label = e.target.value.toUpperCase(); save(); };
                     div.appendChild(input);
                 } else {
                     div.innerText = t.label;
@@ -268,10 +271,15 @@
                         renderAll();
                     };
                 } else if (!isLocked) {
-                    
+                    // Lógica de Movimiento
                     div.onpointerdown = (e) => {
-                        if (e.target.closest('.resize-handle') || e.target.closest('.btn-delete') || e.target.tagName === 'INPUT') return;
+                        if (e.target.closest('.resize-handle') || e.target.closest('.btn-delete')) return;
                         
+                        // Si se hace clic en el input, permitimos foco pero también arrastre desde el contenedor
+                        if (e.target.tagName !== 'INPUT') {
+                            e.preventDefault();
+                        }
+
                         selectedId = t.id;
                         renderAll();
                         
@@ -297,6 +305,7 @@
                         document.addEventListener('pointerup', onUp);
                     };
 
+                    // Accesorios si está seleccionada
                     if (selectedId === t.id) {
                         const del = document.createElement('div');
                         del.className = 'btn-delete';
@@ -314,6 +323,7 @@
                         resizer.innerHTML = '<i class="fa-solid fa-expand"></i>';
                         resizer.onpointerdown = (e) => {
                             e.stopPropagation();
+                            e.preventDefault();
                             const startW = t.w;
                             const startH = t.h;
                             const startX = e.clientX;
