@@ -19,12 +19,18 @@
             background-color: #f8fafc;
         }
         
+        #main-scroll {
+            overflow: auto;
+            position: relative;
+        }
+
         #map-container { 
             height: 1200px; 
             width: 200%;
             position: relative;
             background-color: #ffffff;
-            transition: background-image 0.3s;
+            transition: background-image 0.3s, transform 0.3s ease-in-out;
+            transform-origin: top left;
         }
 
         .design-grid {
@@ -40,7 +46,7 @@
             touch-action: none;
             user-select: none;
             cursor: pointer;
-            border-radius: 16px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -65,11 +71,10 @@
         .dragging { opacity: 0.6; z-index: 100; border: 2px dashed #3b82f6 !important; }
         .selected-design { border: 3px solid #3b82f6 !important; z-index: 50; }
 
-        /* TIRADORES DE EDICIÓN */
         .handle {
             position: absolute;
-            width: 36px;
-            height: 36px;
+            width: 38px;
+            height: 38px;
             border: 3px solid #ffffff;
             border-radius: 50%;
             display: none;
@@ -84,17 +89,17 @@
         .selected-design .handle { display: flex; }
 
         .resizer-handle {
-            right: -18px;
-            bottom: -18px;
-            background-color: #f59e0b; /* Naranja para tamaño */
+            right: -19px;
+            bottom: -19px;
+            background-color: #f59e0b;
             cursor: nwse-resize;
         }
 
         .rotator-handle {
-            right: -18px;
-            top: -18px;
-            background-color: #3b82f6; /* Azul para rotación */
-            cursor: grab;
+            right: -19px;
+            top: -19px;
+            background-color: #3b82f6;
+            cursor: crosshair;
         }
 
         #toast {
@@ -152,7 +157,10 @@
                 <p id="stat-percent" class="text-sm font-black text-emerald-600">0%</p>
             </div>
         </div>
-        <div class="text-right">
+        <div class="text-right flex items-center gap-4">
+            <button onclick="fitToScreen()" class="bg-slate-100 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase text-slate-500 hover:bg-slate-200 transition-colors">
+                <i class="fa-solid fa-expand mr-1"></i> Fit
+            </button>
             <p id="current-time" class="text-[10px] font-black text-slate-950">00:00</p>
         </div>
     </div>
@@ -166,13 +174,12 @@
         </div>
     </nav>
 
-    <main class="flex-1 overflow-auto relative bg-slate-100 p-4 custom-scrollbar" id="main-scroll">
-        <div id="map-container" class="rounded-[2.5rem] shadow-inner border border-slate-200 overflow-hidden" onclick="deselectTable()">
+    <main class="flex-1 overflow-hidden relative bg-slate-100 custom-scrollbar" id="main-scroll">
+        <div id="map-container" class="rounded-[2.5rem] shadow-inner border border-slate-200" onclick="deselectTable()">
             <div id="mesas-layer" class="w-full h-full relative"></div>
         </div>
     </main>
 
-    <!-- PANTALLAS OVERLAY (NOTAS / HISTORIAL) -->
     <div id="notes-screen" class="screen-overlay flex-col p-4 custom-scrollbar">
         <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-200 max-w-md mx-auto w-full space-y-4">
             <h3 class="text-base font-black uppercase italic text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
@@ -232,7 +239,7 @@
                         <i class="fa-solid fa-plus"></i> Simple
                     </button>
                     <button onclick="addTable('vip')" class="flex-1 bg-amber-500 text-slate-950 py-4 rounded-2xl font-black text-[9px] uppercase shadow-lg flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-crown"></i> VIP
+                        <i class="fa-solid fa-crown"></i> VIP (RECT)
                     </button>
                 </div>
                 <button onclick="resetLayout()" class="w-full bg-slate-100 text-slate-400 py-3 rounded-2xl font-black text-[9px] uppercase italic">Restablecer Plano</button>
@@ -288,8 +295,10 @@
             if (resizingId) {
                 const t = tables.find(x => x.id === resizingId);
                 if (t) {
-                    t.w = Math.max(40, startMesaSize.w + (e.clientX - startPos.x));
-                    t.h = Math.max(40, startMesaSize.h + (e.clientY - startPos.y));
+                    const rect = document.getElementById('map-container').getBoundingClientRect();
+                    // Ajustamos el delta según la escala actual si fuera necesario, pero aquí usamos directo
+                    t.w = Math.max(30, startMesaSize.w + (e.clientX - startPos.x));
+                    t.h = Math.max(30, startMesaSize.h + (e.clientY - startPos.y));
                     render();
                 }
                 return;
@@ -302,8 +311,14 @@
                     const rect = mesaEl.getBoundingClientRect();
                     const centerX = rect.left + rect.width / 2;
                     const centerY = rect.top + rect.height / 2;
-                    const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
-                    t.rotation = (angle + 45); // Offset para que el tirador coincida
+                    
+                    // Calculamos ángulo entre el centro y la posición del dedo/mouse
+                    const rad = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+                    const deg = rad * (180 / Math.PI);
+                    
+                    // El tirador está originalmente en top-right (aprox 45 deg o -45 deg)
+                    // Restamos el ángulo inicial del tirador para que el giro sea natural
+                    t.rotation = deg + 45; 
                     render();
                 }
                 return;
@@ -313,8 +328,8 @@
                 const t = tables.find(x => x.id === draggingId);
                 if (t) {
                     const rect = document.getElementById('mesas-layer').getBoundingClientRect();
-                    t.x = Math.max(2, Math.min(98, startMesaPos.x + ((e.clientX - startPos.x) / rect.width * 100)));
-                    t.y = Math.max(2, Math.min(98, startMesaPos.y + ((e.clientY - startPos.y) / rect.height * 100)));
+                    t.x = Math.max(0, Math.min(100, startMesaPos.x + ((e.clientX - startPos.x) / rect.width * 100)));
+                    t.y = Math.max(0, Math.min(100, startMesaPos.y + ((e.clientY - startPos.y) / rect.height * 100)));
                     render();
                 }
             }
@@ -327,6 +342,18 @@
                 rotatingId = null;
                 saveData();
             }
+        }
+
+        function fitToScreen() {
+            const container = document.getElementById('map-container');
+            const main = document.getElementById('main-scroll');
+            
+            const scaleX = main.clientWidth / container.offsetWidth;
+            const scaleY = main.clientHeight / container.offsetHeight;
+            const scale = Math.min(scaleX, scaleY, 1);
+            
+            container.style.transform = `scale(${scale})`;
+            showToast("Plano ajustado");
         }
 
         function startTime() {
@@ -345,7 +372,7 @@
                 y: 10 + Math.floor(i / 3) * 12,
                 label: (i + 1).toString(),
                 occupied: false,
-                w: 60, h: 60,
+                w: 65, h: 65,
                 rotation: 0
             }));
             saveData();
@@ -355,7 +382,7 @@
             const layer = document.getElementById('mesas-layer');
             layer.innerHTML = '';
             const container = document.getElementById('map-container');
-            container.className = `rounded-[2.5rem] shadow-inner border border-slate-200 overflow-hidden ${currentMode === 'design' ? 'design-mode design-grid' : ''}`;
+            container.className = `rounded-[2.5rem] shadow-inner border border-slate-200 ${currentMode === 'design' ? 'design-mode design-grid' : ''}`;
 
             let occCount = 0;
             tables.forEach(t => {
@@ -370,10 +397,10 @@
                 div.style.transform = `translate(-50%, -50%) rotate(${t.rotation || 0}deg)`;
                 div.style.fontSize = `${Math.min(t.w, t.h) * 0.35}px`;
 
+                // El texto se mantiene recto compensando la rotación de la mesa
                 div.innerHTML = `<span style="transform: rotate(-${t.rotation || 0}deg)">${t.label}</span>`;
                 
                 if (currentMode === 'design' && !isLocked) {
-                    // Tirador de Tamaño (Naranja)
                     const resizer = document.createElement('div');
                     resizer.className = 'handle resizer-handle';
                     resizer.innerHTML = '<i class="fa-solid fa-up-right-and-down-left-from-center text-[10px]"></i>';
@@ -385,14 +412,13 @@
                     };
                     div.appendChild(resizer);
 
-                    // Tirador de Rotación (Azul)
                     const rotator = document.createElement('div');
                     rotator.className = 'handle rotator-handle';
                     rotator.innerHTML = '<i class="fa-solid fa-rotate text-[10px]"></i>';
                     rotator.onpointerdown = (e) => {
                         e.stopPropagation();
                         rotatingId = t.id;
-                        startMesaRotation = t.rotation || 0;
+                        // No necesitamos startPos para rotar con el nuevo método
                     };
                     div.appendChild(rotator);
                 }
@@ -474,8 +500,8 @@
                 id: Date.now(), x: 50, y: 50, 
                 label: (tables.length + 1).toString(), 
                 occupied: false,
-                w: type === 'vip' ? 100 : 60, 
-                h: type === 'vip' ? 100 : 60,
+                w: type === 'vip' ? 140 : 65, 
+                h: type === 'vip' ? 70 : 65,
                 rotation: 0
             }); 
             saveData(); render(); 
