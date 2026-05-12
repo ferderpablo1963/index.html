@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>SPOT CHECK PRO V4 - TACTIL FIX</title>
+    <title>SPOT CHECK PRO V4 - FIX MOVIMIENTO</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -17,9 +17,10 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            margin: 0;
         }
 
-        .nav-container { display: flex; background: #020617; padding: 8px; gap: 4px; shrink: 0; }
+        .nav-container { display: flex; background: #020617; padding: 8px; gap: 4px; shrink: 0; z-index: 1000; }
         .nav-btn {
             flex: 1; padding: 12px 4px; border-radius: 12px; color: #64748b;
             font-size: 10px; font-weight: 800; text-transform: uppercase;
@@ -60,7 +61,7 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             border-radius: 8px;
             z-index: 10;
-            touch-action: none;
+            touch-action: none; /* Crucial para drag manual */
         }
 
         .mesa-disponible { background: white; border: 2px solid #cbd5e1; color: #334155; }
@@ -68,13 +69,12 @@
         .mesa-discrepante { background: #ef4444; border: 2px solid #b91c1c; color: white; }
         .mesa-vip { border-color: #f59e0b !important; border-width: 3px !important; }
 
-        /* Tirador para redimensionar con el dedo */
         .resize-handle {
             position: absolute;
-            right: -10px;
-            bottom: -10px;
-            width: 30px;
-            height: 30px;
+            right: -12px;
+            bottom: -12px;
+            width: 36px;
+            height: 36px;
             background: #3b82f6;
             border: 3px solid white;
             border-radius: 50%;
@@ -82,10 +82,11 @@
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 12px;
+            font-size: 14px;
             z-index: 150;
             cursor: nwse-resize;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            touch-action: none;
         }
 
         .edit-bubble {
@@ -105,15 +106,23 @@
         }
         
         #toast {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(150px);
             background: #0f172a; color: white; padding: 12px 24px; border-radius: 20px;
-            font-weight: 800; font-size: 11px; z-index: 1000; transition: 0.3s;
+            font-weight: 800; font-size: 11px; z-index: 2000; transition: 0.3s;
         }
         #toast.show { transform: translateX(-50%) translateY(0); }
 
         .bottom-controls {
             background: white; padding: 16px; border-top: 1px solid #e2e8f0; shrink: 0;
             z-index: 500;
+        }
+
+        .btn-audit-floating {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 900;
         }
     </style>
 </head>
@@ -146,13 +155,10 @@
         </div>
         <div id="design-controls" class="hidden bottom-controls grid grid-cols-2 gap-2">
             <button onclick="addTable('std')" class="bg-slate-900 text-white p-4 rounded-xl font-black text-[10px] uppercase">
-                <i class="fa-solid fa-square mr-1"></i> + Rectangular
+                <i class="fa-solid fa-square mr-1"></i> + Estándar
             </button>
             <button onclick="addTable('vip')" class="bg-amber-500 text-white p-4 rounded-xl font-black text-[10px] uppercase">
                 <i class="fa-solid fa-crown mr-1"></i> + VIP Rect.
-            </button>
-            <button onclick="resetLayout()" class="col-span-2 bg-red-50 text-red-600 p-2 rounded-xl font-black text-[9px] uppercase">
-                Limpiar Todo el Plano
             </button>
         </div>
     </section>
@@ -163,17 +169,16 @@
                 <div id="layer-audit" class="w-full h-full relative"></div>
             </div>
         </div>
-        <div class="bottom-controls">
-            <button onclick="setTab('notes')" class="w-full bg-emerald-500 text-white p-5 rounded-3xl font-black uppercase text-xs shadow-xl">
-                Siguiente: Confirmar Datos <i class="fa-solid fa-chevron-right ml-2"></i>
+        <div class="btn-audit-floating">
+            <button onclick="setTab('notes')" class="w-full bg-emerald-500 text-white p-5 rounded-3xl font-black uppercase text-xs shadow-2xl border-4 border-white/20">
+                Confirmar y Ver Planilla <i class="fa-solid fa-chevron-right ml-2"></i>
             </button>
         </div>
     </section>
 
     <section id="screen-notes" class="screen overflow-y-auto p-6 bg-slate-100">
-        <!-- Formulario de notas mantenido igual -->
         <div class="max-w-md mx-auto bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-200">
-            <h2 class="text-xs font-black uppercase text-slate-400 mb-6 tracking-widest italic border-b pb-2">Planilla de Auditoría In Situ</h2>
+            <h2 class="text-xs font-black uppercase text-slate-400 mb-6 tracking-widest italic border-b pb-2">Planilla de Auditoría</h2>
             <div class="space-y-4">
                 <input type="text" id="mesas-registradas" placeholder="MESAS REGISTRADAS" class="input-field uppercase">
                 <input type="text" id="lugar-sector" placeholder="SECTOR" class="input-field uppercase">
@@ -205,14 +210,9 @@
         let selectedId = null;
         let currentTab = 'design';
 
-        let offsetX = 0;
-        let offsetY = 0;
-        let initialW = 0;
-        let initialH = 0;
+        let initialX, initialY, initialW, initialH;
 
-        function init() { 
-            renderAll(); 
-        }
+        function init() { renderAll(); }
 
         function setTab(tab) {
             currentTab = tab;
@@ -256,17 +256,21 @@
                         renderMap(layerId, true); 
                     };
                 } else {
-                    // MODO DISEÑO - ARRASTRE
+                    // EVENTOS DE LA MESA (SELECCIONAR Y MOVER)
                     div.onpointerdown = (e) => {
                         if (isLocked) return;
-                        if (!e.isPrimary) return; 
+                        if (!e.isPrimary) return;
+                        
+                        // Si tocamos el tirador azul, no iniciamos el arrastre de la mesa
+                        if (e.target.closest('.resize-handle')) return;
 
                         selectedId = t.id;
                         draggingId = t.id;
                         
                         const rect = layer.getBoundingClientRect();
-                        offsetX = (e.clientX - rect.left) - t.x;
-                        offsetY = (e.clientY - rect.top) - t.y;
+                        // Calculamos el offset desde el centro de la mesa (donde está el ancla)
+                        initialX = (e.clientX - rect.left) - t.x;
+                        initialY = (e.clientY - rect.top) - t.y;
                         
                         div.setPointerCapture(e.pointerId);
                         e.stopPropagation();
@@ -276,64 +280,65 @@
                     div.onpointermove = (e) => {
                         if (draggingId === t.id && !resizingId) {
                             const rect = layer.getBoundingClientRect();
-                            t.x = (e.clientX - rect.left) - offsetX;
-                            t.y = (e.clientY - rect.top) - offsetY;
+                            t.x = (e.clientX - rect.left) - initialX;
+                            t.y = (e.clientY - rect.top) - initialY;
                             div.style.left = t.x + 'px';
                             div.style.top = t.y + 'px';
                         }
                     };
 
-                    div.onpointerup = () => { draggingId = null; save(); };
+                    div.onpointerup = (e) => { 
+                        draggingId = null; 
+                        save(); 
+                    };
 
-                    // Burbuja de edición y Tirador de Tamaño
+                    // UI DE EDICIÓN
                     if (selectedId === t.id && !isLocked) {
                         div.style.border = '3px solid #3b82f6';
                         div.style.zIndex = '100';
                         
-                        // Burbuja superior
                         const bubble = document.createElement('div');
                         bubble.className = 'edit-bubble';
                         bubble.innerHTML = `
-                            <button onclick="resize(${t.id}, 20, 0)"><i class="fa-solid fa-arrows-left-right"></i></button>
-                            <button onclick="resize(${t.id}, 0, 20)"><i class="fa-solid fa-arrows-up-down"></i></button>
                             <button onclick="rotate(${t.id})"><i class="fa-solid fa-rotate-right"></i></button>
                             <button onclick="rename(${t.id})"><i class="fa-solid fa-font"></i></button>
                             <button onclick="deleteT(${t.id})"><i class="fa-solid fa-trash-can text-red-400"></i></button>
                         `;
                         div.appendChild(bubble);
 
-                        // Tirador inferior derecho (HANDLE)
+                        // TIRADOR DE REDIMENSIONAR MEJORADO
                         const handle = document.createElement('div');
                         handle.className = 'resize-handle';
-                        handle.innerHTML = '<i class="fa-solid fa-up-right-and-down-left-from-center rotate-90"></i>';
+                        handle.innerHTML = '<i class="fa-solid fa-expand"></i>';
                         
                         handle.onpointerdown = (e) => {
                             e.stopPropagation();
                             resizingId = t.id;
                             initialW = t.w;
                             initialH = t.h;
-                            offsetX = e.clientX;
-                            offsetY = e.clientY;
+                            initialX = e.clientX;
+                            initialY = e.clientY;
                             handle.setPointerCapture(e.pointerId);
                         };
 
                         handle.onpointermove = (e) => {
                             if (resizingId === t.id) {
                                 e.stopPropagation();
-                                const dx = e.clientX - offsetX;
-                                const dy = e.clientY - offsetY;
-                                // Cambia el tamaño libremente
-                                t.w = Math.max(40, initialW + dx);
-                                t.h = Math.max(40, initialH + dy);
-                                renderAll();
+                                const dx = e.clientX - initialX;
+                                const dy = e.clientY - initialY;
+                                // Permite achicar y agrandar libremente
+                                t.w = Math.max(20, initialW + dx);
+                                t.h = Math.max(20, initialH + dy);
+                                div.style.width = t.w + 'px';
+                                div.style.height = t.h + 'px';
                             }
                         };
 
-                        handle.onpointerup = (e) => {
-                            resizingId = null;
-                            save();
+                        handle.onpointerup = (e) => { 
+                            resizingId = null; 
+                            save(); 
+                            renderAll(); // Re-render para limpiar estados
                         };
-
                         div.appendChild(handle);
                     }
                 }
@@ -345,32 +350,11 @@
             isLocked = !isLocked;
             const icon = document.getElementById('lock-icon');
             const text = document.getElementById('lock-text');
-            
-            if (isLocked) {
-                icon.className = 'fa-solid fa-lock text-red-500 mr-1';
-                text.innerText = 'LOCK';
-                selectedId = null;
-            } else {
-                icon.className = 'fa-solid fa-unlock text-emerald-500 mr-1';
-                text.innerText = 'EDIT';
-            }
-            
+            icon.className = isLocked ? 'fa-solid fa-lock text-red-500 mr-1' : 'fa-solid fa-unlock text-emerald-500 mr-1';
+            text.innerText = isLocked ? 'LOCK' : 'EDIT';
+            selectedId = null;
             showToast(isLocked ? "SISTEMA BLOQUEADO" : "MODO EDICIÓN ACTIVADO");
             renderAll();
-        }
-
-        // Lógica de redimensionamiento cíclica (Agrandar -> Máximo -> Mínimo)
-        function resize(id, dw, dh) {
-            const t = tables.find(x => x.id === id);
-            if (dw !== 0) {
-                t.w += dw;
-                if (t.w > 300) t.w = 60; // Si es muy grande, vuelve a achicarse
-            }
-            if (dh !== 0) {
-                t.h += dh;
-                if (t.h > 300) t.h = 40; // Si es muy alta, vuelve a achicarse
-            }
-            save(); renderAll();
         }
 
         function rotate(id) {
@@ -381,7 +365,7 @@
 
         function rename(id) {
             const t = tables.find(x => x.id === id);
-            const n = prompt("Número o Nombre:", t.label);
+            const n = prompt("Nombre:", t.label);
             if(n) t.label = n.toUpperCase();
             save(); renderAll();
         }
@@ -393,18 +377,16 @@
         }
 
         function deselectAll(e) { 
-            if (e.target.id === 'layer-design' || e.target.id === 'viewport' || e.target.id === 'map-canvas') {
-                selectedId = null; 
-                renderAll(); 
+            if (['layer-design', 'viewport', 'map-canvas'].includes(e.target.id)) {
+                selectedId = null; renderAll(); 
             }
         }
 
         function addTable(tipo) {
             const viewport = document.getElementById('viewport');
-            const spawnY = viewport.scrollTop + 150;
-            // Por defecto rectangulares (100x60)
+            const spawnY = viewport.scrollTop + 200;
             tables.push({ 
-                id: Date.now(), x: 150, y: spawnY, w: 100, h: 60, r: 0, 
+                id: Date.now(), x: 200, y: spawnY, w: 100, h: 60, r: 0, 
                 label: (tables.length + 1).toString(), tipo: tipo 
             });
             save(); renderAll();
@@ -444,12 +426,6 @@
                     <p class="text-[9px] text-slate-400 italic">${r.detalle}</p>
                 </div>
             `).join('') || '<div class="text-center py-10 text-slate-300 font-black text-[10px] uppercase">Sin reportes</div>';
-        }
-
-        function resetLayout() {
-            if(confirm("¿Borrar todo el diseño?")) {
-                tables = []; save(); renderAll();
-            }
         }
 
         window.onload = init;
