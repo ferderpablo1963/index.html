@@ -2,10 +2,9 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <!-- Se permite el escalado del usuario para poder agrandar con los dedos -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>SPOT CHECK PRO V4 - ZOOM ENABLED</title>
+    <title>SPOT CHECK PRO V4 - FIX</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -18,7 +17,6 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            /* Se quita touch-action: none para permitir gestos nativos de zoom */
         }
 
         .nav-container { display: flex; background: #020617; padding: 8px; gap: 4px; shrink: 0; }
@@ -60,35 +58,30 @@
             display: flex; align-items: center; justify-content: center;
             font-weight: 900; font-size: 14px; user-select: none;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            cursor: move;
             border-radius: 8px;
             z-index: 10;
-            transition: background 0.2s, border-color 0.2s;
-            /* Solo deshabilitamos acciones táctiles cuando estamos moviendo la mesa */
+            touch-action: none; /* Importante para el arrastre */
         }
 
-        /* Colores Auditoría */
         .mesa-disponible { background: white; border: 2px solid #cbd5e1; color: #334155; }
         .mesa-ocupada { background: #0f172a; border: 2px solid #0f172a; color: #10b981; }
         .mesa-discrepante { background: #ef4444; border: 2px solid #b91c1c; color: white; }
-        
         .mesa-vip { border-color: #f59e0b !important; border-width: 3px !important; }
 
         .edit-bubble {
-            position: absolute; top: -65px; left: 50%; transform: translateX(-50%);
-            background: #0f172a; border-radius: 14px; padding: 6px;
-            display: flex; gap: 6px; z-index: 100; box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+            position: absolute; top: -75px; left: 50%; transform: translateX(-50%);
+            background: #0f172a; border-radius: 14px; padding: 8px;
+            display: flex; gap: 8px; z-index: 100; box-shadow: 0 10px 20px rgba(0,0,0,0.4);
         }
         .edit-bubble button { 
-            color: white; width: 36px; height: 36px; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center; font-size: 14px;
+            color: white; width: 40px; height: 40px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; font-size: 16px;
             background: rgba(255,255,255,0.1);
         }
 
         .input-field { 
             width: 100%; padding: 12px; border-radius: 12px; 
             border: 2px solid #e2e8f0; font-weight: 700; outline: none;
-            font-size: 13px;
         }
         
         #toast {
@@ -102,12 +95,6 @@
             background: white; padding: 16px; border-top: 1px solid #e2e8f0; shrink: 0;
             z-index: 500;
         }
-
-        .form-label {
-            display: block; font-size: 10px; font-weight: 900; color: #64748b;
-            text-transform: uppercase; margin-bottom: 4px; margin-left: 4px;
-            letter-spacing: 0.05em;
-        }
     </style>
 </head>
 <body>
@@ -119,8 +106,9 @@
             </div>
             <span class="text-white font-black italic tracking-tighter uppercase">Spot Check V4</span>
         </div>
-        <button onclick="toggleLock()" id="lock-btn" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-[10px] font-black tracking-widest border border-slate-700">
-            <i id="lock-icon" class="fa-solid fa-lock text-red-500 mr-1"></i> LOCK
+        <!-- Botón de Lock reparado -->
+        <button onclick="toggleLock()" id="lock-btn" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-[10px] font-black tracking-widest border border-slate-700 active:scale-95 transition-transform">
+            <i id="lock-icon" class="fa-solid fa-lock text-red-500 mr-1"></i> <span id="lock-text">LOCK</span>
         </button>
     </header>
 
@@ -131,18 +119,17 @@
         <button onclick="setTab('reports')" id="nav-reports" class="nav-btn"><i class="fa-solid fa-list-ul text-lg"></i>Reportes</button>
     </nav>
 
-    <!-- PANTALLA DISEÑO -->
     <section id="screen-design" class="screen active">
-        <div id="viewport" onscroll="deselectAll()">
+        <div id="viewport" onclick="deselectAll(event)">
             <div id="map-canvas">
-                <div id="layer-design" class="w-full h-full relative" onclick="deselectAll(event)"></div>
+                <div id="layer-design" class="w-full h-full relative"></div>
             </div>
         </div>
         <div id="design-controls" class="hidden bottom-controls grid grid-cols-2 gap-2">
-            <button onclick="addTable('std')" class="bg-slate-900 text-white p-4 rounded-xl font-black text-[10px] uppercase shadow-md">
+            <button onclick="addTable('std')" class="bg-slate-900 text-white p-4 rounded-xl font-black text-[10px] uppercase">
                 <i class="fa-solid fa-square mr-1"></i> + Estándar
             </button>
-            <button onclick="addTable('vip')" class="bg-amber-500 text-white p-4 rounded-xl font-black text-[10px] uppercase shadow-md">
+            <button onclick="addTable('vip')" class="bg-amber-500 text-white p-4 rounded-xl font-black text-[10px] uppercase">
                 <i class="fa-solid fa-crown mr-1"></i> + VIP Rect.
             </button>
             <button onclick="resetLayout()" class="col-span-2 bg-red-50 text-red-600 p-2 rounded-xl font-black text-[9px] uppercase">
@@ -151,9 +138,8 @@
         </div>
     </section>
 
-    <!-- PANTALLA AUDITORÍA -->
     <section id="screen-audit" class="screen">
-        <div id="viewport" class="p-4">
+        <div id="viewport">
             <div id="map-canvas">
                 <div id="layer-audit" class="w-full h-full relative"></div>
             </div>
@@ -165,56 +151,24 @@
         </div>
     </section>
 
-    <!-- PANTALLA NOTAS -->
     <section id="screen-notes" class="screen overflow-y-auto p-6 bg-slate-100">
         <div class="max-w-md mx-auto bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-200">
             <h2 class="text-xs font-black uppercase text-slate-400 mb-6 tracking-widest italic border-b pb-2">Planilla de Auditoría In Situ</h2>
-            
             <div class="space-y-4">
-                <div>
-                    <label class="form-label">Mesas Abiertas Registradas</label>
-                    <input type="text" id="mesas-registradas" placeholder="____" class="input-field uppercase">
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="form-label">Lugar / Sector</label>
-                        <input type="text" id="lugar-sector" placeholder="SECTOR..." class="input-field uppercase">
-                    </div>
-                    <div>
-                        <label class="form-label">Mesas Ocupadas (In Situ)</label>
-                        <input type="text" id="mesas-insitu" placeholder="____" class="input-field uppercase">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="form-label">Mesas Abiertas en Micros (Captura)</label>
-                    <input type="text" id="mesas-micros" placeholder="____" class="input-field uppercase">
-                </div>
-
-                <div>
-                    <label class="form-label">Hora del Control</label>
-                    <input type="time" id="hora-control" class="input-field">
-                </div>
-
-                <div>
-                    <label class="form-label">Observaciones</label>
-                    <textarea id="obs-final" rows="3" placeholder="DETALLES..." class="input-field uppercase"></textarea>
-                </div>
-
-                <div class="pt-2">
-                    <label class="form-label">Firma Auditor</label>
-                    <input type="text" id="firma-auditor" placeholder="NOMBRE Y APELLIDO" class="input-field uppercase">
-                </div>
+                <input type="text" id="mesas-registradas" placeholder="MESAS REGISTRADAS" class="input-field uppercase">
+                <input type="text" id="lugar-sector" placeholder="SECTOR" class="input-field uppercase">
+                <input type="text" id="mesas-insitu" placeholder="MESAS OCUPADAS (IN SITU)" class="input-field uppercase">
+                <input type="text" id="mesas-micros" placeholder="MESAS MICROS" class="input-field uppercase">
+                <input type="time" id="hora-control" class="input-field">
+                <textarea id="obs-final" rows="3" placeholder="OBSERVACIONES..." class="input-field uppercase"></textarea>
+                <input type="text" id="firma-auditor" placeholder="FIRMA AUDITOR" class="input-field uppercase">
             </div>
-
-            <button onclick="saveFinalReport()" class="w-full mt-6 bg-slate-900 text-white p-5 rounded-3xl font-black uppercase text-xs shadow-2xl hover:bg-slate-800 transition-colors">
+            <button onclick="saveFinalReport()" class="w-full mt-6 bg-slate-900 text-white p-5 rounded-3xl font-black uppercase text-xs">
                 Finalizar y Guardar Reporte
             </button>
         </div>
     </section>
 
-    <!-- PANTALLA REPORTES -->
     <section id="screen-reports" class="screen overflow-y-auto p-6">
         <div id="report-list" class="space-y-3 pb-20"></div>
     </section>
@@ -228,19 +182,17 @@
         let isLocked = true;
         let draggingId = null;
         let selectedId = null;
+        let currentTab = 'design';
 
         let offsetX = 0;
         let offsetY = 0;
 
         function init() { 
-            const ahora = new Date();
-            const horaStr = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
-            const inputHora = document.getElementById('hora-control');
-            if(inputHora) inputHora.value = horaStr;
             renderAll(); 
         }
 
         function setTab(tab) {
+            currentTab = tab;
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('screen-' + tab).classList.add('active');
@@ -253,7 +205,8 @@
             renderMap('layer-design', false);
             renderMap('layer-audit', true);
             renderReports();
-            document.getElementById('design-controls').classList.toggle('hidden', isLocked);
+            const controls = document.getElementById('design-controls');
+            if(controls) controls.classList.toggle('hidden', isLocked || currentTab !== 'design');
         }
 
         function renderMap(layerId, isAudit) {
@@ -264,15 +217,8 @@
             tables.forEach(t => {
                 const div = document.createElement('div');
                 const status = auditStatus[t.id] || 0; 
-                const isVip = t.tipo === 'vip';
                 
-                let auditClass = 'mesa-disponible';
-                if (isAudit) {
-                    if (status === 1) auditClass = 'mesa-ocupada';
-                    if (status === 2) auditClass = 'mesa-discrepante';
-                }
-
-                div.className = `mesa ${auditClass} ${isVip ? 'mesa-vip' : ''}`;
+                div.className = `mesa ${isAudit ? (status === 1 ? 'mesa-ocupada' : (status === 2 ? 'mesa-discrepante' : 'mesa-disponible')) : 'mesa-disponible'} ${t.tipo === 'vip' ? 'mesa-vip' : ''}`;
                 div.style.left = t.x + 'px';
                 div.style.top = t.y + 'px';
                 div.style.width = t.w + 'px';
@@ -287,13 +233,37 @@
                         renderMap(layerId, true); 
                     };
                 } else {
-                    div.onclick = (e) => {
+                    // MODO DISEÑO
+                    div.onpointerdown = (e) => {
                         if (isLocked) return;
+                        if (!e.isPrimary) return; 
+
+                        selectedId = t.id;
+                        draggingId = t.id;
+                        
+                        const rect = layer.getBoundingClientRect();
+                        // Ajustar por el punto central de la mesa
+                        offsetX = (e.clientX - rect.left) - t.x;
+                        offsetY = (e.clientY - rect.top) - t.y;
+                        
+                        div.setPointerCapture(e.pointerId);
                         e.stopPropagation();
-                        selectedId = (selectedId === t.id) ? null : t.id;
                         renderAll();
                     };
 
+                    div.onpointermove = (e) => {
+                        if (draggingId === t.id && !isLocked) {
+                            const rect = layer.getBoundingClientRect();
+                            t.x = (e.clientX - rect.left) - offsetX;
+                            t.y = (e.clientY - rect.top) - offsetY;
+                            div.style.left = t.x + 'px';
+                            div.style.top = t.y + 'px';
+                        }
+                    };
+
+                    div.onpointerup = () => { draggingId = null; save(); };
+
+                    // Burbuja de edición si está seleccionada
                     if (selectedId === t.id && !isLocked) {
                         div.style.border = '3px solid #3b82f6';
                         div.style.zIndex = '100';
@@ -304,49 +274,37 @@
                             <button onclick="resize(${t.id}, 0, 20)"><i class="fa-solid fa-arrows-up-down"></i></button>
                             <button onclick="rotate(${t.id})"><i class="fa-solid fa-rotate-right"></i></button>
                             <button onclick="rename(${t.id})"><i class="fa-solid fa-font"></i></button>
-                            <button onclick="deleteT(${t.id})" class="text-red-400"><i class="fa-solid fa-trash-can"></i></button>
+                            <button onclick="deleteT(${t.id})"><i class="fa-solid fa-trash-can text-red-400"></i></button>
                         `;
                         div.appendChild(bubble);
                     }
-
-                    div.onpointerdown = (e) => {
-                        if (isLocked) return;
-                        // Permitir que el sistema maneje el evento si hay más de un toque (pinch zoom)
-                        if (!e.isPrimary) return; 
-
-                        draggingId = t.id;
-                        selectedId = t.id;
-                        
-                        const rect = layer.getBoundingClientRect();
-                        offsetX = (e.clientX - rect.left) - t.x;
-                        offsetY = (e.clientY - rect.top) - t.y;
-                        
-                        div.setPointerCapture(e.pointerId);
-                        e.stopPropagation();
-                    };
-
-                    div.onpointermove = (e) => {
-                        if (draggingId === t.id) {
-                            const rect = layer.getBoundingClientRect();
-                            const newX = (e.clientX - rect.left) - offsetX;
-                            const newY = (e.clientY - rect.top) - offsetY;
-                            t.x = Math.max(20, Math.min(layer.offsetWidth - 20, newX));
-                            t.y = Math.max(20, Math.min(layer.offsetHeight - 20, newY));
-                            div.style.left = t.x + 'px';
-                            div.style.top = t.y + 'px';
-                        }
-                    };
-
-                    div.onpointerup = () => { draggingId = null; save(); };
                 }
                 layer.appendChild(div);
             });
         }
 
+        function toggleLock() {
+            isLocked = !isLocked;
+            const icon = document.getElementById('lock-icon');
+            const text = document.getElementById('lock-text');
+            
+            if (isLocked) {
+                icon.className = 'fa-solid fa-lock text-red-500 mr-1';
+                text.innerText = 'LOCK';
+                selectedId = null;
+            } else {
+                icon.className = 'fa-solid fa-unlock text-emerald-500 mr-1';
+                text.innerText = 'EDIT';
+            }
+            
+            showToast(isLocked ? "SISTEMA BLOQUEADO" : "MODO EDICIÓN ACTIVADO");
+            renderAll();
+        }
+
         function resize(id, dw, dh) {
             const t = tables.find(x => x.id === id);
-            if (dw !== 0) t.w = (t.w > 300) ? 60 : t.w + dw;
-            if (dh !== 0) t.h = (t.h > 300) ? 60 : t.h + dh;
+            if (dw !== 0) t.w = (t.w > 400) ? 60 : t.w + dw;
+            if (dh !== 0) t.h = (t.h > 400) ? 60 : t.h + dh;
             save(); renderAll();
         }
 
@@ -370,29 +328,17 @@
         }
 
         function deselectAll(e) { 
-            if (e && e.target.id !== 'layer-design' && e.target.id !== 'viewport') return;
-            selectedId = null; 
-            renderAll(); 
-        }
-
-        function toggleLock() {
-            isLocked = !isLocked;
-            const icon = document.getElementById('lock-icon');
-            const btn = document.getElementById('lock-btn');
-            icon.className = isLocked ? 'fa-solid fa-lock text-red-500 mr-1' : 'fa-solid fa-unlock text-emerald-500 mr-1';
-            btn.innerHTML = isLocked ? '<i class="fa-solid fa-lock text-red-500 mr-1"></i> LOCK' : '<i class="fa-solid fa-unlock text-emerald-500 mr-1"></i> EDIT';
-            showToast(isLocked ? "PLANO BLOQUEADO" : "EDICIÓN ACTIVADA");
-            renderAll();
+            if (e.target.id === 'layer-design' || e.target.id === 'viewport' || e.target.id === 'map-canvas') {
+                selectedId = null; 
+                renderAll(); 
+            }
         }
 
         function addTable(tipo) {
-            const w = tipo === 'std' ? 60 : 140;
-            const h = tipo === 'std' ? 60 : 80;
             const viewport = document.getElementById('viewport');
             const spawnY = viewport.scrollTop + 150;
-            
             tables.push({ 
-                id: Date.now(), x: 150, y: spawnY, w: w, h: h, r: 0, 
+                id: Date.now(), x: 150, y: spawnY, w: 80, h: 80, r: 0, 
                 label: (tables.length + 1).toString(), tipo: tipo 
             });
             save(); renderAll();
@@ -400,32 +346,25 @@
 
         function save() { localStorage.setItem('sp_v4_tables', JSON.stringify(tables)); }
 
-        function saveFinalReport() {
-            const firma = document.getElementById('firma-auditor').value || "ANÓNIMO";
-            const obs = document.getElementById('obs-final').value || "-";
-            const reg = document.getElementById('mesas-registradas').value || "0";
-            const insitu = document.getElementById('mesas-insitu').value || "0";
-            const lugar = document.getElementById('lugar-sector').value || "GENERAL";
-            const micros = document.getElementById('mesas-micros').value || "0";
-            const hora = document.getElementById('hora-control').value || "00:00";
+        function showToast(m) {
+            const t = document.getElementById('toast');
+            t.innerText = m; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
+        }
 
+        function saveFinalReport() {
             const report = {
                 id: Date.now(),
-                firma: firma.toUpperCase(),
-                resumen: `Sector: ${lugar} | Ocup: ${insitu} | Micros: ${micros}`,
-                detalle: `Reg: ${reg} | Obs: ${obs}`,
-                hora: hora,
+                firma: document.getElementById('firma-auditor').value.toUpperCase() || "AUDITOR",
+                resumen: `Sector: ${document.getElementById('lugar-sector').value} | Ocup: ${document.getElementById('mesas-insitu').value}`,
+                detalle: `Obs: ${document.getElementById('obs-final').value}`,
+                hora: document.getElementById('hora-control').value,
                 date: new Date().toLocaleDateString()
             };
-
             reports.unshift(report);
             localStorage.setItem('sp_v4_reports', JSON.stringify(reports));
-            
-            ["mesas-registradas", "lugar-sector", "mesas-insitu", "mesas-micros", "obs-final", "firma-auditor"].forEach(id => {
-                document.getElementById(id).value = "";
-            });
-            
-            showToast("REPORTE ARCHIVADO"); 
+            showToast("REPORTE GUARDADO");
+            renderReports();
             setTab('reports');
         }
 
@@ -433,29 +372,17 @@
             const list = document.getElementById('report-list');
             list.innerHTML = reports.map(r => `
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <p class="font-black text-[11px] text-slate-900 uppercase">${r.firma}</p>
-                            <p class="text-[9px] text-slate-400 font-bold">${r.date} - ${r.hora}</p>
-                        </div>
-                        <div class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-[9px] font-black uppercase">Guardado</div>
-                    </div>
-                    <p class="text-[10px] text-slate-600 font-bold bg-slate-50 p-2 rounded-lg mb-1">${r.resumen}</p>
+                    <p class="font-black text-[11px] text-slate-900 uppercase">${r.firma} - ${r.date}</p>
+                    <p class="text-[10px] text-slate-600 font-bold">${r.resumen}</p>
                     <p class="text-[9px] text-slate-400 italic">${r.detalle}</p>
                 </div>
-            `).join('') || '<div class="text-center py-10 text-slate-300 font-black text-[10px] uppercase">Sin reportes históricos</div>';
+            `).join('') || '<div class="text-center py-10 text-slate-300 font-black text-[10px] uppercase">Sin reportes</div>';
         }
 
         function resetLayout() {
-            if(confirm("¿Estás seguro de borrar todo el mapa?")) {
+            if(confirm("¿Borrar todo el diseño?")) {
                 tables = []; save(); renderAll();
             }
-        }
-
-        function showToast(m) {
-            const t = document.getElementById('toast');
-            t.innerText = m; t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 2000);
         }
 
         window.onload = init;
