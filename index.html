@@ -29,7 +29,7 @@
 
         #map-container { 
             height: 1200px; 
-            width: 1000px;
+            width: 1500px;
             position: absolute;
             background-color: #ffffff;
             transform-origin: 0 0;
@@ -59,6 +59,7 @@
             opacity: 0.7;
             box-shadow: 0 10px 20px rgba(0,0,0,0.2);
             z-index: 1000;
+            border-color: #f59e0b !important;
         }
 
         .mesa.circulo { border-radius: 50%; }
@@ -71,7 +72,7 @@
         .screen-overlay {
             position: fixed;
             inset: 0;
-            top: 140px; /* Debajo de los tabs */
+            top: 130px; 
             background-color: #f8fafc;
             z-index: 200;   
             display: none;
@@ -116,22 +117,20 @@
 <body class="h-screen flex flex-col overflow-hidden">
 
     <!-- HEADER & TABS SUPERIORES -->
-    <header class="bg-slate-950 text-white p-4 pt-8 shrink-0">
+    <header class="bg-slate-950 text-white p-4 pt-6 shrink-0">
         <div class="flex justify-between items-center mb-4">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center italic font-black text-xs">SC</div>
-                <div>
-                    <h1 class="font-black text-lg tracking-tighter uppercase italic leading-none">SPOT CHECK</h1>
-                </div>
+                <h1 class="font-black text-lg tracking-tighter uppercase italic leading-none">SPOT CHECK</h1>
             </div>
-            <button onclick="openModal('save-modal')" class="bg-red-600 px-4 py-2 rounded-full text-[10px] font-black uppercase italic shadow-lg shadow-red-900/40">Finalizar</button>
+            <button onclick="openModal('save-modal')" class="bg-red-600 px-4 py-2 rounded-full text-[10px] font-black uppercase italic">Finalizar</button>
         </div>
         
-        <div class="flex gap-4 overflow-x-auto no-scrollbar">
-            <button onclick="switchTab('map')" id="btn-map" class="tab-btn active px-2 py-2 font-black text-[10px] uppercase italic whitespace-nowrap">MAPA</button>
-            <button onclick="switchTab('notes')" id="btn-notes" class="tab-btn text-slate-500 px-2 py-2 font-black text-[10px] uppercase italic whitespace-nowrap">NOTAS</button>
-            <button onclick="switchTab('report')" id="btn-report" class="tab-btn text-slate-500 px-2 py-2 font-black text-[10px] uppercase italic whitespace-nowrap">REPORTES</button>
-            <button onclick="switchTab('design')" id="btn-design" class="tab-btn text-slate-500 px-2 py-2 font-black text-[10px] uppercase italic whitespace-nowrap text-amber-500">DISEÑO</button>
+        <div class="flex gap-6 overflow-x-auto no-scrollbar border-t border-white/10 pt-2">
+            <button onclick="switchTab('map')" id="btn-map" class="tab-btn active px-1 py-2 font-black text-[10px] uppercase italic whitespace-nowrap">MAPA</button>
+            <button onclick="switchTab('notes')" id="btn-notes" class="tab-btn text-slate-500 px-1 py-2 font-black text-[10px] uppercase italic whitespace-nowrap">NOTAS</button>
+            <button onclick="switchTab('report')" id="btn-report" class="tab-btn text-slate-500 px-1 py-2 font-black text-[10px] uppercase italic whitespace-nowrap">REPORTES</button>
+            <button onclick="switchTab('design')" id="btn-design" class="tab-btn text-slate-500 px-1 py-2 font-black text-[10px] uppercase italic whitespace-nowrap text-amber-500">DISEÑO</button>
         </div>
     </header>
 
@@ -142,13 +141,13 @@
             <div class="flex items-center gap-1"><div class="w-2 h-2 bg-black rounded-full"></div><span id="c-occ" class="text-[10px] font-black italic">0</span></div>
             <div class="flex items-center gap-1"><div class="w-2 h-2 bg-red-500 rounded-full"></div><span id="c-und" class="text-[10px] font-black italic text-red-600">0</span></div>
         </div>
-        <div id="mode-indicator" class="text-[8px] font-black uppercase text-slate-400 bg-slate-100 px-2 py-1 rounded">Modo Lectura</div>
+        <div id="mode-indicator" class="text-[8px] font-black uppercase text-slate-400 bg-slate-100 px-2 py-1 rounded">VISTA LECTURA</div>
     </div>
 
     <!-- ÁREA DE MAPA -->
     <main id="viewport">
         <div id="map-container">
-            <!-- Barra de referencia -->
+            <!-- Referencias fijas del plano -->
             <div class="absolute bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center font-black text-slate-200 italic text-2xl" style="left: 450px; top: 20px; width: 450px; height: 80px; border-radius: 40px;">BARRA PRINCIPAL</div>
             <div id="mesas-layer" class="w-full h-full relative"></div>
         </div>
@@ -162,76 +161,66 @@
 
     <!-- PANTALLAS OVERLAY -->
     <div id="notes-screen" class="screen-overlay">
-        <div class="max-w-md mx-auto w-full">
-            <h2 class="font-black text-xl italic uppercase tracking-tighter mb-4 text-slate-800">Notas de Turno</h2>
-            <textarea id="main-notes" placeholder="Escribe observaciones aquí..." class="w-full h-80 p-5 bg-white rounded-3xl border-2 border-slate-100 focus:border-red-500 outline-none font-bold text-slate-600 uppercase text-xs shadow-inner"></textarea>
-        </div>
+        <h2 class="font-black text-xl italic uppercase mb-4 text-slate-800">Notas de Turno</h2>
+        <textarea id="main-notes" placeholder="Escribe observaciones aquí..." class="w-full h-80 p-5 bg-white rounded-3xl border-2 border-slate-100 font-bold text-slate-600 uppercase text-xs shadow-inner"></textarea>
     </div>
 
     <div id="report-screen" class="screen-overlay">
-        <div class="max-w-md mx-auto w-full">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="font-black text-xl italic uppercase tracking-tighter text-slate-800">Historial</h2>
-                <button onclick="clearHistory()" class="text-red-500 text-[10px] font-black uppercase italic">Limpiar</button>
-            </div>
-            <div id="history-list" class="space-y-4 pb-10"></div>
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="font-black text-xl italic uppercase text-slate-800">Historial</h2>
+            <button onclick="clearHistory()" class="text-red-500 text-[10px] font-black uppercase italic">Limpiar Todo</button>
         </div>
+        <div id="history-list" class="space-y-4 pb-10"></div>
     </div>
 
     <div id="design-screen" class="screen-overlay">
-        <div class="max-w-md mx-auto w-full space-y-6">
+        <div class="space-y-6">
             <div class="bg-amber-50 border-2 border-amber-200 p-5 rounded-3xl">
-                <h3 class="font-black text-amber-800 uppercase italic text-sm mb-2">Modo Editor Activo</h3>
-                <p class="text-[10px] text-amber-700 font-bold leading-tight">En este modo puedes arrastrar las mesas para ubicarlas exactamente. El mapa mostrará una cuadrícula de referencia.</p>
+                <h3 class="font-black text-amber-800 uppercase italic text-sm mb-2">Editor de Plano</h3>
+                <p class="text-[10px] text-amber-700 font-bold leading-tight">En esta pestaña puedes arrastrar las mesas libremente para ajustar el plano. Se guardará la posición al soltar.</p>
             </div>
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4">
-                <button onclick="resetLayout()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase italic text-xs">Restablecer Plano Base</button>
-                <button onclick="switchTab('map')" class="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase italic text-xs text-center">Volver al Mapa</button>
-            </div>
+            <button onclick="resetLayout()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase italic text-xs">Restablecer Posiciones</button>
+            <button onclick="switchTab('map')" class="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase italic text-xs text-center">Ver en el Mapa</button>
         </div>
     </div>
 
-    <!-- MODAL DE GUARDADO -->
+    <!-- MODAL FINALIZAR -->
     <div id="save-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden z-[500] items-center justify-center p-6">
         <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl">
-            <h3 class="text-center font-black uppercase italic text-lg mb-6">Auditoría Spot Check</h3>
+            <h3 class="text-center font-black uppercase italic text-lg mb-6 tracking-tighter">Guardar Auditoría</h3>
             <div class="space-y-4 mb-8">
-                <input id="f-auditor" type="text" placeholder="Auditor" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black uppercase text-xs">
+                <input id="f-auditor" type="text" placeholder="NOMBRE AUDITOR" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black uppercase text-xs">
                 <div class="grid grid-cols-2 gap-3">
-                    <input id="f-fisico" type="number" placeholder="In Situ" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-xs">
-                    <input id="f-sistema" type="number" placeholder="Micros" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-xs">
+                    <input id="f-fisico" type="number" placeholder="CONTEO FÍSICO" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-xs">
+                    <input id="f-sistema" type="number" placeholder="CONTEO SISTEMA" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-xs">
                 </div>
             </div>
-            <button onclick="confirmSave()" class="w-full py-5 bg-red-600 text-white rounded-2xl font-black uppercase italic shadow-xl shadow-red-900/40 mb-4">Guardar y Cerrar</button>
-            <button onclick="closeModal('save-modal')" class="w-full text-slate-400 font-black text-[10px] uppercase italic tracking-widest">Cancelar</button>
+            <button onclick="confirmSave()" class="w-full py-5 bg-red-600 text-white rounded-2xl font-black uppercase italic shadow-xl shadow-red-900/40 mb-4">Confirmar y Guardar</button>
+            <button onclick="closeModal('save-modal')" class="w-full text-slate-400 font-black text-[10px] uppercase italic tracking-widest">Cerrar</button>
         </div>
     </div>
 
     <script>
-        const DB_PREFIX = 'SC_PROFESSIONAL_V4';
+        const DB_PREFIX = 'SC_PROF_V4_TOP';
         let tables = [];
         let audits = JSON.parse(localStorage.getItem(`${DB_PREFIX}_audits`)) || [];
         let isDesignMode = false;
-        
-        // Coordenadas iniciales para 40 mesas
+        let scale = 0.6, tx = 20, ty = 20;
+
         function createInitialLayout() {
             const layout = [];
-            // Fila 1-10: Superiores (Barra)
-            for(let i=0; i<10; i++) layout.push({ id: i+1, label: `${i+1}`, x: 450 + (i*52), y: 140, w: 45, h: 45, type: 'cuadrado', status: 'free' });
-            // Fila 11-20: Centrales Sup
-            for(let i=0; i<10; i++) layout.push({ id: 11+i, label: `${11+i}`, x: 50 + (i*92), y: 350, w: 70, h: 70, type: 'cuadrado', status: 'free' });
-            // Fila 21-25: Redondas Grandes
-            for(let i=0; i<5; i++) layout.push({ id: 21+i, label: `${21+i}`, x: 100 + (i*180), y: 550, w: 100, h: 100, type: 'circulo', status: 'free' });
-            // Fila 26-30: Redondas Medianas
-            for(let i=0; i<5; i++) layout.push({ id: 26+i, label: `${26+i}`, x: 150 + (i*160), y: 780, w: 80, h: 80, type: 'circulo', status: 'free' });
-            // Fila 31-40: Entrada
-            for(let i=0; i<10; i++) layout.push({ id: 31+i, label: `${31+i}`, x: 50 + (i*92), y: 1000, w: 70, h: 70, type: 'cuadrado', status: 'free' });
+            // Fila Superior Barra (1-10)
+            for(let i=0; i<10; i++) layout.push({ id: i+1, label: `${i+1}`, x: 450 + (i*55), y: 140, w: 45, h: 45, type: 'cuadrado', status: 'free' });
+            // Fila VIP (11-20)
+            for(let i=0; i<10; i++) layout.push({ id: 11+i, label: `${11+i}`, x: 50 + (i*95), y: 350, w: 75, h: 75, type: 'cuadrado', status: 'free' });
+            // Fila Redondas (21-30)
+            for(let i=0; i<10; i++) layout.push({ id: 21+i, label: `${21+i}`, x: 100 + (i*140), y: 550, w: 90, h: 90, type: 'circulo', status: 'free' });
+            // Fila Acceso (31-40)
+            for(let i=0; i<10; i++) layout.push({ id: 31+i, label: `${31+i}`, x: 50 + (i*95), y: 800, w: 75, h: 75, type: 'cuadrado', status: 'free' });
             tables = layout;
             saveTables();
         }
 
-        let scale = 0.5, tx = 0, ty = 0;
-        let isPanning = false, startP = { x: 0, y: 0 };
         const view = document.getElementById('viewport');
         const map = document.getElementById('map-container');
 
@@ -239,24 +228,19 @@
             const saved = localStorage.getItem(`${DB_PREFIX}_tables`);
             if(saved) tables = JSON.parse(saved); else createInitialLayout();
             render();
-            setupInteractions();
+            setupPanning();
             resetZoom();
         }
 
-        function setupInteractions() {
-            // Paneo
+        function setupPanning() {
+            let isPanning = false, startP = { x: 0, y: 0 };
             view.onpointerdown = e => { 
                 if(e.target.closest('.mesa')) return;
                 isPanning = true; 
                 startP = { x: e.clientX - tx, y: e.clientY - ty }; 
                 view.setPointerCapture(e.pointerId);
             };
-            view.onpointermove = e => { 
-                if(!isPanning) return; 
-                tx = e.clientX - startP.x; 
-                ty = e.clientY - startP.y; 
-                applyTransform(); 
-            };
+            view.onpointermove = e => { if(isPanning) { tx = e.clientX - startP.x; ty = e.clientY - startP.y; applyTransform(); } };
             view.onpointerup = e => { isPanning = false; view.releasePointerCapture(e.pointerId); };
         }
 
@@ -276,17 +260,16 @@
                 div.style.height = t.h + 'px';
                 div.innerText = t.label;
 
-                // Eventos de la mesa
+                // Evento Principal
                 div.onpointerdown = (e) => {
                     if(!isDesignMode) {
                         t.status = t.status === 'free' ? 'occupied' : (t.status === 'occupied' ? 'undefined' : 'free');
                         saveTables(); render();
                     } else {
-                        startDragging(e, t, div);
+                        handleMesaDrag(e, t, div);
                     }
                     e.stopPropagation();
                 };
-
                 layer.appendChild(div);
             });
             document.getElementById('c-free').innerText = f;
@@ -294,21 +277,22 @@
             document.getElementById('c-und').innerText = u;
         }
 
-        function startDragging(e, tableObj, element) {
+        function handleMesaDrag(e, tableObj, element) {
             let startX = e.clientX;
             let startY = e.clientY;
-            let initialTableX = tableObj.x;
-            let initialTableY = tableObj.y;
+            let initialX = tableObj.x;
+            let initialY = tableObj.y;
             
             element.classList.add('dragging');
+            element.setPointerCapture(e.pointerId);
             
             const onMove = (moveEv) => {
                 const dx = (moveEv.clientX - startX) / scale;
                 const dy = (moveEv.clientY - startY) / scale;
                 
-                // Ajustar a rejilla de 10px en modo diseño
-                tableObj.x = Math.round((initialTableX + dx) / 10) * 10;
-                tableObj.y = Math.round((initialTableY + dy) / 10) * 10;
+                // Movimiento libre con ligera rejilla de 5px
+                tableObj.x = Math.round((initialX + dx) / 5) * 5;
+                tableObj.y = Math.round((initialY + dy) / 5) * 5;
                 
                 element.style.left = tableObj.x + 'px';
                 element.style.top = tableObj.y + 'px';
@@ -317,12 +301,12 @@
             const onUp = () => {
                 element.classList.remove('dragging');
                 saveTables();
-                window.removeEventListener('pointermove', onMove);
-                window.removeEventListener('pointerup', onUp);
+                element.removeEventListener('pointermove', onMove);
+                element.removeEventListener('pointerup', onUp);
             };
 
-            window.addEventListener('pointermove', onMove);
-            window.addEventListener('pointerup', onUp);
+            element.addEventListener('pointermove', onMove);
+            element.addEventListener('pointerup', onUp);
         }
 
         function switchTab(tab) {
@@ -335,19 +319,16 @@
             
             if(isDesignMode) {
                 map.classList.add('design-grid');
-                indicator.innerText = "Modo Editor";
-                indicator.classList.replace('bg-slate-100', 'bg-amber-100');
-                indicator.classList.replace('text-slate-400', 'text-amber-600');
+                indicator.innerText = "MODO EDICIÓN (ARRASTRE)";
+                indicator.className = "text-[8px] font-black uppercase text-amber-600 bg-amber-100 px-2 py-1 rounded";
             } else {
                 map.classList.remove('design-grid');
-                indicator.innerText = "Modo Lectura";
-                indicator.classList.replace('bg-amber-100', 'bg-slate-100');
-                indicator.classList.replace('text-amber-600', 'text-slate-400');
+                indicator.innerText = "VISTA LECTURA";
+                indicator.className = "text-[8px] font-black uppercase text-slate-400 bg-slate-100 px-2 py-1 rounded";
             }
 
             if(tab !== 'map') document.getElementById(`${tab}-screen`).classList.add('active');
             if(tab === 'report') renderHistory();
-            
             document.getElementById(`btn-${tab}`).classList.add('active');
         }
 
@@ -355,10 +336,10 @@
             const a = {
                 id: Date.now(),
                 fecha: new Date().toLocaleString(),
-                auditor: document.getElementById('f-auditor').value || 'S/N',
+                auditor: document.getElementById('f-auditor').value || 'S/D',
                 insitu: document.getElementById('f-fisico').value || '0',
                 micros: document.getElementById('f-sistema').value || '0',
-                obs: document.getElementById('main-notes').value || 'Sin observaciones',
+                obs: document.getElementById('main-notes').value || '-',
                 stats: { o: tables.filter(t => t.status === 'occupied').length, i: tables.filter(t => t.status === 'undefined').length }
             };
             audits.unshift(a);
@@ -370,47 +351,40 @@
         function renderHistory() {
             const list = document.getElementById('history-list');
             list.innerHTML = audits.map(a => `
-                <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 relative">
-                    <div class="flex justify-between mb-4">
+                <div class="bg-white p-5 rounded-3xl border border-slate-100">
+                    <div class="flex justify-between items-start mb-3">
                         <div>
-                            <p class="text-[7px] font-black text-slate-300 uppercase">${a.fecha}</p>
-                            <h4 class="font-black text-slate-800 text-sm uppercase italic">${a.auditor}</h4>
+                            <span class="text-[7px] font-black text-slate-300 block uppercase">${a.fecha}</span>
+                            <span class="font-black text-slate-800 text-xs uppercase">${a.auditor}</span>
                         </div>
-                        <div class="flex flex-col items-end">
-                             <span class="text-[9px] font-black text-slate-400">MESAS: ${a.stats.o}</span>
-                             <span class="text-[9px] font-black text-red-400">INCID: ${a.stats.i}</span>
+                        <div class="text-right">
+                            <div class="text-[9px] font-black text-slate-400">MESAS: ${a.stats.o}</div>
+                            <div class="text-[9px] font-black text-red-500">FALLO: ${a.stats.i}</div>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 mb-4">
-                        <div class="bg-slate-50 p-2 rounded-xl border border-slate-100 text-center">
+                    <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2 rounded-2xl mb-2">
+                        <div class="text-center">
                             <span class="text-[7px] font-bold text-slate-400 uppercase block">In Situ</span>
-                            <span class="font-black text-slate-800">${a.insitu}</span>
+                            <span class="font-black text-slate-700">${a.insitu}</span>
                         </div>
-                        <div class="bg-red-50 p-2 rounded-xl border border-red-100 text-center">
-                            <span class="text-[7px] font-bold text-red-400 uppercase block">Micros</span>
+                        <div class="text-center">
+                            <span class="text-[7px] font-bold text-slate-400 uppercase block">Micros</span>
                             <span class="font-black text-red-600">${a.micros}</span>
                         </div>
                     </div>
-                    <p class="text-[9px] text-slate-500 font-medium italic border-t pt-3 uppercase leading-tight">${a.obs}</p>
-                    <button onclick="copyRaw(${a.id})" class="mt-3 w-full py-2 bg-slate-50 rounded-xl text-[8px] font-black uppercase text-slate-400 hover:text-slate-600">Copiar Datos</button>
+                    <p class="text-[9px] text-slate-500 italic uppercase leading-none mt-2">${a.obs}</p>
                 </div>
-            `).join('') || '<p class="text-center text-slate-300 py-10 uppercase font-black text-xs">No hay reportes</p>';
+            `).join('') || '<p class="text-center py-20 uppercase font-black text-slate-300">Sin reportes</p>';
         }
 
-        function copyRaw(id) {
-            const a = audits.find(x => x.id === id);
-            const text = `AUDITORIA: ${a.fecha}\nAUDITOR: ${a.auditor}\nIN SITU: ${a.insitu}\nMICROS: ${a.micros}\nNOTAS: ${a.obs}`;
-            navigator.clipboard.writeText(text);
-        }
-
-        function changeZoom(d) { scale = Math.min(Math.max(scale + d, 0.1), 3); applyTransform(); }
-        function resetZoom() { scale = (view.clientWidth / 1000) * 0.9; tx = 20; ty = 20; applyTransform(); }
+        function changeZoom(d) { scale = Math.min(Math.max(scale + d, 0.2), 2); applyTransform(); }
+        function resetZoom() { scale = 0.6; tx = 20; ty = 20; applyTransform(); }
         function applyTransform() { map.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`; }
         function saveTables() { localStorage.setItem(`${DB_PREFIX}_tables`, JSON.stringify(tables)); }
-        function resetLayout() { if(confirm("¿Restablecer plano base?")) { createInitialLayout(); render(); } }
-        function clearHistory() { if(confirm("¿Borrar todo?")) { audits=[]; localStorage.removeItem(`${DB_PREFIX}_audits`); renderHistory(); } }
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
+        function resetLayout() { if(confirm("¿Restablecer el diseño original?")) { createInitialLayout(); render(); } }
+        function clearHistory() { if(confirm("¿Limpiar historial?")) { audits=[]; localStorage.removeItem(`${DB_PREFIX}_audits`); renderHistory(); } }
+        function openModal(id) { document.getElementById(id).classList.replace('hidden', 'flex'); }
+        function closeModal(id) { document.getElementById(id).classList.replace('flex', 'hidden'); }
 
         window.onload = init;
     </script>
