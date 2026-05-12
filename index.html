@@ -35,40 +35,52 @@
         .mesa {
             position: absolute;
             transform: translate(-50%, -50%);
-            transition: background-color 0.2s, transform 0.1s, border-color 0.2s, box-shadow 0.2s;
+            transition: background-color 0.2s, transform 0.1s, border-color 0.2s, box-shadow 0.2s, width 0.2s, height 0.2s;
             z-index: 10;
             touch-action: none;
             user-select: none;
             cursor: pointer;
-            width: 54px;
-            height: 54px;
-            border-radius: 16px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 800;
-            font-size: 0.75rem;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            overflow: hidden;
         }
 
+        /* ESTADOS DE MESA */
         .mesa-free { background-color: #ffffff; color: #64748b; border: 2px solid #e2e8f0; }
+        
+        .mesa-pending { 
+            background-color: #ef4444 !important; 
+            color: #ffffff !important; 
+            border: 2px solid #dc2626 !important;
+            animation: pulse-red 2s infinite;
+        }
+
         .mesa-occupied { 
             background-color: #0f172a !important; 
             color: #ffffff !important; 
             border: 2px solid #0f172a !important; 
-            transform: translate(-50%, -50%) scale(1.1);
             box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.3);
+        }
+
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
 
         .design-mode .mesa {
             background-color: #ffffff !important;
             color: #64748b !important;
             border: 2px solid #e2e8f0 !important;
-            transform: translate(-50%, -50%) scale(1);
+            animation: none !important;
         }
 
-        .dragging { opacity: 0.6; transform: translate(-50%, -50%) scale(1.2) !important; z-index: 100; border: 2px dashed #3b82f6 !important; }
-        .selected-design { border: 3px solid #3b82f6 !important; z-index: 50; }
+        .dragging { opacity: 0.6; transform: translate(-50%, -50%) scale(1.05) !important; z-index: 100; border: 2px dashed #3b82f6 !important; }
+        .selected-design { border: 3px solid #3b82f6 !important; z-index: 50; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5) !important; }
 
         #toast {
             position: fixed;
@@ -83,29 +95,21 @@
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
 
-        footer {
-            padding-bottom: calc(1rem + env(safe-area-inset-bottom));
-        }
-
         .screen-overlay {
             position: fixed;
-            left: 0;
-            right: 0;
-            bottom: 0;     
-            top: 205px;    
+            left: 0; right: 0; bottom: 0; top: 205px;    
             background-color: #f8fafc;
             z-index: 30;   
             overflow-y: auto;
             display: none;
             padding-bottom: 100px; 
         }
-        .screen-overlay.active {
-            display: flex;
-        }
+        .screen-overlay.active { display: flex; }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden select-none text-slate-900">
 
+    <!-- HEADER -->
     <header class="bg-slate-950 text-white p-5 pt-12 flex justify-between items-center shrink-0 shadow-2xl z-[60]">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg transform -rotate-3">
@@ -113,7 +117,7 @@
             </div>
             <div>
                 <h1 class="font-black text-xl tracking-tighter uppercase italic leading-none">SPOT CHECK</h1>
-                <p class="text-[8px] text-slate-400 font-black tracking-[0.3em] uppercase mt-1">Live Mode</p>
+                <p class="text-[8px] text-slate-400 font-black tracking-[0.3em] uppercase mt-1">Control Pro</p>
             </div>
         </div>
         <button onclick="toggleLock()" id="lock-btn" class="group flex items-center gap-2 px-4 py-2 bg-slate-900 rounded-2xl border border-slate-800 transition-all active:scale-95">
@@ -122,6 +126,7 @@
         </button>
     </header>
 
+    <!-- STATS -->
     <div class="bg-white border-b border-slate-200 px-6 py-3 flex justify-between items-center z-50 shrink-0">
         <div class="flex gap-4">
             <div>
@@ -130,15 +135,16 @@
             </div>
             <div class="w-[1px] h-6 bg-slate-100 my-auto"></div>
             <div>
-                <p class="text-[8px] font-black text-slate-400 uppercase">Capacidad</p>
+                <p class="text-[8px] font-black text-slate-400 uppercase">Eficiencia</p>
                 <p id="stat-percent" class="text-sm font-black text-emerald-600">0%</p>
             </div>
         </div>
         <div class="text-right">
-            <p id="current-time" class="text-[10px] font-black text-slate-950">00:00</p>
+            <p id="current-time" class="text-[10px] font-black text-slate-950 uppercase tracking-tighter">00:00</p>
         </div>
     </div>
 
+    <!-- NAVEGACIÓN -->
     <nav class="px-4 py-3 bg-slate-50 flex gap-2 shrink-0 z-40 border-b border-slate-200">
         <div class="flex w-full bg-slate-200/50 p-1 rounded-2xl border border-white/50">
             <button onclick="setMode('audit')" id="nav-audit" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase transition-all bg-white shadow-sm text-slate-950 border-b-2 border-emerald-500">Auditar</button>
@@ -148,117 +154,107 @@
         </div>
     </nav>
 
+    <!-- MAPA -->
     <main class="flex-1 overflow-auto relative bg-slate-100 p-4 custom-scrollbar" id="main-scroll">
         <div id="map-container" class="rounded-[2.5rem] shadow-inner border border-slate-200 overflow-hidden">
             <div id="mesas-layer" class="w-full h-full relative"></div>
         </div>
     </main>
 
+    <!-- SCREENS -->
     <div id="notes-screen" class="screen-overlay flex-col p-4 custom-scrollbar">
         <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-200 max-w-md mx-auto w-full space-y-4">
             <h3 class="text-base font-black uppercase italic text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
-                <i class="fa-solid fa-pen-to-square text-emerald-500"></i> Plantilla Reporte
+                <i class="fa-solid fa-pen-to-square text-emerald-500"></i> Nuevo Reporte
             </h3>
-            
             <div class="grid grid-cols-1 gap-3">
-                <div>
-                    <label class="text-[8px] font-black text-slate-400 uppercase mb-1 block">Lugar / Sector</label>
-                    <input id="note-lugar" type="text" placeholder="Ej. Terraza Principal" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-sm outline-none">
-                </div>
-
+                <input id="note-lugar" type="text" placeholder="Sector / Sala" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-sm outline-none">
                 <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-[8px] font-black text-slate-400 uppercase mb-1 block">Abiertas (Plano)</label>
-                        <input id="note-abiertas" type="number" readonly class="w-full p-4 bg-slate-100 border border-slate-200 rounded-2xl font-black text-sm text-center">
-                    </div>
-                    <div>
-                        <label class="text-[8px] font-black text-slate-400 uppercase mb-1 block">In Situ (Contado)</label>
-                        <input id="note-insitu" type="number" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-sm text-center outline-none">
-                    </div>
+                    <input id="note-abiertas" type="number" readonly class="w-full p-4 bg-slate-100 border border-slate-200 rounded-2xl font-black text-sm text-center">
+                    <input id="note-insitu" type="number" placeholder="In Situ" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-sm text-center outline-none">
                 </div>
-
-                <div>
-                    <label class="text-[8px] font-black text-slate-400 uppercase mb-1 block">Micros (Sistema)</label>
-                    <input id="note-micros" type="text" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-sm outline-none">
+                <input id="note-micros" type="text" placeholder="Micros (Sistema)" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-sm outline-none">
+                <div class="flex gap-2">
+                    <input id="note-hora" type="text" class="w-1/3 p-4 bg-slate-100 border border-slate-200 rounded-2xl font-bold text-xs text-center" readonly>
+                    <input id="note-firma" type="text" placeholder="Auditor" class="w-2/3 p-4 bg-slate-50 border border-slate-200 rounded-2xl font-black uppercase text-xs outline-none">
                 </div>
-
-                <div>
-                    <label class="text-[8px] font-black text-slate-400 uppercase mb-1 block">Auditor y Observaciones</label>
-                    <div class="flex gap-2 mb-2">
-                        <input id="note-hora" type="text" class="w-1/3 p-4 bg-slate-100 border border-slate-200 rounded-2xl font-bold text-xs text-center" readonly title="Hora Automática">
-                        <input id="note-firma" type="text" placeholder="Tu Nombre" class="w-2/3 p-4 bg-slate-50 border border-slate-200 rounded-2xl font-black uppercase text-xs outline-none">
-                    </div>
-                    <textarea id="note-observaciones" rows="3" placeholder="Notas adicionales..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-xs outline-none custom-scrollbar"></textarea>
-                </div>
+                <textarea id="note-observaciones" rows="3" placeholder="Comentarios..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-xs outline-none"></textarea>
             </div>
-
-            <button onclick="openModal('audit-modal')" class="w-full bg-slate-950 text-white py-5 rounded-[2rem] font-black text-sm uppercase shadow-xl active:bg-emerald-600 transition-all flex items-center justify-center gap-3">
-                <i class="fa-solid fa-save"></i> Guardar Reporte
-            </button>
+            <button onclick="openModal('audit-modal')" class="w-full bg-slate-950 text-white py-5 rounded-[2rem] font-black text-sm uppercase shadow-xl">Guardar Todo</button>
         </div>
     </div>
 
     <div id="history-screen" class="screen-overlay flex-col p-6 custom-scrollbar">
-        <div class="flex justify-between items-center mb-6 shrink-0">
-            <div>
-                <h2 class="text-2xl font-black uppercase italic text-slate-950 leading-none text-emerald-500">Historial</h2>
-                <p class="text-[8px] font-black text-slate-400 uppercase mt-1">Registros locales</p>
-            </div>
-            <button onclick="setMode('audit')" class="w-10 h-10 bg-slate-100 text-slate-400 rounded-xl flex items-center justify-center">
-                <i class="fa-solid fa-arrow-left"></i>
-            </button>
-        </div>
         <div id="history-list" class="space-y-4"></div>
-        <div class="mt-8 pb-20">
-             <button onclick="clearHistory()" class="w-full py-4 text-red-400 font-black text-[9px] uppercase tracking-widest bg-red-50 rounded-2xl">Borrar Todo el Historial</button>
-        </div>
+        <button onclick="clearHistory()" class="mt-8 w-full py-4 text-red-400 font-black text-[9px] uppercase tracking-widest bg-red-50 rounded-2xl">Limpiar Historial</button>
     </div>
 
+    <!-- FOOTER -->
     <footer id="main-footer" class="p-6 bg-white border-t border-slate-200 shrink-0 z-50">
+        <!-- AUDIT -->
         <div id="audit-controls" class="flex gap-3">
-            <button onclick="openModal('audit-modal')" class="flex-[3] bg-slate-950 text-white py-5 rounded-3xl font-black text-sm uppercase shadow-xl active:bg-emerald-600 transition-all flex items-center justify-center gap-3">
-                <i class="fa-solid fa-check-double"></i>
-                Cerrar Reporte
+            <button onclick="openModal('audit-modal')" class="flex-[3] bg-slate-950 text-white py-5 rounded-3xl font-black text-sm uppercase shadow-xl flex items-center justify-center gap-3 italic">
+                <i class="fa-solid fa-check-double"></i> Cerrar Turno
             </button>
-            <button onclick="clearCurrentAudit()" class="flex-1 bg-slate-100 text-slate-400 py-5 rounded-3xl font-black text-[10px] uppercase transition-all flex items-center justify-center" title="Limpiar Tablero">
+            <button onclick="clearCurrentAudit()" class="flex-1 bg-slate-100 text-slate-400 py-5 rounded-3xl font-black text-[10px] uppercase flex items-center justify-center">
                 <i class="fa-solid fa-rotate-left"></i>
             </button>
         </div>
         
-        <div id="design-controls" class="hidden">
-            <div id="table-edit-zone" class="hidden flex gap-2 mb-4">
-                <input id="label-input" type="text" class="flex-1 bg-slate-100 border-none rounded-2xl px-5 py-4 font-black text-sm outline-none" placeholder="ID...">
-                <button onclick="deleteSelected()" class="bg-red-50 text-red-500 w-14 h-14 rounded-2xl flex items-center justify-center"><i class="fa-solid fa-trash"></i></button>
-                <button onclick="deselectTable()" class="bg-slate-950 text-white w-14 h-14 rounded-2xl flex items-center justify-center"><i class="fa-solid fa-check"></i></button>
+        <!-- DESIGN -->
+        <div id="design-controls" class="hidden flex flex-col gap-3">
+            <div id="table-edit-zone" class="hidden space-y-3">
+                <div class="flex gap-2">
+                    <input id="label-input" type="text" class="flex-1 bg-slate-100 rounded-2xl px-5 py-4 font-black text-sm outline-none" placeholder="Nombre...">
+                    <button onclick="deselectTable()" class="bg-slate-950 text-white w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"><i class="fa-solid fa-check"></i></button>
+                    <button onclick="deleteSelected()" class="bg-red-50 text-red-500 w-14 h-14 rounded-2xl flex items-center justify-center"><i class="fa-solid fa-trash"></i></button>
+                </div>
+                <!-- CONTROLES DIMENSIONES -->
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-slate-50 p-2 rounded-2xl border border-slate-200 flex flex-col items-center">
+                        <span class="text-[7px] font-black uppercase text-slate-400 mb-1">Ancho</span>
+                        <div class="flex gap-1">
+                            <button onclick="resizeSelected('w', -5)" class="w-10 h-8 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-600 active:bg-slate-100"><i class="fa-solid fa-minus text-[10px]"></i></button>
+                            <button onclick="resizeSelected('w', 5)" class="w-10 h-8 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-600 active:bg-slate-100"><i class="fa-solid fa-plus text-[10px]"></i></button>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 p-2 rounded-2xl border border-slate-200 flex flex-col items-center">
+                        <span class="text-[7px] font-black uppercase text-slate-400 mb-1">Alto</span>
+                        <div class="flex gap-1">
+                            <button onclick="resizeSelected('h', -5)" class="w-10 h-8 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-600 active:bg-slate-100"><i class="fa-solid fa-minus text-[10px]"></i></button>
+                            <button onclick="resizeSelected('h', 5)" class="w-10 h-8 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-600 active:bg-slate-100"><i class="fa-solid fa-plus text-[10px]"></i></button>
+                        </div>
+                    </div>
+                </div>
             </div>
+
             <div id="design-actions" class="flex gap-2">
                 <button onclick="addTable()" class="flex-1 bg-slate-950 text-white py-4 rounded-2xl font-black text-[10px] uppercase shadow-lg flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-plus"></i> Añadir Mesa
+                    <i class="fa-solid fa-plus text-emerald-400"></i> Agregar Mesa
                 </button>
                 <button onclick="resetLayout()" class="bg-slate-100 text-slate-400 px-6 rounded-2xl font-black text-[10px] uppercase italic">Reset</button>
             </div>
         </div>
     </footer>
 
+    <!-- MODALES -->
     <div id="audit-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm hidden z-[200] items-center justify-center p-8">
         <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 shadow-2xl">
-            <h3 class="text-xl font-black text-center mb-2 uppercase text-slate-900 italic">Finalizar Auditoría</h3>
-            <p class="text-[10px] text-center text-slate-400 font-bold uppercase mb-8 tracking-widest">¿Confirmas el guardado de este reporte?</p>
-            
-            <div class="flex flex-col gap-3">
-                <button onclick="saveAudit()" class="w-full py-6 bg-emerald-500 text-slate-950 rounded-3xl font-black uppercase shadow-lg active:scale-95 transition-all">Confirmar Envío</button>
-                <button onclick="closeModal('audit-modal')" class="w-full py-4 text-slate-400 font-bold text-[10px] uppercase tracking-widest">Volver</button>
-            </div>
+            <h3 class="text-xl font-black text-center mb-2 uppercase text-slate-900 italic text-emerald-500">Finalizar Auditoría</h3>
+            <p class="text-[10px] text-center text-slate-400 font-bold uppercase mb-8 tracking-widest">¿Confirmar los datos actuales?</p>
+            <button onclick="saveAudit()" class="w-full py-6 bg-emerald-500 text-slate-950 rounded-3xl font-black uppercase shadow-lg mb-3 italic">Sí, Guardar</button>
+            <button onclick="closeModal('audit-modal')" class="w-full py-4 text-slate-400 font-bold text-[10px] uppercase">Atrás</button>
         </div>
     </div>
 
+    <!-- TOAST -->
     <div id="toast" class="bg-slate-900 text-white px-6 py-3 rounded-full font-bold text-xs uppercase shadow-2xl flex items-center gap-3">
         <i class="fa-solid fa-circle-check text-emerald-400"></i>
-        <span id="toast-msg">Acción realizada</span>
+        <span id="toast-msg">Hecho</span>
     </div>
 
     <script>
-        const DB_PREFIX = 'spotcheck_final_v1';
+        const DB_PREFIX = 'spotcheck_rect_v1';
         
         let tables = JSON.parse(localStorage.getItem(`${DB_PREFIX}_tables`)) || [];
         let audits = JSON.parse(localStorage.getItem(`${DB_PREFIX}_audits`)) || [];
@@ -267,8 +263,6 @@
         let currentMode = 'audit';
         let selectedId = null;
         let draggingId = null;
-        
-        // Variables optimizadas para cálculo de desplazamiento táctil e inercia diferencial
         let dragOffsetPercent = { x: 0, y: 0 };
 
         function init() {
@@ -276,74 +270,65 @@
             render();
             updateLockUI();
             startTime();
-            
-            // Eventos globales asignados a la ventana para evitar pérdidas por velocidad
             window.addEventListener('pointermove', handlePointerMove);
             window.addEventListener('pointerup', handlePointerUp);
         }
 
-        function startTime() {
-            setInterval(() => {
-                const now = new Date();
-                const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const timeEl = document.getElementById('current-time');
-                if(timeEl) timeEl.innerText = timeString;
-                const noteHora = document.getElementById('note-hora');
-                if (currentMode === 'notes' && noteHora) noteHora.value = timeString;
-            }, 1000);
-        }
-
         function createInitialLayout() {
-            tables = Array.from({ length: 12 }, (_, i) => ({
+            tables = Array.from({ length: 9 }, (_, i) => ({
                 id: Date.now() + i,
-                x: 15 + (i % 3) * 20,
-                y: 10 + Math.floor(i / 3) * 12,
+                x: 15 + (i % 3) * 25,
+                y: 15 + Math.floor(i / 3) * 15,
+                w: 60, 
+                h: 60,
                 label: (i + 1).toString(),
-                occupied: false
+                status: 'free'
             }));
             saveData();
         }
 
         function render() {
             const layer = document.getElementById('mesas-layer');
-            if(!layer) return;
             layer.innerHTML = '';
             const container = document.getElementById('map-container');
             
-            if (currentMode === 'design') {
-                container.classList.add('design-mode', 'design-grid');
-            } else {
-                container.classList.remove('design-mode', 'design-grid');
-            }
+            container.classList.toggle('design-mode', currentMode === 'design');
+            container.classList.toggle('design-grid', currentMode === 'design');
 
             let occCount = 0;
             tables.forEach(t => {
-                if(t.occupied) occCount++;
+                if(t.status === 'occupied') occCount++;
+                
                 const div = document.createElement('div');
                 div.id = `mesa-${t.id}`;
-                div.className = `mesa ${t.occupied ? 'mesa-occupied' : 'mesa-free'} ${selectedId === t.id && currentMode === 'design' ? 'selected-design' : ''}`;
+                
+                let statusClass = 'mesa-free';
+                if(t.status === 'pending') statusClass = 'mesa-pending';
+                if(t.status === 'occupied') statusClass = 'mesa-occupied';
+
+                div.className = `mesa ${statusClass} ${selectedId === t.id && currentMode === 'design' ? 'selected-design' : ''}`;
+                
+                // Aplicar dimensiones rectangulares
                 div.style.left = `${t.x}%`;
                 div.style.top = `${t.y}%`;
+                div.style.width = `${t.w || 60}px`;
+                div.style.height = `${t.h || 60}px`;
+                
+                // Ajustar tamaño de fuente basado en el lado más corto
+                const minSide = Math.min(t.w || 60, t.h || 60);
+                div.style.fontSize = `${minSide * 0.3}px`;
+                
                 div.innerText = t.label;
                 
                 div.onpointerdown = (e) => {
                     if (currentMode === 'design' && !isLocked) {
                         e.stopPropagation();
-                        // Forzar captura de puntero para evitar pérdidas táctiles
                         div.setPointerCapture(e.pointerId);
-                        
                         draggingId = t.id;
                         selectedId = t.id;
-                        
                         const rect = layer.getBoundingClientRect();
-                        
-                        // Calculamos la distancia exacta en % desde donde se pulsó la mesa a su centro virtual
-                        const clickXPercent = ((e.clientX - rect.left) / rect.width) * 100;
-                        const clickYPercent = ((e.clientY - rect.top) / rect.height) * 100;
-                        
-                        dragOffsetPercent.x = clickXPercent - t.x;
-                        dragOffsetPercent.y = clickYPercent - t.y;
-                        
+                        dragOffsetPercent.x = (((e.clientX - rect.left) / rect.width) * 100) - t.x;
+                        dragOffsetPercent.y = (((e.clientY - rect.top) / rect.height) * 100) - t.y;
                         div.classList.add('dragging');
                         updateDesignPanel();
                     }
@@ -351,8 +336,15 @@
 
                 div.onclick = (e) => {
                     if (currentMode === 'audit') {
-                        t.occupied = !t.occupied;
+                        // Ciclo: Blanco -> Rojo -> Negro -> Blanco
+                        if(t.status === 'free') t.status = 'pending';
+                        else if(t.status === 'pending') t.status = 'occupied';
+                        else t.status = 'free';
                         saveData();
+                        render();
+                    } else if (currentMode === 'design' && !isLocked) {
+                        selectedId = t.id;
+                        updateDesignPanel();
                         render();
                     }
                 };
@@ -362,91 +354,26 @@
             document.getElementById('stat-occupied').innerText = occCount;
             const perc = tables.length > 0 ? Math.round((occCount / tables.length) * 100) : 0;
             document.getElementById('stat-percent').innerText = perc + '%';
-            document.getElementById('note-abiertas').value = tables.length;
+            if(document.getElementById('note-abiertas')) document.getElementById('note-abiertas').value = occCount;
         }
 
         function handlePointerMove(e) {
             if (!draggingId) return;
-            
             const layer = document.getElementById('mesas-layer');
             const rect = layer.getBoundingClientRect();
             const mesa = tables.find(t => t.id === draggingId);
-            
             if (mesa) {
-                // Cálculo ultra fluido basado directamente en el espacio porcentual del plano de fondo
-                const currentXPercent = ((e.clientX - rect.left) / rect.width) * 100;
-                const currentYPercent = ((e.clientY - rect.top) / rect.height) * 100;
-                
-                // Mapeo directo sin retraso por DOM virtual
-                mesa.x = Math.max(2, Math.min(98, currentXPercent - dragOffsetPercent.x));
-                mesa.y = Math.max(2, Math.min(98, currentYPercent - dragOffsetPercent.y));
-                
-                // Actualización rápida directa en los estilos inline para no perder frames (60fps)
+                const curX = ((e.clientX - rect.left) / rect.width) * 100;
+                const curY = ((e.clientY - rect.top) / rect.height) * 100;
+                mesa.x = Math.max(2, Math.min(98, curX - dragOffsetPercent.x));
+                mesa.y = Math.max(2, Math.min(98, curY - dragOffsetPercent.y));
                 const div = document.getElementById(`mesa-${draggingId}`);
-                if (div) {
-                    div.style.left = `${mesa.x}%`;
-                    div.style.top = `${mesa.y}%`;
-                }
+                if (div) { div.style.left = `${mesa.x}%`; div.style.top = `${mesa.y}%`; }
             }
         }
 
-        function handlePointerUp(e) { 
-            if (draggingId) { 
-                const div = document.getElementById(`mesa-${draggingId}`);
-                if (div) {
-                    div.classList.remove('dragging');
-                    try { div.releasePointerCapture(e.pointerId); } catch(err) {}
-                }
-                draggingId = null; 
-                saveData(); 
-                render(); // Re-renderizado final de limpieza para asentar posiciones
-            } 
-        }
-
-        function setMode(m) {
-            draggingId = null;
-            selectedId = null;
-            currentMode = m;
-            
-            ['audit', 'design', 'notes', 'history'].forEach(mode => {
-                const btn = document.getElementById(`nav-${mode}`);
-                if (btn) btn.className = `flex-1 py-3 rounded-xl font-black text-[10px] uppercase transition-all ${mode === m ? 'bg-white shadow-sm text-slate-900 border-b-2 border-emerald-500' : 'text-slate-400'}`;
-            });
-
-            const mainFooter = document.getElementById('main-footer');
-            if (m === 'notes' || m === 'history') {
-                mainFooter.classList.add('hidden');
-            } else {
-                mainFooter.classList.remove('hidden');
-            }
-
-            document.getElementById('audit-controls').classList.toggle('hidden', m === 'design');
-            document.getElementById('design-controls').classList.toggle('hidden', m !== 'design');
-
-            document.getElementById('notes-screen').classList.toggle('active', m === 'notes');
-            document.getElementById('history-screen').classList.toggle('active', m === 'history');
-
-            if (m === 'history') renderHistory();
-            updateDesignPanel();
-            render();
-        }
-
-        function toggleLock() { 
-            isLocked = !isLocked; 
-            updateLockUI(); 
-            saveData(); 
-            showToast(isLocked ? "Bloqueado" : "Modo Edición");
-            render();
-        }
-
-        function updateLockUI() {
-            const icon = document.getElementById('lock-icon');
-            const txt = document.getElementById('lock-text');
-            if(icon) icon.className = isLocked ? 'fa-solid fa-lock text-red-500' : 'fa-solid fa-unlock text-emerald-400';
-            if(txt) {
-                txt.innerText = isLocked ? 'Bloqueado' : 'Edición';
-                txt.className = `text-[9px] font-black uppercase ${isLocked ? 'text-red-400' : 'text-emerald-400'}`;
-            }
+        function handlePointerUp() { 
+            if (draggingId) { draggingId = null; saveData(); render(); } 
         }
 
         function updateDesignPanel() {
@@ -456,38 +383,62 @@
             if (selectedId && !isLocked && currentMode === 'design') {
                 zone.classList.remove('hidden');
                 actions.classList.add('hidden');
-                input.value = tables.find(t => t.id === selectedId).label;
-                input.oninput = (e) => { tables.find(t => t.id === selectedId).label = e.target.value; render(); saveData(); };
+                const mesa = tables.find(t => t.id === selectedId);
+                input.value = mesa.label;
+                input.oninput = (e) => { mesa.label = e.target.value; render(); saveData(); };
             } else {
                 zone.classList.add('hidden');
                 actions.classList.remove('hidden');
             }
         }
 
-        function deselectTable() { selectedId = null; updateDesignPanel(); render(); }
-        function deleteSelected() { tables = tables.filter(t => t.id !== selectedId); deselectTable(); saveData(); }
+        function resizeSelected(dim, delta) {
+            if(!selectedId) return;
+            const mesa = tables.find(t => t.id === selectedId);
+            if (dim === 'w') mesa.w = Math.max(30, Math.min(300, (mesa.w || 60) + delta));
+            if (dim === 'h') mesa.h = Math.max(30, Math.min(300, (mesa.h || 60) + delta));
+            saveData();
+            render();
+        }
+
         function addTable() { 
-            tables.push({ id: Date.now(), x: 25, y: 15, label: (tables.length + 1).toString(), occupied: false }); 
+            tables.push({ id: Date.now(), x: 50, y: 50, w: 60, h: 60, label: (tables.length + 1).toString(), status: 'free' }); 
             saveData(); render(); 
         }
 
-        function clearCurrentAudit() {
-            if(!confirm("¿Deseas limpiar el tablero y todos los campos de notas?")) return;
-            tables.forEach(t => t.occupied = false);
-            ['note-lugar', 'note-insitu', 'note-micros', 'note-observaciones', 'note-firma'].forEach(id => {
-                const el = document.getElementById(id);
-                if(el) el.value = '';
+        function deleteSelected() { tables = tables.filter(t => t.id !== selectedId); deselectTable(); saveData(); }
+        function deselectTable() { selectedId = null; updateDesignPanel(); render(); }
+
+        function setMode(m) {
+            selectedId = null;
+            currentMode = m;
+            ['audit', 'design', 'notes', 'history'].forEach(mode => {
+                const btn = document.getElementById(`nav-${mode}`);
+                if (btn) btn.className = `flex-1 py-3 rounded-xl font-black text-[10px] uppercase transition-all ${mode === m ? 'bg-white shadow-sm text-slate-900 border-b-2 border-emerald-500' : 'text-slate-400'}`;
             });
-            saveData(); render();
-            showToast("Campos Limpiados");
+            document.getElementById('main-footer').classList.toggle('hidden', m === 'notes' || m === 'history');
+            document.getElementById('audit-controls').classList.toggle('hidden', m !== 'audit');
+            document.getElementById('design-controls').classList.toggle('hidden', m !== 'design');
+            document.getElementById('notes-screen').classList.toggle('active', m === 'notes');
+            document.getElementById('history-screen').classList.toggle('active', m === 'history');
+            if (m === 'history') renderHistory();
+            updateDesignPanel();
+            render();
         }
 
-        function clearHistory() {
-            if(!confirm("¿Borrar permanentemente todo el historial?")) return;
-            audits = [];
-            saveData();
-            renderHistory();
-            showToast("Historial Limpio");
+        function toggleLock() { 
+            isLocked = !isLocked; 
+            updateLockUI(); 
+            saveData(); 
+            showToast(isLocked ? "MODO AUDITORÍA" : "MODO EDICIÓN");
+            render();
+        }
+
+        function updateLockUI() {
+            const icon = document.getElementById('lock-icon');
+            const txt = document.getElementById('lock-text');
+            if(icon) icon.className = isLocked ? 'fa-solid fa-lock text-red-500' : 'fa-solid fa-unlock text-emerald-400';
+            if(txt) txt.innerText = isLocked ? 'Bloqueado' : 'Edición';
         }
 
         function showToast(msg) {
@@ -497,108 +448,79 @@
             setTimeout(() => t.classList.remove('show'), 2000);
         }
 
+        function startTime() {
+            setInterval(() => {
+                const now = new Date();
+                const ts = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second: '2-digit'});
+                document.getElementById('current-time').innerText = ts;
+                if(document.getElementById('note-hora')) document.getElementById('note-hora').value = ts;
+            }, 1000);
+        }
+
         function openModal(id) { document.getElementById(id).classList.replace('hidden', 'flex'); }
         function closeModal(id) { document.getElementById(id).classList.replace('flex', 'hidden'); }
 
         function saveAudit() {
-            const nFirma = document.getElementById('note-firma').value || 'Sin Nombre';
-            const occupied = tables.filter(t => t.occupied).length;
+            const occupied = tables.filter(t => t.status === 'occupied').length;
             const percent = Math.round((occupied / tables.length) * 100);
-
             audits.unshift({
                 id: Date.now(),
-                name: nFirma.toUpperCase(),
+                name: (document.getElementById('note-firma').value || 'S/N').toUpperCase(),
                 date: new Date().toLocaleDateString(),
                 time: document.getElementById('note-hora').value,
                 percent: percent,
                 count: `${occupied}/${tables.length}`,
                 details: {
-                    lugar: document.getElementById('note-lugar').value || 'Sector General',
+                    lugar: document.getElementById('note-lugar').value || 'General',
                     insitu: document.getElementById('note-insitu').value || '-',
                     micros: document.getElementById('note-micros').value || '-',
-                    obs: document.getElementById('note-observaciones').value || 'Sin observaciones'
+                    obs: document.getElementById('note-observaciones').value || ''
                 }
             });
-            
-            tables.forEach(t => t.occupied = false);
+            tables.forEach(t => t.status = 'free');
             saveData();
             closeModal('audit-modal');
             setMode('history');
-            showToast("Reporte Guardado");
-        }
-
-        function deleteAudit(id) {
-            if(!confirm("¿Eliminar este reporte permanentemente?")) return;
-            audits = audits.filter(a => a.id !== id);
-            saveData();
-            renderHistory();
-            showToast("Registro Borrado");
-        }
-
-        async function exportAudit(auditId) {
-            const a = audits.find(x => x.id === auditId);
-            if(!a) return;
-
-            const content = `SPOT CHECK - REPORTE DE AUDITORÍA\nFECHA: ${a.date}\nHORA: ${a.time}\nAUDITOR: ${a.name}\nSECTOR: ${a.details.lugar}\nMESAS OCUPADAS: ${a.count}\nCAPACIDAD: ${a.percent}%\nIN SITU: ${a.details.insitu}\nMICROS: ${a.details.micros}\nOBSERVACIONES:\n${a.details.obs}`;
-            const fileName = `SpotCheck_${a.date.replace(/\//g, '-')}.txt`;
-
-            if (navigator.share) {
-                try {
-                    await navigator.share({ title: `Reporte ${a.name}`, text: content });
-                } catch (err) { downloadFile(content, fileName); }
-            } else { downloadFile(content, fileName); }
-        }
-
-        function downloadFile(text, name) {
-            const blob = new Blob([text], { type: 'text/plain' });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url; link.download = name;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-            showToast("Archivo Descargado");
+            showToast("REPORTE ARCHIVADO");
         }
 
         function renderHistory() {
             const list = document.getElementById('history-list');
-            if(!list) return;
             list.innerHTML = audits.map((a) => `
-                <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-slate-100 relative">
-                    <div class="absolute top-5 right-5 flex gap-2">
-                        <button onclick="exportAudit(${a.id})" class="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-xs shadow-sm"><i class="fa-solid fa-share-nodes"></i></button>
-                        <button onclick="deleteAudit(${a.id})" class="w-8 h-8 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-xs shadow-sm"><i class="fa-solid fa-trash-can"></i></button>
-                    </div>
-                    <div class="flex justify-between items-start pr-20">
+                <div class="bg-white p-5 rounded-[2.5rem] shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex justify-between items-start">
                         <div>
-                            <div class="font-black text-xs uppercase text-slate-900 leading-none">${a.name}</div>
-                            <div class="text-[9px] text-slate-400 font-bold uppercase mt-1">${a.date} • ${a.time}</div>
+                            <div class="font-black text-[10px] uppercase text-slate-900 leading-none">${a.name}</div>
+                            <div class="text-[8px] text-slate-400 font-bold uppercase mt-1 tracking-wider">${a.date} • ${a.time}</div>
                         </div>
                         <div class="text-right">
-                            <div class="text-lg font-black text-emerald-600 leading-none">${a.percent}%</div>
-                            <div class="text-[8px] font-black text-slate-400 uppercase">${a.count} Mesas</div>
+                            <div class="text-xl font-black text-emerald-600 leading-none">${a.percent}%</div>
+                            <div class="text-[7px] font-black text-slate-400 uppercase tracking-widest">${a.count} Mesas</div>
                         </div>
                     </div>
-                    <div class="mt-4 pt-4 border-t border-slate-50 text-[10px] space-y-1.5">
-                        <div class="flex items-center gap-2"><span class="text-slate-400 font-bold uppercase text-[8px]">Sector:</span><span class="font-black text-slate-700 italic">${a.details.lugar}</span></div>
-                        <div class="grid grid-cols-2 bg-slate-50/50 p-2 rounded-xl">
-                            <div><span class="text-slate-400 font-bold uppercase text-[7px] block">In Situ</span><span class="font-black text-slate-700">${a.details.insitu}</span></div>
-                            <div><span class="text-slate-400 font-bold uppercase text-[7px] block">Micros</span><span class="font-black text-slate-700">${a.details.micros}</span></div>
-                        </div>
-                        <div class="italic text-slate-500 text-[9px] px-1 bg-white p-2 rounded-xl border border-slate-50 mt-1">${a.details.obs}</div>
+                    <div class="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-2xl">
+                         <div>
+                            <span class="text-[6px] font-black text-slate-400 uppercase block">Sector</span>
+                            <span class="text-[9px] font-bold text-slate-700 uppercase">${a.details.lugar}</span>
+                         </div>
+                         <div>
+                            <span class="text-[6px] font-black text-slate-400 uppercase block">Micros</span>
+                            <span class="text-[9px] font-bold text-slate-700 uppercase">${a.details.micros}</span>
+                         </div>
                     </div>
                 </div>
-            `).join('') || '<p class="text-center text-slate-300 py-20 uppercase font-black text-[10px]">Sin registros</p>';
+            `).join('') || '<p class="text-center text-slate-300 py-20 uppercase font-black text-[10px]">Sin historial</p>';
         }
 
-        function resetLayout() { if (confirm("¿Restablecer el diseño original?")) { createInitialLayout(); render(); } }
-        
         function saveData() {
             localStorage.setItem(`${DB_PREFIX}_tables`, JSON.stringify(tables));
             localStorage.setItem(`${DB_PREFIX}_audits`, JSON.stringify(audits));
             localStorage.setItem(`${DB_PREFIX}_locked`, JSON.stringify(isLocked));
         }
+
+        function clearCurrentAudit() { if(confirm("¿Limpiar auditoría actual?")) { tables.forEach(t => t.status = 'free'); render(); saveData(); } }
+        function clearHistory() { if(confirm("¿Borrar todo el historial?")) { audits = []; saveData(); renderHistory(); } }
+        function resetLayout() { if (confirm("¿Restablecer diseño?")) { createInitialLayout(); render(); } }
 
         init();
     </script>
