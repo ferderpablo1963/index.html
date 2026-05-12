@@ -2,9 +2,10 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Se permite el escalado del usuario para poder agrandar con los dedos -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>SPOT CHECK PRO V4</title>
+    <title>SPOT CHECK PRO V4 - ZOOM ENABLED</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -17,10 +18,9 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            touch-action: none;
+            /* Se quita touch-action: none para permitir gestos nativos de zoom */
         }
 
-        /* Navegación fija idéntica a la anterior */
         .nav-container { display: flex; background: #020617; padding: 8px; gap: 4px; shrink: 0; }
         .nav-btn {
             flex: 1; padding: 12px 4px; border-radius: 12px; color: #64748b;
@@ -32,7 +32,6 @@
         .screen { flex: 1; display: none; overflow: hidden; position: relative; }
         .screen.active { display: flex; flex-direction: column; }
 
-        /* Contenedor del mapa optimizado para arrastre libre */
         #viewport {
             flex: 1;
             background: #cbd5e1;
@@ -43,7 +42,6 @@
             -webkit-overflow-scrolling: touch;
         }
 
-        /* Lienzo del mapa extra largo */
         #map-canvas { 
             width: 800px; 
             height: 1500px; 
@@ -64,12 +62,16 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             cursor: move;
             border-radius: 8px;
-            touch-action: none; /* Crucial para Pointer Events */
             z-index: 10;
+            transition: background 0.2s, border-color 0.2s;
+            /* Solo deshabilitamos acciones táctiles cuando estamos moviendo la mesa */
         }
 
-        .mesa-libre { background: white; border: 2px solid #cbd5e1; color: #334155; }
+        /* Colores Auditoría */
+        .mesa-disponible { background: white; border: 2px solid #cbd5e1; color: #334155; }
         .mesa-ocupada { background: #0f172a; border: 2px solid #0f172a; color: #10b981; }
+        .mesa-discrepante { background: #ef4444; border: 2px solid #b91c1c; color: white; }
+        
         .mesa-vip { border-color: #f59e0b !important; border-width: 3px !important; }
 
         .edit-bubble {
@@ -98,9 +100,9 @@
 
         .bottom-controls {
             background: white; padding: 16px; border-top: 1px solid #e2e8f0; shrink: 0;
+            z-index: 500;
         }
 
-        /* Estilo para el formulario de notas */
         .form-label {
             display: block; font-size: 10px; font-weight: 900; color: #64748b;
             text-transform: uppercase; margin-bottom: 4px; margin-left: 4px;
@@ -132,16 +134,16 @@
     <!-- PANTALLA DISEÑO -->
     <section id="screen-design" class="screen active">
         <div id="viewport" onscroll="deselectAll()">
-            <div id="map-canvas" id="canvas-container">
+            <div id="map-canvas">
                 <div id="layer-design" class="w-full h-full relative" onclick="deselectAll(event)"></div>
             </div>
         </div>
         <div id="design-controls" class="hidden bottom-controls grid grid-cols-2 gap-2">
             <button onclick="addTable('std')" class="bg-slate-900 text-white p-4 rounded-xl font-black text-[10px] uppercase shadow-md">
-                <i class="fa-solid fa-square mr-1"></i> + Standart
+                <i class="fa-solid fa-square mr-1"></i> + Estándar
             </button>
             <button onclick="addTable('vip')" class="bg-amber-500 text-white p-4 rounded-xl font-black text-[10px] uppercase shadow-md">
-                <i class="fa-solid fa-crown mr-1"></i> + VIP (4x)
+                <i class="fa-solid fa-crown mr-1"></i> + VIP Rect.
             </button>
             <button onclick="resetLayout()" class="col-span-2 bg-red-50 text-red-600 p-2 rounded-xl font-black text-[9px] uppercase">
                 Limpiar Todo el Plano
@@ -163,7 +165,7 @@
         </div>
     </section>
 
-    <!-- PANTALLA NOTAS (TEMPLATE SOLICITADO) -->
+    <!-- PANTALLA NOTAS -->
     <section id="screen-notes" class="screen overflow-y-auto p-6 bg-slate-100">
         <div class="max-w-md mx-auto bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-200">
             <h2 class="text-xs font-black uppercase text-slate-400 mb-6 tracking-widest italic border-b pb-2">Planilla de Auditoría In Situ</h2>
@@ -222,17 +224,15 @@
     <script>
         let tables = JSON.parse(localStorage.getItem('sp_v4_tables')) || [];
         let reports = JSON.parse(localStorage.getItem('sp_v4_reports')) || [];
-        let occupied = {};
+        let auditStatus = {}; 
         let isLocked = true;
         let draggingId = null;
         let selectedId = null;
 
-        // OFFSET para arrastre libre
         let offsetX = 0;
         let offsetY = 0;
 
         function init() { 
-            // Establecer hora actual por defecto
             const ahora = new Date();
             const horaStr = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
             const inputHora = document.getElementById('hora-control');
@@ -263,10 +263,16 @@
 
             tables.forEach(t => {
                 const div = document.createElement('div');
-                const isOcc = occupied[t.id];
+                const status = auditStatus[t.id] || 0; 
                 const isVip = t.tipo === 'vip';
                 
-                div.className = `mesa ${isOcc && isAudit ? 'mesa-ocupada' : 'mesa-libre'} ${isVip ? 'mesa-vip' : ''}`;
+                let auditClass = 'mesa-disponible';
+                if (isAudit) {
+                    if (status === 1) auditClass = 'mesa-ocupada';
+                    if (status === 2) auditClass = 'mesa-discrepante';
+                }
+
+                div.className = `mesa ${auditClass} ${isVip ? 'mesa-vip' : ''}`;
                 div.style.left = t.x + 'px';
                 div.style.top = t.y + 'px';
                 div.style.width = t.w + 'px';
@@ -277,7 +283,7 @@
                 if (isAudit) {
                     div.onclick = (e) => { 
                         e.stopPropagation();
-                        occupied[t.id] = !occupied[t.id]; 
+                        auditStatus[t.id] = (status + 1) % 3;
                         renderMap(layerId, true); 
                     };
                 } else {
@@ -303,10 +309,11 @@
                         div.appendChild(bubble);
                     }
 
-                    // LÓGICA DE ARRASTRE MEJORADA (MOVIMIENTO LIBRE)
                     div.onpointerdown = (e) => {
                         if (isLocked) return;
-                        e.preventDefault();
+                        // Permitir que el sistema maneje el evento si hay más de un toque (pinch zoom)
+                        if (!e.isPrimary) return; 
+
                         draggingId = t.id;
                         selectedId = t.id;
                         
@@ -323,11 +330,8 @@
                             const rect = layer.getBoundingClientRect();
                             const newX = (e.clientX - rect.left) - offsetX;
                             const newY = (e.clientY - rect.top) - offsetY;
-                            
-                            // Límites del canvas
                             t.x = Math.max(20, Math.min(layer.offsetWidth - 20, newX));
                             t.y = Math.max(20, Math.min(layer.offsetHeight - 20, newY));
-                            
                             div.style.left = t.x + 'px';
                             div.style.top = t.y + 'px';
                         }
@@ -341,8 +345,8 @@
 
         function resize(id, dw, dh) {
             const t = tables.find(x => x.id === id);
-            if (dw !== 0) t.w = t.w > 200 ? 60 : t.w + dw;
-            if (dh !== 0) t.h = t.h > 200 ? 60 : t.h + dh;
+            if (dw !== 0) t.w = (t.w > 300) ? 60 : t.w + dw;
+            if (dh !== 0) t.h = (t.h > 300) ? 60 : t.h + dh;
             save(); renderAll();
         }
 
@@ -382,12 +386,13 @@
         }
 
         function addTable(tipo) {
-            const size = tipo === 'std' ? 60 : 120;
+            const w = tipo === 'std' ? 60 : 140;
+            const h = tipo === 'std' ? 60 : 80;
             const viewport = document.getElementById('viewport');
             const spawnY = viewport.scrollTop + 150;
             
             tables.push({ 
-                id: Date.now(), x: 100, y: spawnY, w: size, h: size, r: 0, 
+                id: Date.now(), x: 150, y: spawnY, w: w, h: h, r: 0, 
                 label: (tables.length + 1).toString(), tipo: tipo 
             });
             save(); renderAll();
@@ -416,7 +421,6 @@
             reports.unshift(report);
             localStorage.setItem('sp_v4_reports', JSON.stringify(reports));
             
-            // Limpiar formulario
             ["mesas-registradas", "lugar-sector", "mesas-insitu", "mesas-micros", "obs-final", "firma-auditor"].forEach(id => {
                 document.getElementById(id).value = "";
             });
