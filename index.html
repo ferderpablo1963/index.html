@@ -132,6 +132,26 @@
             z-index: 300;
             box-shadow: 0 10px 30px rgba(0,0,0,0.4);
         }
+
+        /* Estilo para reporte tipo Ticket */
+        .ticket-report {
+            background: white;
+            padding: 25px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #1e293b;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .ticket-report::before {
+            content: "";
+            position: absolute;
+            top: -5px; left: 0; right: 0;
+            height: 10px;
+            background-image: radial-gradient(circle, transparent, transparent 50%, white 50%, white);
+            background-size: 15px 15px;
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
@@ -143,7 +163,7 @@
                 <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center italic font-black text-xs">SC</div>
                 <h1 class="font-black text-lg tracking-tighter uppercase italic leading-none">SPOT CHECK</h1>
             </div>
-            <button onclick="openModal('save-modal')" class="bg-red-600 px-5 py-2 rounded-full text-[10px] font-black uppercase italic tracking-widest">Finalizar</button>
+            <button onclick="prefillAndOpenSaveModal()" class="bg-red-600 px-5 py-2 rounded-full text-[10px] font-black uppercase italic tracking-widest">Finalizar</button>
         </div>
         
         <div class="flex gap-6 overflow-x-auto no-scrollbar border-t border-white/10 pt-2">
@@ -167,7 +187,6 @@
     <!-- ÁREA DEL MAPA -->
     <main id="viewport">
         <div id="map-container">
-            <!-- Referencia estática de barra -->
             <div class="absolute bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center font-black text-slate-300 italic text-2xl uppercase" style="left: 600px; top: 40px; width: 600px; height: 100px; border-radius: 50px;">Barra Principal</div>
             <div id="mesas-layer" class="w-full h-full relative"></div>
         </div>
@@ -178,10 +197,10 @@
             <button onclick="resetZoom()" class="btn-round"><i class="fa-solid fa-expand text-sm"></i></button>
         </div>
 
-        <!-- Toolbar de Diseño Flotante -->
+        <!-- Toolbar de Diseño -->
         <div id="design-toolbar">
             <span class="text-[9px] text-amber-500 font-black uppercase italic mr-2">Diseño:</span>
-            <button onclick="addNewMesa()" class="bg-white/10 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase italic border border-white/20 hover:bg-white/20">
+            <button onclick="addNewMesa()" class="bg-white/10 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase italic border border-white/20">
                 <i class="fa-solid fa-plus mr-1"></i> Nueva Mesa
             </button>
             <button onclick="resetLayout()" class="text-white/40 px-2 py-2 font-black text-[9px] uppercase italic">Reiniciar</button>
@@ -196,13 +215,13 @@
 
     <div id="report-screen" class="screen-overlay">
         <div class="flex justify-between items-center mb-6">
-            <h2 class="font-black text-xl italic uppercase text-slate-800">Historial</h2>
-            <button onclick="clearHistory()" class="text-red-500 text-[10px] font-black uppercase italic border border-red-200 px-4 py-1 rounded-full">Limpiar Todo</button>
+            <h2 class="font-black text-xl italic uppercase text-slate-800">Historial de Controles</h2>
+            <button onclick="clearHistory()" class="text-red-500 text-[10px] font-black uppercase italic border border-red-200 px-4 py-1 rounded-full">Borrar Todo</button>
         </div>
-        <div id="history-list" class="space-y-4 pb-20"></div>
+        <div id="history-list" class="space-y-6 pb-24"></div>
     </div>
 
-    <!-- MODAL EDICIÓN DE MESA (Para modo diseño) -->
+    <!-- MODAL EDICIÓN DE MESA -->
     <div id="edit-mesa-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden z-[600] items-center justify-center p-6">
         <div class="bg-white w-full max-w-sm rounded-[3rem] p-8">
             <h3 class="font-black uppercase italic text-lg mb-6 text-center text-slate-900 underline decoration-red-500 decoration-4">Propiedades</h3>
@@ -212,51 +231,63 @@
                     <input id="edit-label" type="text" class="w-full p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl font-black uppercase text-xs">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <button onclick="setMesaProp('type', 'cuadrado')" class="p-4 bg-slate-100 rounded-2xl font-black text-[10px] uppercase italic border-2 border-transparent focus:border-slate-900">Cuadrada</button>
-                    <button onclick="setMesaProp('type', 'circulo')" class="p-4 bg-slate-100 rounded-2xl font-black text-[10px] uppercase italic border-2 border-transparent focus:border-slate-900">Redonda</button>
+                    <button onclick="setMesaProp('type', 'cuadrado')" class="p-4 bg-slate-100 rounded-2xl font-black text-[10px] uppercase italic">Cuadrada</button>
+                    <button onclick="setMesaProp('type', 'circulo')" class="p-4 bg-slate-100 rounded-2xl font-black text-[10px] uppercase italic">Redonda</button>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-[9px] font-black uppercase ml-2 text-slate-400">Ancho</label>
-                        <input id="edit-w" type="number" class="w-full p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl font-black text-xs text-center">
-                    </div>
-                    <div>
-                        <label class="text-[9px] font-black uppercase ml-2 text-slate-400">Alto</label>
-                        <input id="edit-h" type="number" class="w-full p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl font-black text-xs text-center">
-                    </div>
+                    <div><input id="edit-w" type="number" class="w-full p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl font-black text-xs text-center"></div>
+                    <div><input id="edit-h" type="number" class="w-full p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl font-black text-xs text-center"></div>
                 </div>
-                <button onclick="deleteMesa()" class="w-full py-3 text-red-500 font-black uppercase italic text-[10px] bg-red-50 rounded-2xl border border-red-100">Eliminar Mesa</button>
+                <button onclick="deleteMesa()" class="w-full py-3 text-red-500 font-black uppercase italic text-[10px] bg-red-50 rounded-2xl">Eliminar Mesa</button>
             </div>
-            <button onclick="saveMesaEdit()" class="w-full py-5 bg-slate-950 text-white rounded-2xl font-black uppercase italic shadow-xl mb-4">Guardar y Cerrar</button>
+            <button onclick="saveMesaEdit()" class="w-full py-5 bg-slate-950 text-white rounded-2xl font-black uppercase italic shadow-xl mb-4">Guardar</button>
             <button onclick="closeModal('edit-mesa-modal')" class="w-full text-slate-400 font-black text-[10px] uppercase italic">Cancelar</button>
         </div>
     </div>
 
-    <!-- MODAL FINALIZAR AUDITORÍA -->
-    <div id="save-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden z-[500] items-center justify-center p-6">
-        <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 shadow-2xl">
-            <h3 class="text-center font-black uppercase italic text-xl mb-8">Resumen Final</h3>
-            <div class="space-y-5 mb-8">
-                <input id="f-auditor" type="text" placeholder="NOMBRE DEL AUDITOR" class="w-full p-5 bg-slate-50 border-2 border-slate-200 rounded-2xl font-black uppercase text-xs">
-                <input id="f-lugar" type="text" placeholder="SECTOR (EJ. BARRA, TERRAZA)" class="w-full p-5 bg-slate-50 border-2 border-slate-200 rounded-2xl font-black uppercase text-xs">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black uppercase ml-2 text-slate-400">In Situ</label>
-                        <input id="f-fisico" type="number" placeholder="0" class="w-full p-5 bg-slate-50 border-2 border-slate-200 rounded-2xl font-black text-sm text-center">
+    <!-- MODAL FINALIZAR AUDITORÍA (NUEVO FORMATO) -->
+    <div id="save-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden z-[500] items-center justify-center p-6 overflow-y-auto">
+        <div class="bg-white w-full max-w-sm rounded-[2rem] p-6 shadow-2xl my-auto">
+            <h3 class="text-center font-black uppercase italic text-lg mb-6 border-b pb-2">IMPRESIÓN DE REPORTE</h3>
+            
+            <div class="space-y-4 mb-6">
+                <div class="bg-slate-50 p-4 rounded-xl space-y-3">
+                    <div>
+                        <label class="text-[8px] font-black text-slate-400 uppercase">Sector / Lugar</label>
+                        <input id="f-lugar" type="text" placeholder="EJ. TERRAZA" class="w-full p-2 bg-white border border-slate-200 rounded-lg font-black uppercase text-xs">
                     </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black uppercase ml-2 text-slate-400">Micros</label>
-                        <input id="f-sistema" type="number" placeholder="0" class="w-full p-5 bg-slate-50 border-2 border-slate-200 rounded-2xl font-black text-sm text-center">
+                    <div>
+                        <label class="text-[8px] font-black text-slate-400 uppercase">Mesas Abiertas Registradas (Mapa)</label>
+                        <input id="f-registradas" type="number" class="w-full p-2 bg-slate-100 border border-slate-200 rounded-lg font-black text-xs" readonly>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[8px] font-black text-slate-400 uppercase">In Situ Ocupadas</label>
+                            <input id="f-insitu" type="number" class="w-full p-2 bg-white border border-slate-200 rounded-lg font-black text-xs">
+                        </div>
+                        <div>
+                            <label class="text-[8px] font-black text-slate-400 uppercase">Abiertas en Micros</label>
+                            <input id="f-micros" type="number" class="w-full p-2 bg-white border border-slate-200 rounded-lg font-black text-xs">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[8px] font-black text-slate-400 uppercase">Observaciones</label>
+                        <textarea id="f-obs" class="w-full p-2 bg-white border border-slate-200 rounded-lg font-black uppercase text-[10px] h-20"></textarea>
+                    </div>
+                    <div>
+                        <label class="text-[8px] font-black text-slate-400 uppercase">Auditor / Firma</label>
+                        <input id="f-auditor" type="text" placeholder="NOMBRE" class="w-full p-2 bg-white border border-slate-200 rounded-lg font-black uppercase text-xs">
                     </div>
                 </div>
             </div>
-            <button onclick="confirmSave()" class="w-full py-6 bg-red-600 text-white rounded-2xl font-black uppercase italic shadow-2xl shadow-red-900/40 mb-4">Guardar Reporte</button>
-            <button onclick="closeModal('save-modal')" class="w-full text-slate-400 font-black text-[10px] uppercase italic">Regresar al Mapa</button>
+            
+            <button onclick="confirmSave()" class="w-full py-4 bg-red-600 text-white rounded-xl font-black uppercase italic shadow-lg mb-3">Generar Reporte</button>
+            <button onclick="closeModal('save-modal')" class="w-full text-slate-400 font-black text-[10px] uppercase italic">Cancelar</button>
         </div>
     </div>
 
     <script>
-        const DB_PREFIX = 'SPOTCHECK_PROF_V6';
+        const DB_PREFIX = 'SPOTCHECK_PROF_V7';
         let tables = [];
         let audits = JSON.parse(localStorage.getItem(`${DB_PREFIX}_audits`)) || [];
         let isDesignMode = false;
@@ -269,14 +300,8 @@
 
         function createInitialLayout() {
             const layout = [];
-            // Filas de mesas estandar
-            for(let i=0; i<10; i++) {
-                layout.push({ id: Date.now()+i, label: `${i+1}`, x: 300 + (i*80), y: 250, w: 60, h: 60, type: 'cuadrado', status: 'free' });
-                layout.push({ id: Date.now()+20+i, label: `${i+11}`, x: 300 + (i*80), y: 400, w: 60, h: 60, type: 'cuadrado', status: 'free' });
-            }
-            // VIPs circulares
-            for(let i=0; i<5; i++) {
-                layout.push({ id: Date.now()+50+i, label: `V${i+1}`, x: 100, y: 150 + (i*120), w: 90, h: 90, type: 'circulo', status: 'free' });
+            for(let i=0; i<20; i++) {
+                layout.push({ id: Date.now()+i, label: `${i+1}`, x: 300 + ((i%10)*90), y: 250 + (Math.floor(i/10)*120), w: 60, h: 60, type: 'cuadrado', status: 'free' });
             }
             tables = layout;
             saveData();
@@ -314,7 +339,6 @@
             
             tables.forEach(t => {
                 counts[t.status === 'free' ? 'free' : (t.status === 'occupied' ? 'occ' : 'und')]++;
-                
                 const el = document.createElement('div');
                 el.className = `mesa ${t.type} status-${t.status}`;
                 el.style.left = `${t.x}px`;
@@ -323,24 +347,16 @@
                 el.style.height = `${t.h || 60}px`;
                 el.innerText = t.label;
 
-                // Eventos de interacción
                 el.onpointerdown = (e) => {
                     e.stopPropagation();
-                    if(isDesignMode) {
-                        handleDrag(e, t, el);
-                    } else {
-                        // Cambiar estado en modo lectura
+                    if(isDesignMode) handleDrag(e, t, el);
+                    else {
                         t.status = t.status === 'free' ? 'occupied' : (t.status === 'occupied' ? 'undefined' : 'free');
-                        saveData();
-                        render();
+                        saveData(); render();
                     }
                 };
 
-                // Abrir edición en modo diseño con un clic
-                el.onclick = () => {
-                    if(isDesignMode) openEditModal(t);
-                };
-
+                el.onclick = () => { if(isDesignMode) openEditModal(t); };
                 mesasLayer.appendChild(el);
             });
 
@@ -350,31 +366,22 @@
         }
 
         function handleDrag(e, t, el) {
-            let sX = e.clientX, sY = e.clientY;
-            let iX = t.x, iY = t.y;
+            let sX = e.clientX, sY = e.clientY, iX = t.x, iY = t.y;
             el.classList.add('dragging');
             el.setPointerCapture(e.pointerId);
-            
             const onMove = (ev) => {
                 t.x = iX + (ev.clientX - sX) / scale;
                 t.y = iY + (ev.clientY - sY) / scale;
-                el.style.left = `${t.x}px`;
-                el.style.top = `${t.y}px`;
+                el.style.left = `${t.x}px`; el.style.top = `${t.y}px`;
             };
-            
             const onUp = () => {
-                el.classList.remove('dragging');
-                saveData();
-                el.removeEventListener('pointermove', onMove);
-                el.removeEventListener('pointerup', onUp);
+                el.classList.remove('dragging'); saveData();
+                el.removeEventListener('pointermove', onMove); el.removeEventListener('pointerup', onUp);
             };
-            
-            el.addEventListener('pointermove', onMove);
-            el.addEventListener('pointerup', onUp);
+            el.addEventListener('pointermove', onMove); el.addEventListener('pointerup', onUp);
         }
 
         function switchTab(tab) {
-            // Limpiar estados
             document.querySelectorAll('.screen-overlay').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('design-toolbar').style.display = 'none';
@@ -384,19 +391,73 @@
             const ind = document.getElementById('mode-indicator');
 
             if(tab === 'map') {
-                ind.innerText = "MODO LECTURA";
-                ind.className = "text-[8px] font-black uppercase text-slate-400 bg-slate-100 px-2 py-1 rounded tracking-widest";
+                ind.innerText = "MODO LECTURA"; ind.className = "text-[8px] font-black uppercase text-slate-400 bg-slate-100 px-2 py-1 rounded";
             } else if(tab === 'design') {
                 document.getElementById('design-toolbar').style.display = 'flex';
                 mapContainer.classList.add('design-grid');
-                ind.innerText = "MODO CONSTRUCTOR (MUEVA PIEZAS)";
-                ind.className = "text-[8px] font-black uppercase text-amber-600 bg-amber-100 px-2 py-1 rounded tracking-widest";
+                ind.innerText = "MODO CONSTRUCTOR"; ind.className = "text-[8px] font-black uppercase text-amber-600 bg-amber-100 px-2 py-1 rounded";
             } else {
                 document.getElementById(`${tab}-screen`).classList.add('active');
                 if(tab === 'report') renderHistory();
             }
-
             document.getElementById(`btn-${tab}`).classList.add('active');
+        }
+
+        function prefillAndOpenSaveModal() {
+            const occupied = tables.filter(t => t.status === 'occupied' || t.status === 'undefined').length;
+            document.getElementById('f-registradas').value = occupied;
+            document.getElementById('f-insitu').value = occupied;
+            document.getElementById('f-micros').value = occupied;
+            document.getElementById('f-obs').value = document.getElementById('main-notes').value;
+            openModal('save-modal');
+        }
+
+        function confirmSave() {
+            const audit = {
+                id: Date.now(),
+                timestamp: new Date().toLocaleString(),
+                hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                lugar: document.getElementById('f-lugar').value || '---',
+                registradas: document.getElementById('f-registradas').value,
+                insitu: document.getElementById('f-insitu').value,
+                micros: document.getElementById('f-micros').value,
+                obs: document.getElementById('f-obs').value || 'S/N',
+                auditor: document.getElementById('f-auditor').value || '---'
+            };
+            audits.unshift(audit);
+            localStorage.setItem(`${DB_PREFIX}_audits`, JSON.stringify(audits));
+            closeModal('save-modal');
+            switchTab('report');
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = audits.map(a => `
+                <div class="ticket-report text-[11px] leading-relaxed">
+                    <div class="text-center font-bold mb-4 border-b border-dashed border-slate-300 pb-2">
+                        IMPRESIÓN DE REPORTE (Open Checks)<br>
+                        ${a.timestamp}
+                    </div>
+                    
+                    <div class="space-y-1 mb-4">
+                        <p>MESAS ABIERTAS REGISTRADAS: <span class="font-bold underline">${a.registradas}</span></p>
+                        <p>IN SITU SE OBSERVAN: (<span class="italic">${a.lugar}</span>) <span class="font-bold underline">${a.insitu}</span> mesas ocupadas</p>
+                        <p>MESAS ABIERTAS EN MICROS (Captura): <span class="font-bold underline">${a.micros}</span></p>
+                        <p>HORA DEL CONTROL: <span class="font-bold underline">${a.hora}</span></p>
+                    </div>
+
+                    <div class="mb-4">
+                        <p class="font-bold">Observaciones:</p>
+                        <p class="italic text-slate-600">${a.obs}</p>
+                    </div>
+
+                    <div class="mt-8 border-t border-slate-200 pt-4 text-center">
+                        <div class="w-32 h-[1px] bg-slate-400 mx-auto mb-1"></div>
+                        <p class="font-bold uppercase">${a.auditor}</p>
+                        <p class="text-[8px] text-slate-400">FIRMA AUDITOR</p>
+                    </div>
+                </div>
+            `).join('') || '<p class="text-center py-20 uppercase font-black text-slate-300 italic text-xs">Sin registros</p>';
         }
 
         function openEditModal(t) {
@@ -423,80 +484,23 @@
         }
 
         function deleteMesa() {
-            if(confirm("¿Eliminar esta mesa definitivamente?")) {
+            if(confirm("¿Eliminar mesa?")) {
                 tables = tables.filter(x => x.id !== selectedMesaId);
                 saveData(); render(); closeModal('edit-mesa-modal');
             }
         }
 
         function addNewMesa() {
-            const newM = {
-                id: Date.now(), label: '+', x: 100 / scale, y: 100 / scale, w: 65, h: 65, type: 'cuadrado', status: 'free'
-            };
-            tables.push(newM);
+            tables.push({ id: Date.now(), label: '+', x: 100, y: 100, w: 60, h: 60, type: 'cuadrado', status: 'free' });
             saveData(); render();
-        }
-
-        function confirmSave() {
-            const audit = {
-                id: Date.now(),
-                fecha: new Date().toLocaleString(),
-                auditor: document.getElementById('f-auditor').value || 'S/N',
-                lugar: document.getElementById('f-lugar').value || 'GENERAL',
-                insitu: document.getElementById('f-fisico').value || '0',
-                micros: document.getElementById('f-sistema').value || '0',
-                obs: document.getElementById('main-notes').value || 'Sin observaciones',
-                u: tables.filter(t => t.status === 'undefined').length
-            };
-            audits.unshift(audit);
-            localStorage.setItem(`${DB_PREFIX}_audits`, JSON.stringify(audits));
-            closeModal('save-modal');
-            switchTab('report');
-        }
-
-        function renderHistory() {
-            const list = document.getElementById('history-list');
-            list.innerHTML = audits.map(a => `
-                <div class="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <span class="block text-[8px] font-black text-slate-300 uppercase">${a.fecha}</span>
-                            <h4 class="font-black text-slate-900 text-sm uppercase italic tracking-tighter">${a.auditor}</h4>
-                        </div>
-                        <div class="${a.u > 0 ? 'bg-red-50 text-red-600' : 'bg-slate-50 text-slate-400'} px-3 py-1 rounded-full font-black text-[9px] uppercase italic">
-                            Fallas: ${a.u}
-                        </div>
-                    </div>
-                    
-                    <div class="space-y-3">
-                        <div class="flex items-center gap-2">
-                            <span class="text-slate-400 font-bold uppercase text-[8px]">Sector:</span>
-                            <span class="font-black text-slate-700 italic text-[11px] uppercase">${a.lugar}</span>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-3xl border border-slate-100">
-                            <div>
-                                <span class="text-slate-400 font-bold uppercase text-[7px] block">In Situ</span>
-                                <span class="font-black text-slate-800 text-lg leading-none">${a.insitu}</span>
-                            </div>
-                            <div>
-                                <span class="text-slate-400 font-bold uppercase text-[7px] block">Micros</span>
-                                <span class="font-black text-red-600 text-lg leading-none">${a.micros}</span>
-                            </div>
-                        </div>
-                        <div class="bg-white p-4 rounded-2xl border border-slate-50">
-                            <p class="text-[10px] text-slate-500 font-medium uppercase italic leading-tight">${a.obs}</p>
-                        </div>
-                    </div>
-                </div>
-            `).join('') || '<p class="text-center py-20 uppercase font-black text-slate-300 italic text-xs">Historial Vacío</p>';
         }
 
         function changeZoom(d) { scale = Math.min(Math.max(scale + d, 0.1), 3); applyTransform(); }
         function resetZoom() { scale = 0.5; tx = 20; ty = 20; applyTransform(); }
         function applyTransform() { mapContainer.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`; }
         function saveData() { localStorage.setItem(`${DB_PREFIX}_tables`, JSON.stringify(tables)); }
-        function resetLayout() { if(confirm("¿Restablecer el plano original?")) { createInitialLayout(); render(); } }
-        function clearHistory() { if(confirm("¿Borrar todo el historial?")) { audits=[]; localStorage.removeItem(`${DB_PREFIX}_audits`); renderHistory(); } }
+        function resetLayout() { if(confirm("¿Restablecer original?")) { createInitialLayout(); render(); } }
+        function clearHistory() { if(confirm("¿Borrar historial?")) { audits=[]; localStorage.removeItem(`${DB_PREFIX}_audits`); renderHistory(); } }
         function openModal(id) { document.getElementById(id).classList.replace('hidden', 'flex'); }
         function closeModal(id) { document.getElementById(id).classList.replace('flex', 'hidden'); }
 
