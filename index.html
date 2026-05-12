@@ -49,7 +49,7 @@
             border-width: 2px;
         }
 
-        .mesa-rect { border-radius: 12px; }
+        .mesa-rect { border-radius: 8px; }
         .mesa-circle { border-radius: 50%; }
 
         /* ESTADOS DE MESA */
@@ -85,16 +85,6 @@
         .dragging { opacity: 0.6; transform: translate(-50%, -50%) scale(1.05) !important; z-index: 100; border: 2px dashed #3b82f6 !important; }
         .selected-design { border: 3px solid #3b82f6 !important; z-index: 50; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5) !important; }
 
-        #toast {
-            position: fixed;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            transition: transform 0.3s ease-out;
-            z-index: 1000;
-        }
-        #toast.show { transform: translateX(-50%) translateY(0); }
-        
         .screen-overlay {
             position: fixed;
             left: 0; right: 0; bottom: 0; top: 205px;    
@@ -110,6 +100,8 @@
             background-color: #0f172a !important;
             color: white !important;
         }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden select-none text-slate-900">
@@ -191,7 +183,7 @@
                 </div>
                 <textarea id="note-observaciones" rows="3" placeholder="Observaciones generales..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-xs outline-none focus:border-emerald-500"></textarea>
             </div>
-            <button onclick="openModal('audit-modal')" class="w-full bg-slate-950 text-white py-5 rounded-[2rem] font-black text-sm uppercase shadow-xl active:scale-95 transition-transform">Guardar Reporte</button>
+            <button onclick="saveAudit()" class="w-full bg-slate-950 text-white py-5 rounded-[2rem] font-black text-sm uppercase shadow-xl active:scale-95 transition-transform">Guardar Reporte</button>
         </div>
     </div>
 
@@ -202,7 +194,7 @@
 
     <!-- FOOTER -->
     <footer id="main-footer" class="p-6 pb-8 bg-white border-t border-slate-100 shrink-0 z-50">
-        <!-- AUDIT -->
+        <!-- AUDIT CONTROLS -->
         <div id="audit-controls" class="flex gap-3">
             <button onclick="openModal('audit-modal')" class="flex-[4] bg-slate-950 text-white py-6 rounded-[2.5rem] font-black text-sm uppercase shadow-2xl flex items-center justify-center gap-3 italic active:scale-95 transition-transform">
                 <i class="fa-solid fa-check-double text-emerald-400"></i> Finalizar Turno
@@ -212,43 +204,45 @@
             </button>
         </div>
         
-        <!-- DESIGN -->
+        <!-- DESIGN CONTROLS -->
         <div id="design-controls" class="hidden flex flex-col gap-4">
-            <!-- PANEL EDICIÓN MESA -->
             <div id="table-edit-zone" class="hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
                 
-                <!-- SELECTORES RÁPIDOS (TAMAÑO Y FORMA) -->
+                <!-- SELECTOR DE FORMA MEJORADO -->
                 <div class="flex items-center gap-3 mb-4 overflow-x-auto pb-1 no-scrollbar">
-                    <!-- FORMAS -->
                     <div class="flex bg-slate-100 p-1 rounded-2xl gap-1 shrink-0">
-                        <button onclick="updateShape('rect')" id="shape-rect" class="w-12 h-12 flex items-center justify-center rounded-xl bg-white text-slate-900 shadow-sm border border-slate-200">
+                        <!-- CUADRADO -->
+                        <button onclick="updateShape('square')" id="shape-square" class="w-12 h-12 flex items-center justify-center rounded-xl text-slate-400">
                             <i class="fa-solid fa-square"></i>
                         </button>
+                        <!-- CÍRCULO -->
                         <button onclick="updateShape('circle')" id="shape-circle" class="w-12 h-12 flex items-center justify-center rounded-xl text-slate-400">
                             <i class="fa-solid fa-circle"></i>
                         </button>
+                        <!-- RECTÁNGULO -->
+                        <button onclick="updateShape('rect')" id="shape-rect" class="w-16 h-12 flex items-center justify-center rounded-xl text-slate-400">
+                            <div class="w-8 h-5 border-2 border-current rounded-sm"></div>
+                        </button>
                     </div>
                     
-                    <!-- TAMAÑOS -->
+                    <!-- SELECTOR DE TAMAÑO -->
                     <div class="flex flex-1 bg-slate-100 p-1 rounded-2xl gap-1">
-                        <button onclick="updateSize(50)" id="size-50" class="flex-1 py-3 rounded-xl font-black text-[10px] text-slate-400">S</button>
-                        <button onclick="updateSize(70)" id="size-70" class="flex-1 py-3 rounded-xl font-black text-[10px] text-slate-400">M</button>
-                        <button onclick="updateSize(100)" id="size-100" class="flex-1 py-3 rounded-xl font-black text-[10px] text-slate-400">L</button>
-                        <button onclick="updateSize(140)" id="size-140" class="flex-1 py-3 rounded-xl font-black text-[10px] text-slate-400">XL</button>
+                        <button onclick="updateSize('S')" id="size-S" class="flex-1 py-3 rounded-xl font-black text-[10px] text-slate-400">S</button>
+                        <button onclick="updateSize('M')" id="size-M" class="flex-1 py-3 rounded-xl font-black text-[10px] text-slate-400">M</button>
+                        <button onclick="updateSize('L')" id="size-L" class="flex-1 py-3 rounded-xl font-black text-[10px] text-slate-400">L</button>
+                        <button onclick="updateSize('XL')" id="size-XL" class="flex-1 py-3 rounded-xl font-black text-[10px] text-slate-400">XL</button>
                     </div>
                 </div>
 
-                <!-- BOTONES ACCIÓN MESA -->
                 <div class="flex gap-2">
                     <div class="flex-[3] relative">
-                        <input id="label-input" type="text" class="w-full bg-slate-100 rounded-[2rem] px-6 py-5 font-black text-sm outline-none focus:bg-white focus:border-emerald-500 border border-transparent transition-all" placeholder="ID">
+                        <input id="label-input" type="text" class="w-full bg-slate-100 rounded-[2rem] px-6 py-5 font-black text-sm outline-none focus:bg-white focus:border-emerald-500 border border-transparent transition-all uppercase" placeholder="ETIQUETA">
                     </div>
                     <button onclick="deleteSelected()" class="w-16 h-16 bg-red-50 text-red-500 rounded-[2rem] flex items-center justify-center text-lg active:scale-95 transition-all"><i class="fa-solid fa-trash-can"></i></button>
                     <button onclick="deselectTable()" class="w-16 h-16 bg-slate-950 text-white rounded-[2rem] flex items-center justify-center text-lg shadow-xl active:scale-95 transition-all"><i class="fa-solid fa-check"></i></button>
                 </div>
             </div>
 
-            <!-- BOTÓN AGREGAR -->
             <div id="design-actions" class="flex gap-2">
                 <button onclick="addTable()" class="flex-[4] bg-slate-950 text-white py-6 rounded-[2.5rem] font-black text-sm uppercase shadow-2xl flex items-center justify-center gap-3 italic active:scale-95 transition-transform">
                     <i class="fa-solid fa-plus text-emerald-400"></i> Nueva Mesa
@@ -274,14 +268,22 @@
     </div>
 
     <!-- TOAST -->
-    <div id="toast" class="bg-slate-900/95 backdrop-blur text-white px-8 py-4 rounded-full font-black text-[10px] uppercase shadow-2xl flex items-center gap-3 border border-white/10 italic">
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur text-white px-8 py-4 rounded-full font-black text-[10px] uppercase shadow-2xl flex items-center gap-3 border border-white/10 italic z-[1000] opacity-0 pointer-events-none transition-all duration-300 translate-y-10">
         <i class="fa-solid fa-circle-check text-emerald-400"></i>
         <span id="toast-msg">Hecho</span>
     </div>
 
     <script>
-        const DB_PREFIX = 'spotcheck_rect_v3';
+        const DB_PREFIX = 'spotcheck_final_v1';
         
+        // Tamaños base por nivel (en píxeles)
+        const SIZE_MAP = {
+            'S': 50,
+            'M': 75,
+            'L': 100,
+            'XL': 150
+        };
+
         let tables = JSON.parse(localStorage.getItem(`${DB_PREFIX}_tables`)) || [];
         let audits = JSON.parse(localStorage.getItem(`${DB_PREFIX}_audits`)) || [];
         let isLocked = JSON.parse(localStorage.getItem(`${DB_PREFIX}_locked`)) ?? true; 
@@ -305,9 +307,10 @@
                 id: Date.now() + i,
                 x: 15 + (i % 3) * 25,
                 y: 15 + Math.floor(i / 3) * 15,
-                w: 70, 
-                h: 70,
-                shape: 'rect',
+                sizeLabel: 'M',
+                w: 75, 
+                h: 75,
+                shape: 'square',
                 label: (i + 1).toString(),
                 status: 'free'
             }));
@@ -337,12 +340,11 @@
                 
                 div.style.left = `${t.x}%`;
                 div.style.top = `${t.y}%`;
-                div.style.width = `${t.w || 70}px`;
-                div.style.height = `${t.h || 70}px`;
+                div.style.width = `${t.w}px`;
+                div.style.height = `${t.h}px`;
                 
-                const minSide = Math.min(t.w || 70, t.h || 70);
+                const minSide = Math.min(t.w, t.h);
                 div.style.fontSize = `${minSide * 0.35}px`;
-                
                 div.innerText = t.label;
                 
                 div.onpointerdown = (e) => {
@@ -411,16 +413,22 @@
                 actions.classList.add('hidden');
                 const mesa = tables.find(t => t.id === selectedId);
                 input.value = mesa.label;
-                input.oninput = (e) => { mesa.label = e.target.value; render(); saveData(); };
+                input.oninput = (e) => { mesa.label = e.target.value.toUpperCase(); render(); saveData(); };
                 
-                // Actualizar estado botones forma
-                document.getElementById('shape-rect').className = mesa.shape === 'rect' ? 'w-12 h-12 flex items-center justify-center rounded-xl bg-slate-950 text-white shadow-lg' : 'w-12 h-12 flex items-center justify-center rounded-xl text-slate-400';
-                document.getElementById('shape-circle').className = mesa.shape === 'circle' ? 'w-12 h-12 flex items-center justify-center rounded-xl bg-slate-950 text-white shadow-lg' : 'w-12 h-12 flex items-center justify-center rounded-xl text-slate-400';
+                // Actualizar botones de forma
+                ['square', 'circle', 'rect'].forEach(s => {
+                    const btn = document.getElementById(`shape-${s}`);
+                    btn.className = mesa.shape === s ? 
+                        'w-16 h-12 flex items-center justify-center rounded-xl bg-slate-950 text-white shadow-lg' : 
+                        'w-16 h-12 flex items-center justify-center rounded-xl text-slate-400';
+                });
                 
-                // Actualizar estado botones tamaño
-                [50, 70, 100, 140].forEach(s => {
-                    const btn = document.getElementById(`size-${s}`);
-                    btn.className = mesa.w === s ? 'flex-1 py-3 rounded-xl font-black text-[10px] size-btn-active' : 'flex-1 py-3 rounded-xl font-black text-[10px] text-slate-400';
+                // Actualizar botones de tamaño
+                ['S', 'M', 'L', 'XL'].forEach(label => {
+                    const btn = document.getElementById(`size-${label}`);
+                    btn.className = (mesa.sizeLabel === label) ? 
+                        'flex-1 py-3 rounded-xl font-black text-[10px] size-btn-active' : 
+                        'flex-1 py-3 rounded-xl font-black text-[10px] text-slate-400';
                 });
             } else {
                 zone.classList.add('hidden');
@@ -432,20 +440,38 @@
             if(!selectedId) return;
             const mesa = tables.find(t => t.id === selectedId);
             mesa.shape = s;
+            applyDimensions(mesa);
             saveData(); render(); updateDesignPanel();
         }
 
-        function updateSize(s) {
+        function updateSize(label) {
             if(!selectedId) return;
             const mesa = tables.find(t => t.id === selectedId);
-            mesa.w = s;
-            mesa.h = s;
+            mesa.sizeLabel = label;
+            applyDimensions(mesa);
             saveData(); render(); updateDesignPanel();
+        }
+
+        function applyDimensions(mesa) {
+            const base = SIZE_MAP[mesa.sizeLabel || 'M'];
+            if (mesa.shape === 'rect') {
+                mesa.w = base * 1.6; // Más ancho
+                mesa.h = base * 0.8; // Más bajo
+            } else {
+                mesa.w = base;
+                mesa.h = base;
+            }
         }
 
         function addTable() { 
             const newId = Date.now();
-            tables.push({ id: newId, x: 50, y: 50, w: 70, h: 70, shape: 'rect', label: (tables.length + 1).toString(), status: 'free' }); 
+            const newMesa = { 
+                id: newId, x: 50, y: 50, 
+                sizeLabel: 'M', w: 75, h: 75, 
+                shape: 'square', label: (tables.length + 1).toString(), 
+                status: 'free' 
+            };
+            tables.push(newMesa); 
             selectedId = newId;
             saveData(); updateDesignPanel(); render(); 
         }
@@ -488,8 +514,12 @@
         function showToast(msg) {
             const t = document.getElementById('toast');
             document.getElementById('toast-msg').innerText = msg;
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 2000);
+            t.style.opacity = '1';
+            t.style.transform = 'translateX(-50%) translateY(0)';
+            setTimeout(() => {
+                t.style.opacity = '0';
+                t.style.transform = 'translateX(-50%) translateY(40px)';
+            }, 2000);
         }
 
         function startTime() {
@@ -518,7 +548,7 @@
                     lugar: document.getElementById('note-lugar').value || 'GENERAL',
                     insitu: document.getElementById('note-insitu').value || '-',
                     micros: document.getElementById('note-micros').value || '-',
-                    obs: document.getElementById('note-observaciones').value || 'Sin observaciones'
+                    obs: document.getElementById('note-observaciones').value || 'Sin obs'
                 }
             });
             tables.forEach(t => t.status = 'free');
@@ -557,7 +587,7 @@
 
         function clearCurrentAudit() { tables.forEach(t => t.status = 'free'); render(); saveData(); showToast("LIMPIADO"); }
         function clearHistory() { if(confirm("¿Borrar historial?")) { audits = []; saveData(); renderHistory(); } }
-        function resetLayout() { if (confirm("¿Restablecer original?")) { createInitialLayout(); render(); } }
+        function resetLayout() { if (confirm("¿Restablecer el diseño original?")) { createInitialLayout(); render(); } }
 
         init();
     </script>
