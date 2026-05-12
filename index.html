@@ -21,7 +21,6 @@
             flex-direction: column;
             overflow: hidden;
             margin: 0;
-            touch-action: none; /* Crucial para evitar scroll del sistema durante el drag */
         }
 
         .nav-container { 
@@ -68,8 +67,10 @@
             font-weight: 900; font-size: 16px; 
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             border-radius: 12px;
-            touch-action: none; /* Impide que el navegador mueva la pantalla al tocar la mesa */
+            touch-action: none; 
             user-select: none;
+            z-index: 10;
+            transition: transform 0.1s;
         }
         
         .mesa-disponible { background: white; border: 2px solid #cbd5e1; color: #64748b; }
@@ -78,17 +79,27 @@
 
         .resize-handle {
             position: absolute; right: -5px; bottom: -5px;
-            width: 25px; height: 25px; background: #3b82f6;
+            width: 28px; height: 28px; background: #3b82f6;
             border-radius: 50%; border: 2px solid white;
             display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 10px; z-index: 20;
+            color: white; font-size: 12px; z-index: 30;
         }
 
         .btn-delete {
             position: absolute; top: -10px; right: -10px;
             width: 25px; height: 25px; background: #ef4444;
             color: white; border-radius: 50%; border: 2px solid white;
-            display: flex; align-items: center; justify-content: center; z-index: 20;
+            display: flex; align-items: center; justify-content: center; z-index: 30;
+        }
+
+        .edit-input {
+            width: 80%;
+            background: transparent;
+            border: none;
+            text-align: center;
+            font-weight: 900;
+            color: inherit;
+            outline: none;
         }
 
         .floating-bar {
@@ -124,7 +135,6 @@
         <button onclick="setTab('reports')" id="nav-reports" class="nav-btn"><i class="fa-solid fa-chart-line"></i>Historial</button>
     </nav>
 
-    <!-- PANTALLA: DISEÑO -->
     <section id="screen-design" class="screen active">
         <div class="viewport" id="viewport-design">
             <div id="map-canvas" class="map-canvas"></div>
@@ -139,12 +149,10 @@
         </div>
     </section>
 
-    <!-- PANTALLA: AUDITORÍA -->
     <section id="screen-audit" class="screen">
         <div class="viewport">
             <div id="map-canvas-audit" class="map-canvas"></div>
         </div>
-        <!-- BOTÓN VERDE DE GENERAR REPORTE RESTAURADO -->
         <div class="floating-bar">
             <button onclick="openFinalizeModal()" class="w-full bg-emerald-500 text-slate-900 py-4 rounded-2xl font-black uppercase text-sm shadow-xl border-b-4 border-emerald-700 active:translate-y-1">
                 <i class="fa-solid fa-file-export mr-2"></i> Generar Reporte
@@ -152,12 +160,11 @@
         </div>
     </section>
 
-    <!-- PANTALLA: REPORTES -->
     <section id="screen-reports" class="screen overflow-y-auto p-4 bg-slate-100">
         <div id="report-list" class="max-w-md mx-auto pb-20 space-y-3"></div>
     </section>
 
-    <!-- MODAL FINALIZAR AUDITORÍA -->
+    <!-- Modales -->
     <div id="finalize-modal" class="modal">
         <div class="bg-white w-5/6 max-w-sm rounded-3xl p-6 shadow-2xl">
             <h3 class="font-black text-slate-900 uppercase text-center mb-4">Finalizar Auditoría</h3>
@@ -169,7 +176,6 @@
         </div>
     </div>
 
-    <!-- MODAL RESET -->
     <div id="reset-modal" class="modal">
         <div class="bg-white w-64 rounded-3xl p-6 text-center shadow-2xl">
             <p class="font-black text-xs uppercase mb-4">¿Borrar todo el mapa?</p>
@@ -242,7 +248,19 @@
                 div.style.top = t.y + 'px';
                 div.style.width = t.w + 'px';
                 div.style.height = t.h + 'px';
-                div.innerText = t.label;
+                
+                // Contenido de la mesa (Label o Input)
+                if (currentTab === 'design' && selectedId === t.id && !isLocked) {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'edit-input';
+                    input.value = t.label;
+                    input.oninput = (e) => { t.label = e.target.value.toUpperCase(); save(); };
+                    input.onclick = (e) => e.stopPropagation();
+                    div.appendChild(input);
+                } else {
+                    div.innerText = t.label;
+                }
 
                 if (currentTab === 'audit') {
                     div.onclick = () => {
@@ -250,38 +268,40 @@
                         renderAll();
                     };
                 } else if (!isLocked) {
-                    // ARRASTRE SUAVE Y SEGURO PARA MÓVIL
+                    
                     div.onpointerdown = (e) => {
-                        if (e.target.closest('.resize-handle') || e.target.closest('.btn-delete')) return;
+                        if (e.target.closest('.resize-handle') || e.target.closest('.btn-delete') || e.target.tagName === 'INPUT') return;
                         
                         selectedId = t.id;
                         renderAll();
                         
-                        div.setPointerCapture(e.pointerId);
-                        // Calculamos el offset exacto del toque respecto al origen de la mesa
-                        const offsetX = e.pageX - t.x;
-                        const offsetY = e.pageY - t.y;
+                        const startX = e.clientX;
+                        const startY = e.clientY;
+                        const initialX = t.x;
+                        const initialY = t.y;
 
-                        div.onpointermove = (em) => {
-                            // Actualización de posición basada en coordenadas de página para evitar saltos por scroll
-                            t.x = em.pageX - offsetX;
-                            t.y = em.pageY - offsetY;
+                        const onMove = (em) => {
+                            t.x = initialX + (em.clientX - startX);
+                            t.y = initialY + (em.clientY - startY);
                             div.style.left = t.x + 'px';
                             div.style.top = t.y + 'px';
                         };
 
-                        div.onpointerup = () => {
-                            div.onpointermove = null;
-                            div.releasePointerCapture(e.pointerId);
+                        const onUp = () => {
+                            document.removeEventListener('pointermove', onMove);
+                            document.removeEventListener('pointerup', onUp);
                             save();
                         };
+
+                        document.addEventListener('pointermove', onMove);
+                        document.addEventListener('pointerup', onUp);
                     };
 
                     if (selectedId === t.id) {
                         const del = document.createElement('div');
                         del.className = 'btn-delete';
                         del.innerHTML = '<i class="fa-solid fa-xmark"></i>';
-                        del.onclick = (e) => {
+                        del.onpointerdown = (e) => {
                             e.stopPropagation();
                             tables = tables.filter(x => x.id !== t.id);
                             selectedId = null;
@@ -294,23 +314,26 @@
                         resizer.innerHTML = '<i class="fa-solid fa-expand"></i>';
                         resizer.onpointerdown = (e) => {
                             e.stopPropagation();
-                            resizer.setPointerCapture(e.pointerId);
                             const startW = t.w;
                             const startH = t.h;
-                            const startX = e.pageX;
-                            const startY = e.pageY;
+                            const startX = e.clientX;
+                            const startY = e.clientY;
 
-                            resizer.onpointermove = (em) => {
-                                t.w = Math.max(40, startW + (em.pageX - startX));
-                                t.h = Math.max(40, startH + (em.pageY - startY));
+                            const onResizeMove = (em) => {
+                                t.w = Math.max(40, startW + (em.clientX - startX));
+                                t.h = Math.max(40, startH + (em.clientY - startY));
                                 div.style.width = t.w + 'px';
                                 div.style.height = t.h + 'px';
                             };
-                            resizer.onpointerup = () => {
-                                resizer.onpointermove = null;
-                                resizer.releasePointerCapture(e.pointerId);
+
+                            const onResizeUp = () => {
+                                document.removeEventListener('pointermove', onResizeMove);
+                                document.removeEventListener('pointerup', onResizeUp);
                                 save();
                             };
+
+                            document.addEventListener('pointermove', onResizeMove);
+                            document.addEventListener('pointerup', onResizeUp);
                         };
                         div.appendChild(resizer);
                     }
@@ -371,9 +394,7 @@
         function closeResetModal() { document.getElementById('reset-modal').classList.remove('active'); }
         function resetCanvas() { tables = []; save(); renderAll(); closeResetModal(); }
 
-        window.onload = () => {
-            renderAll();
-        };
+        window.onload = renderAll;
     </script>
 </body>
 </html>
