@@ -20,7 +20,7 @@
             touch-action: none;
         }
 
-        /* Estilo de navegación fijo */
+        /* Navegación fija idéntica a la anterior */
         .nav-container { display: flex; background: #020617; padding: 8px; gap: 4px; shrink: 0; }
         .nav-btn {
             flex: 1; padding: 12px 4px; border-radius: 12px; color: #64748b;
@@ -32,21 +32,21 @@
         .screen { flex: 1; display: none; overflow: hidden; position: relative; }
         .screen.active { display: flex; flex-direction: column; }
 
-        /* Contenedor del mapa con scroll real */
+        /* Contenedor del mapa optimizado para arrastre libre */
         #viewport {
             flex: 1;
             background: #cbd5e1;
             overflow: auto;
             position: relative;
             padding: 20px;
-            display: block; /* Para que el scroll funcione correctamente */
+            display: block;
             -webkit-overflow-scrolling: touch;
         }
 
-        /* Lienzo del mapa - Más largo para permitir movimiento abajo */
+        /* Lienzo del mapa extra largo */
         #map-canvas { 
             width: 800px; 
-            height: 1200px; 
+            height: 1500px; 
             background: white;
             position: relative; 
             border-radius: 1rem; 
@@ -61,15 +61,15 @@
             transform-origin: center;
             display: flex; align-items: center; justify-content: center;
             font-weight: 900; font-size: 14px; user-select: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: background 0.2s, border 0.2s, transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             cursor: move;
             border-radius: 8px;
-            touch-action: none;
+            touch-action: none; /* Crucial para Pointer Events */
             z-index: 10;
         }
 
         .mesa-libre { background: white; border: 2px solid #cbd5e1; color: #334155; }
-        .mesa-ocupada { background: #0f172a; border: 2px solid #0f172a; color: #10b981; scale: 1.05; }
+        .mesa-ocupada { background: #0f172a; border: 2px solid #0f172a; color: #10b981; }
         .mesa-vip { border-color: #f59e0b !important; border-width: 3px !important; }
 
         .edit-bubble {
@@ -83,7 +83,11 @@
             background: rgba(255,255,255,0.1);
         }
 
-        .input-field { width: 100%; padding: 14px; border-radius: 1rem; border: 2px solid #e2e8f0; font-weight: 700; outline: none; }
+        .input-field { 
+            width: 100%; padding: 12px; border-radius: 12px; 
+            border: 2px solid #e2e8f0; font-weight: 700; outline: none;
+            font-size: 13px;
+        }
         
         #toast {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
@@ -94,6 +98,13 @@
 
         .bottom-controls {
             background: white; padding: 16px; border-top: 1px solid #e2e8f0; shrink: 0;
+        }
+
+        /* Estilo para el formulario de notas */
+        .form-label {
+            display: block; font-size: 10px; font-weight: 900; color: #64748b;
+            text-transform: uppercase; margin-bottom: 4px; margin-left: 4px;
+            letter-spacing: 0.05em;
         }
     </style>
 </head>
@@ -121,7 +132,7 @@
     <!-- PANTALLA DISEÑO -->
     <section id="screen-design" class="screen active">
         <div id="viewport" onscroll="deselectAll()">
-            <div id="map-canvas">
+            <div id="map-canvas" id="canvas-container">
                 <div id="layer-design" class="w-full h-full relative" onclick="deselectAll(event)"></div>
             </div>
         </div>
@@ -152,20 +163,51 @@
         </div>
     </section>
 
-    <!-- PANTALLA NOTAS -->
-    <section id="screen-notes" class="screen overflow-y-auto p-6">
-        <div class="max-w-md mx-auto bg-white p-6 rounded-[2rem] border border-slate-200">
-            <h2 class="text-xs font-black uppercase text-slate-400 mb-6 tracking-widest italic">Formulario de Spot Check</h2>
-            <div class="mb-4">
-                <label class="text-[10px] font-black text-slate-800 uppercase ml-2">Nombre Auditor</label>
-                <input type="text" id="note-auditor" placeholder="EJ: PABLO" class="input-field mt-1 uppercase">
+    <!-- PANTALLA NOTAS (TEMPLATE SOLICITADO) -->
+    <section id="screen-notes" class="screen overflow-y-auto p-6 bg-slate-100">
+        <div class="max-w-md mx-auto bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-200">
+            <h2 class="text-xs font-black uppercase text-slate-400 mb-6 tracking-widest italic border-b pb-2">Planilla de Auditoría In Situ</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="form-label">Mesas Abiertas Registradas</label>
+                    <input type="text" id="mesas-registradas" placeholder="____" class="input-field uppercase">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="form-label">Lugar / Sector</label>
+                        <input type="text" id="lugar-sector" placeholder="SECTOR..." class="input-field uppercase">
+                    </div>
+                    <div>
+                        <label class="form-label">Mesas Ocupadas (In Situ)</label>
+                        <input type="text" id="mesas-insitu" placeholder="____" class="input-field uppercase">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="form-label">Mesas Abiertas en Micros (Captura)</label>
+                    <input type="text" id="mesas-micros" placeholder="____" class="input-field uppercase">
+                </div>
+
+                <div>
+                    <label class="form-label">Hora del Control</label>
+                    <input type="time" id="hora-control" class="input-field">
+                </div>
+
+                <div>
+                    <label class="form-label">Observaciones</label>
+                    <textarea id="obs-final" rows="3" placeholder="DETALLES..." class="input-field uppercase"></textarea>
+                </div>
+
+                <div class="pt-2">
+                    <label class="form-label">Firma Auditor</label>
+                    <input type="text" id="firma-auditor" placeholder="NOMBRE Y APELLIDO" class="input-field uppercase">
+                </div>
             </div>
-            <div class="mb-6">
-                <label class="text-[10px] font-black text-slate-800 uppercase ml-2">Novedades / Observación</label>
-                <textarea id="note-obs" rows="3" placeholder="COMENTARIOS..." class="input-field mt-1 uppercase"></textarea>
-            </div>
-            <button onclick="saveFinalReport()" class="w-full bg-slate-900 text-white p-5 rounded-3xl font-black uppercase text-xs shadow-2xl">
-                Guardar Reporte Local
+
+            <button onclick="saveFinalReport()" class="w-full mt-6 bg-slate-900 text-white p-5 rounded-3xl font-black uppercase text-xs shadow-2xl hover:bg-slate-800 transition-colors">
+                Finalizar y Guardar Reporte
             </button>
         </div>
     </section>
@@ -185,7 +227,18 @@
         let draggingId = null;
         let selectedId = null;
 
-        function init() { renderAll(); }
+        // OFFSET para arrastre libre
+        let offsetX = 0;
+        let offsetY = 0;
+
+        function init() { 
+            // Establecer hora actual por defecto
+            const ahora = new Date();
+            const horaStr = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
+            const inputHora = document.getElementById('hora-control');
+            if(inputHora) inputHora.value = horaStr;
+            renderAll(); 
+        }
 
         function setTab(tab) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -228,17 +281,15 @@
                         renderMap(layerId, true); 
                     };
                 } else {
-                    // SELECCIÓN
                     div.onclick = (e) => {
                         if (isLocked) return;
                         e.stopPropagation();
                         selectedId = (selectedId === t.id) ? null : t.id;
-                        renderMap(layerId, false);
+                        renderAll();
                     };
 
-                    // BURBUJA DE EDICIÓN
                     if (selectedId === t.id && !isLocked) {
-                        div.style.borderColor = '#3b82f6';
+                        div.style.border = '3px solid #3b82f6';
                         div.style.zIndex = '100';
                         const bubble = document.createElement('div');
                         bubble.className = 'edit-bubble';
@@ -252,28 +303,36 @@
                         div.appendChild(bubble);
                     }
 
-                    // ARRASTRE OPTIMIZADO PARA MÓVIL (Uso de coordenadas absolutas en el lienzo)
+                    // LÓGICA DE ARRASTRE MEJORADA (MOVIMIENTO LIBRE)
                     div.onpointerdown = (e) => {
                         if (isLocked) return;
+                        e.preventDefault();
                         draggingId = t.id;
                         selectedId = t.id;
+                        
+                        const rect = layer.getBoundingClientRect();
+                        offsetX = (e.clientX - rect.left) - t.x;
+                        offsetY = (e.clientY - rect.top) - t.y;
+                        
                         div.setPointerCapture(e.pointerId);
                         e.stopPropagation();
                     };
+
                     div.onpointermove = (e) => {
                         if (draggingId === t.id) {
                             const rect = layer.getBoundingClientRect();
-                            // Cálculo exacto considerando el scroll
-                            const newX = e.clientX - rect.left;
-                            const newY = e.clientY - rect.top;
+                            const newX = (e.clientX - rect.left) - offsetX;
+                            const newY = (e.clientY - rect.top) - offsetY;
                             
-                            t.x = Math.max(0, Math.min(layer.offsetWidth, newX));
-                            t.y = Math.max(0, Math.min(layer.offsetHeight, newY));
+                            // Límites del canvas
+                            t.x = Math.max(20, Math.min(layer.offsetWidth - 20, newX));
+                            t.y = Math.max(20, Math.min(layer.offsetHeight - 20, newY));
                             
                             div.style.left = t.x + 'px';
                             div.style.top = t.y + 'px';
                         }
                     };
+
                     div.onpointerup = () => { draggingId = null; save(); };
                 }
                 layer.appendChild(div);
@@ -282,48 +341,53 @@
 
         function resize(id, dw, dh) {
             const t = tables.find(x => x.id === id);
-            if (dw !== 0) t.w = t.w > 200 ? 50 : t.w + dw;
-            if (dh !== 0) t.h = t.h > 200 ? 50 : t.h + dh;
+            if (dw !== 0) t.w = t.w > 200 ? 60 : t.w + dw;
+            if (dh !== 0) t.h = t.h > 200 ? 60 : t.h + dh;
             save(); renderAll();
         }
+
         function rotate(id) {
             const t = tables.find(x => x.id === id);
             t.r = (t.r || 0) + 45;
             save(); renderAll();
         }
+
         function rename(id) {
             const t = tables.find(x => x.id === id);
             const n = prompt("Número o Nombre:", t.label);
             if(n) t.label = n.toUpperCase();
             save(); renderAll();
         }
+
         function deleteT(id) {
             tables = tables.filter(x => x.id !== id);
             selectedId = null;
             save(); renderAll();
         }
+
         function deselectAll(e) { 
-            if (e && e.target.id !== 'layer-design') return;
+            if (e && e.target.id !== 'layer-design' && e.target.id !== 'viewport') return;
             selectedId = null; 
             renderAll(); 
         }
 
         function toggleLock() {
             isLocked = !isLocked;
-            document.getElementById('lock-icon').className = isLocked ? 'fa-solid fa-lock text-red-500 mr-1' : 'fa-solid fa-unlock text-emerald-500 mr-1';
-            document.getElementById('lock-btn').innerHTML = isLocked ? '<i class="fa-solid fa-lock text-red-500 mr-1"></i> LOCK' : '<i class="fa-solid fa-unlock text-emerald-500 mr-1"></i> EDIT';
+            const icon = document.getElementById('lock-icon');
+            const btn = document.getElementById('lock-btn');
+            icon.className = isLocked ? 'fa-solid fa-lock text-red-500 mr-1' : 'fa-solid fa-unlock text-emerald-500 mr-1';
+            btn.innerHTML = isLocked ? '<i class="fa-solid fa-lock text-red-500 mr-1"></i> LOCK' : '<i class="fa-solid fa-unlock text-emerald-500 mr-1"></i> EDIT';
             showToast(isLocked ? "PLANO BLOQUEADO" : "EDICIÓN ACTIVADA");
             renderAll();
         }
 
         function addTable(tipo) {
             const size = tipo === 'std' ? 60 : 120;
-            // Posicionar en el centro de la vista actual del scroll
             const viewport = document.getElementById('viewport');
-            const spawnY = viewport.scrollTop + 100;
+            const spawnY = viewport.scrollTop + 150;
             
             tables.push({ 
-                id: Date.now(), x: 150, y: spawnY, w: size, h: size, r: 0, 
+                id: Date.now(), x: 100, y: spawnY, w: size, h: size, r: 0, 
                 label: (tables.length + 1).toString(), tipo: tipo 
             });
             save(); renderAll();
@@ -332,19 +396,32 @@
         function save() { localStorage.setItem('sp_v4_tables', JSON.stringify(tables)); }
 
         function saveFinalReport() {
-            const auditor = document.getElementById('note-auditor').value || "AUDITOR";
-            const obs = document.getElementById('note-obs').value || "-";
-            const occ = Object.values(occupied).filter(v => v).length;
+            const firma = document.getElementById('firma-auditor').value || "ANÓNIMO";
+            const obs = document.getElementById('obs-final').value || "-";
+            const reg = document.getElementById('mesas-registradas').value || "0";
+            const insitu = document.getElementById('mesas-insitu').value || "0";
+            const lugar = document.getElementById('lugar-sector').value || "GENERAL";
+            const micros = document.getElementById('mesas-micros').value || "0";
+            const hora = document.getElementById('hora-control').value || "00:00";
+
             const report = {
-                id: Date.now(), auditor: auditor.toUpperCase(), obs: obs,
-                count: occ, total: tables.length,
-                date: new Date().toLocaleString()
+                id: Date.now(),
+                firma: firma.toUpperCase(),
+                resumen: `Sector: ${lugar} | Ocup: ${insitu} | Micros: ${micros}`,
+                detalle: `Reg: ${reg} | Obs: ${obs}`,
+                hora: hora,
+                date: new Date().toLocaleDateString()
             };
+
             reports.unshift(report);
             localStorage.setItem('sp_v4_reports', JSON.stringify(reports));
-            occupied = {}; 
-            document.getElementById('note-obs').value = "";
-            showToast("REPORTE GUARDADO"); 
+            
+            // Limpiar formulario
+            ["mesas-registradas", "lugar-sector", "mesas-insitu", "mesas-micros", "obs-final", "firma-auditor"].forEach(id => {
+                document.getElementById(id).value = "";
+            });
+            
+            showToast("REPORTE ARCHIVADO"); 
             setTab('reports');
         }
 
@@ -352,17 +429,21 @@
             const list = document.getElementById('report-list');
             list.innerHTML = reports.map(r => `
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                    <div class="flex justify-between items-center mb-2">
-                        <div><p class="font-black text-xs text-slate-900">${r.auditor}</p><p class="text-[9px] text-slate-400 font-bold">${r.date}</p></div>
-                        <div class="text-lg font-black text-slate-900 bg-slate-100 px-3 py-1 rounded-xl">${r.total > 0 ? Math.round((r.count/r.total)*100) : 0}%</div>
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <p class="font-black text-[11px] text-slate-900 uppercase">${r.firma}</p>
+                            <p class="text-[9px] text-slate-400 font-bold">${r.date} - ${r.hora}</p>
+                        </div>
+                        <div class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-[9px] font-black uppercase">Guardado</div>
                     </div>
-                    <div class="text-[10px] text-slate-500 bg-slate-50 p-2 rounded-lg italic border-l-4 border-emerald-500">"${r.obs}"</div>
+                    <p class="text-[10px] text-slate-600 font-bold bg-slate-50 p-2 rounded-lg mb-1">${r.resumen}</p>
+                    <p class="text-[9px] text-slate-400 italic">${r.detalle}</p>
                 </div>
-            `).join('') || '<div class="text-center py-10 text-slate-300 font-black text-[10px] uppercase">No hay reportes</div>';
+            `).join('') || '<div class="text-center py-10 text-slate-300 font-black text-[10px] uppercase">Sin reportes históricos</div>';
         }
 
         function resetLayout() {
-            if(confirm("¿Borrar todo el diseño?")) {
+            if(confirm("¿Estás seguro de borrar todo el mapa?")) {
                 tables = []; save(); renderAll();
             }
         }
@@ -373,7 +454,7 @@
             setTimeout(() => t.classList.remove('show'), 2000);
         }
 
-        init();
+        window.onload = init;
     </script>
 </body>
 </html>
