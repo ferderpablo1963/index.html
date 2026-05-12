@@ -3,11 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#020617">
-    
-    <title>SPOT CHECK - ZOOM & REPORTES</title>
+    <title>SPOT CHECK - Versión Local</title>
+    <!-- Tailwind para el diseño y FontAwesome para los iconos -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -15,515 +12,398 @@
         body { 
             font-family: system-ui, -apple-system, sans-serif; 
             overscroll-behavior: none; 
-            -webkit-tap-highlight-color: transparent; 
-            background-color: #f1f5f9;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            background-color: #f8fafc; 
         }
-        
-        #map-wrapper {
-            flex: 1;
-            width: 100%;
-            overflow: hidden;
-            position: relative;
-            background-color: #cbd5e1;
-            touch-action: none;
-        }
-
+        /* Contenedor del mapa con scroll */
         #map-container { 
-            height: 2500px; 
-            width: 2500px; 
-            position: absolute;
-            background-color: #ffffff;
-            transform-origin: 0 0;
-            will-change: transform;
+            height: 1200px; 
+            width: 150%; 
+            position: relative; 
+            background-color: #ffffff; 
+            border-radius: 2.5rem;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
         }
-
-        .design-grid {
-            background-image: 
-                linear-gradient(to right, #f1f5f9 2px, transparent 2px),
-                linear-gradient(to bottom, #f1f5f9 2px, transparent 2px);
-            background-size: 50px 50px;
-        }
-
-        .mesa, .area-vip {
-            position: absolute;
-            z-index: 20;
-            touch-action: none;
+        /* Estilo de las mesas */
+        .mesa {
+            position: absolute; 
+            transform: translate(-50%, -50%);
+            width: 55px; 
+            height: 55px; 
+            border-radius: 50%;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            font-weight: 900; 
+            font-size: 0.85rem; 
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 900;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+            z-index: 10;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             user-select: none;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            touch-action: none;
         }
-
-        .mesa { border-radius: 14px; border: 2px solid #e2e8f0; font-size: 14px; }
-        .area-vip { border: 3px dashed #94a3b8; border-radius: 20px; text-transform: uppercase; font-size: 18px; }
-
-        .item-free { background-color: #ffffff; color: #1e293b; }
-        /* CAMBIO A ROJO PARA INDETERMINADAS */
-        .item-doubt { background-color: #ef4444 !important; color: #ffffff !important; border: 3px solid #b91c1c !important; animation: pulse-red 2s infinite; }
-        .item-occupied { background-color: #020617 !important; color: #ffffff !important; border-color: #020617 !important; }
-
-        @keyframes pulse-red {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        .mesa-libre { 
+            background: white; 
+            border: 2px solid #e2e8f0; 
+            color: #1e293b; 
         }
-
-        .selected-design { 
-            outline: 4px solid #3b82f6; 
-            outline-offset: 4px; 
-            z-index: 50 !important; 
+        .mesa-ocupada { 
+            background: #0f172a; 
+            border: 2px solid #0f172a; 
+            color: #10b981; 
+            transform: translate(-50%, -50%) scale(1.1); 
+            box-shadow: 0 10px 15px rgba(15, 23, 42, 0.3); 
         }
-
-        .layout-console {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 400;
-            width: 90%;
-            max-width: 400px;
-            background: #020617;
-            padding: 15px;
-            border-radius: 30px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+        /* Cuadrícula para modo diseño */
+        .design-grid { 
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px); 
+            background-size: 30px 30px; 
         }
-
-        .layout-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-            color: white;
-            font-weight: 900;
-            font-size: 10px;
+        .dragging { 
+            opacity: 0.6; 
+            z-index: 100; 
+            border: 2px dashed #3b82f6 !important; 
+            transform: translate(-50%, -50%) scale(1.2) !important; 
         }
-
-        .layout-btn-icon {
-            width: 50px;
-            height: 50px;
-            background: #2563eb;
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
+        .screen-overlay { 
+            position: fixed; 
+            inset: 0; 
+            top: 160px; 
+            background: #f8fafc; 
+            z-index: 40; 
+            display: none; 
+            overflow-y: auto; 
+            padding-bottom: 120px; 
         }
-
-        .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 20px); }
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .screen-overlay.active { display: block; }
+        #toast { 
+            position: fixed; 
+            bottom: 120px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            z-index: 1000; 
+            display: none; 
+        }
+        /* Scrollbar estética */
+        .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body class="text-slate-900">
+<body class="h-screen flex flex-col overflow-hidden select-none text-slate-900">
 
-    <!-- HEADER -->
-    <header class="bg-slate-950 text-white p-4 pt-10 flex justify-between items-center shrink-0 z-[500] shadow-xl">
+    <!-- CABECERA -->
+    <header class="bg-slate-950 text-white p-5 pt-12 flex justify-between items-center shrink-0 shadow-2xl z-[60]">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center rotate-3 shadow-lg">
-                <i class="fa-solid fa-bolt-lightning text-white"></i>
+            <div class="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg transform rotate-3">
+                <i class="fa-solid fa-bolt text-slate-950 text-xl"></i>
             </div>
             <div>
-                <h1 class="font-black text-lg italic uppercase leading-tight">SPOT CHECK</h1>
-                <p class="text-[8px] text-blue-400 font-black tracking-widest uppercase">Intelligent Control</p>
+                <h1 class="text-xl font-black italic tracking-tighter leading-none">SPOT CHECK</h1>
+                <p class="text-[9px] uppercase font-bold tracking-[0.2em] text-emerald-400">Versión Local Pro</p>
             </div>
         </div>
-        
-        <div id="design-edit-top" class="hidden flex items-center gap-2 bg-blue-600 p-2 rounded-2xl shadow-lg">
-            <input id="label-input" type="text" class="w-12 bg-white/20 text-white font-black outline-none rounded-lg text-sm text-center py-1" maxlength="5">
-            <div class="flex gap-1 h-8">
-                <button onclick="changeSize(10)" class="w-8 bg-blue-500 rounded-lg flex items-center justify-center"><i class="fa-solid fa-plus text-[10px]"></i></button>
-                <button onclick="changeSize(-10)" class="w-8 bg-blue-500 rounded-lg flex items-center justify-center"><i class="fa-solid fa-minus text-[10px]"></i></button>
-                <button onclick="rotateSelected()" class="w-8 bg-blue-500 rounded-lg flex items-center justify-center"><i class="fa-solid fa-rotate"></i></button>
-                <button onclick="deleteSelected()" class="w-8 bg-red-500 rounded-lg flex items-center justify-center"><i class="fa-solid fa-trash-can text-[10px]"></i></button>
-            </div>
-        </div>
-
-        <button onclick="toggleLock()" id="lock-btn" class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center border border-slate-800 transition-all">
-            <i class="fa-solid fa-lock text-red-500 text-lg" id="lock-icon"></i>
+        <button onclick="toggleLock()" id="lock-btn" class="bg-slate-900 px-4 py-2 rounded-xl text-[10px] font-black border border-slate-800 transition-all active:scale-95 flex items-center gap-2">
+            <i id="lock-icon" class="fa-solid fa-lock text-red-500"></i>
+            <span id="lock-text" class="text-slate-300">BLOQUEADO</span>
         </button>
     </header>
 
-    <!-- NAVIGATION & STATS BAR -->
-    <div class="bg-white border-b border-slate-200 z-[450] shrink-0 shadow-sm">
-        <nav class="p-2 flex gap-2">
-            <button onclick="setMode('audit')" id="nav-audit" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase bg-slate-950 text-white">Control</button>
-            <button onclick="setMode('design')" id="nav-design" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400">Layout</button>
-            <button onclick="setMode('history')" id="nav-history" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400">Reportes</button>
-        </nav>
-        
-        <!-- DASHBOARD DE ESTADÍSTICAS EN TIEMPO REAL -->
-        <div id="stats-bar" class="px-4 pb-3 flex justify-between items-center border-t border-slate-50 pt-2 overflow-x-auto whitespace-nowrap gap-4">
-            <div class="flex flex-col">
-                <span class="text-[18px] font-black leading-none" id="stat-perc">0%</span>
-                <span class="text-[7px] font-black uppercase text-slate-400">Ocupación</span>
-            </div>
-            <div class="h-6 w-[1px] bg-slate-200"></div>
-            <div class="flex gap-4">
-                <div class="flex items-center gap-1.5">
-                    <div class="w-2 h-2 rounded-full bg-slate-200"></div>
-                    <span class="text-[10px] font-black" id="stat-free">0</span>
-                </div>
-                <div class="flex items-center gap-1.5">
-                    <div class="w-2 h-2 rounded-full bg-slate-950"></div>
-                    <span class="text-[10px] font-black" id="stat-occ">0</span>
-                </div>
-                <div class="flex items-center gap-1.5">
-                    <div class="w-2 h-2 rounded-full bg-red-500"></div>
-                    <span class="text-[10px] font-black text-red-600" id="stat-doubt">0</span>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- NAVEGACIÓN -->
+    <nav class="bg-white border-b border-slate-200 p-2 flex gap-1 shrink-0 z-50 shadow-sm">
+        <button onclick="setTab('map')" id="btn-map" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase bg-slate-50 text-slate-950 border-b-2 border-emerald-500 transition-all">Auditoría</button>
+        <button onclick="setTab('history')" id="btn-history" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase text-slate-400 transition-all">Historial</button>
+        <button onclick="setTab('config')" id="btn-config" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase text-slate-400 transition-all">Ajustes</button>
+    </nav>
 
-    <!-- MAP VIEW -->
-    <main class="flex-1 relative overflow-hidden" id="main-view">
-        <div id="layout-console" class="layout-console hidden">
-            <button onclick="addTable()" class="layout-btn">
-                <div class="layout-btn-icon"><i class="fa-solid fa-plus"></i></div>
-                <span>Mesa</span>
-            </button>
-            <button onclick="addVIP()" class="layout-btn">
-                <div class="layout-btn-icon bg-purple-600"><i class="fa-solid fa-vector-square"></i></div>
-                <span>VIP</span>
-            </button>
-            <button onclick="toggleLock()" class="layout-btn">
-                <div class="layout-btn-icon bg-emerald-600"><i class="fa-solid fa-check"></i></div>
-                <span>Cerrar</span>
-            </button>
-        </div>
-
-        <div id="map-wrapper">
-            <div id="map-container" class="design-grid">
-                <div id="mesas-layer" class="w-full h-full relative"></div>
-            </div>
+    <!-- ÁREA DE MAPA -->
+    <main id="map-screen" class="flex-1 overflow-auto bg-slate-100 relative p-4 custom-scroll">
+        <div id="map-container">
+            <div id="mesas-layer" class="w-full h-full relative"></div>
         </div>
     </main>
 
-    <!-- FOOTER AUDIT - AJUSTADO PARA QUE NO TAPE -->
-    <footer id="audit-footer" class="p-4 bg-white border-t border-slate-200 z-[450] safe-bottom shrink-0 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
-        <button onclick="openSaveModal()" class="w-full bg-slate-950 text-white py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest active:scale-95 transition-all shadow-xl">
-            Finalizar y Guardar Reporte
+    <!-- PANTALLA HISTORIAL -->
+    <div id="history-screen" class="screen-overlay p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xs font-black uppercase text-slate-400 tracking-widest">Registros Guardados</h2>
+            <button onclick="clearHistory()" class="text-[9px] font-black text-red-400 uppercase bg-red-50 px-3 py-1.5 rounded-lg">Borrar Todo</button>
+        </div>
+        <div id="history-list" class="space-y-4"></div>
+    </div>
+
+    <!-- PANTALLA AJUSTES -->
+    <div id="config-screen" class="screen-overlay p-6">
+        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm max-w-md mx-auto">
+            <h3 class="font-black text-slate-950 uppercase italic text-lg mb-2">Editor de Plano</h3>
+            <p class="text-[10px] text-slate-400 mb-8 uppercase font-black tracking-wider">Desbloquea el candado arriba para mover mesas o cambiar etiquetas.</p>
+            
+            <div id="edit-box" class="hidden mb-8 p-5 bg-slate-50 rounded-3xl border border-slate-100 space-y-4">
+                <div>
+                    <label class="text-[8px] font-black text-slate-400 uppercase mb-2 block">Nombre/Nº de Mesa</label>
+                    <input id="label-input" type="text" class="w-full bg-white border border-slate-200 rounded-2xl px-4 py-4 font-black outline-none focus:border-emerald-500 transition-all text-lg">
+                </div>
+                <button onclick="deleteSelected()" class="w-full bg-red-50 text-red-500 py-4 rounded-2xl font-black text-[10px] uppercase flex items-center justify-center gap-2 border border-red-100">
+                    <i class="fa-solid fa-trash"></i> Eliminar Seleccionada
+                </button>
+            </div>
+
+            <div class="flex flex-col gap-3">
+                <button onclick="addTable()" class="w-full bg-slate-950 text-white py-5 rounded-3xl font-black text-xs uppercase shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all">
+                    <i class="fa-solid fa-plus text-emerald-400"></i> Añadir Mesa
+                </button>
+                <button onclick="resetLayout()" class="w-full py-4 text-slate-300 font-black text-[9px] uppercase tracking-[0.3em]">Resetear Plano Original</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER ACCIONES -->
+    <footer id="footer-actions" class="p-6 bg-white border-t border-slate-200 flex gap-3 shrink-0 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
+        <button onclick="finishAudit()" class="flex-[4] bg-slate-950 text-white py-5 rounded-[2rem] font-black text-sm uppercase shadow-2xl flex items-center justify-center gap-3 active:bg-emerald-600 transition-all">
+            <i class="fa-solid fa-check-double text-emerald-400"></i> Finalizar Reporte
+        </button>
+        <button onclick="clearCurrentSelection()" class="flex-1 bg-slate-100 text-slate-400 py-5 rounded-[2rem] flex items-center justify-center active:bg-red-50 active:text-red-400 transition-all">
+            <i class="fa-solid fa-trash-can"></i>
         </button>
     </footer>
 
-    <!-- MODAL DE GUARDADO -->
-    <div id="modal-save" class="fixed inset-0 bg-slate-950/95 z-[1000] hidden items-center justify-center p-6 backdrop-blur-md">
-        <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 shadow-2xl">
-            <h3 class="text-2xl font-black uppercase text-center italic tracking-tighter">Cerrar Auditoría</h3>
-            <div class="space-y-3">
-                <input id="aud-resp" type="text" class="w-full p-4 bg-slate-100 rounded-2xl font-bold border-2 border-transparent focus:border-blue-500 outline-none uppercase text-xs" placeholder="Auditor / Responsable">
-                <input id="aud-lugar" type="text" class="w-full p-4 bg-slate-100 rounded-2xl font-bold border-2 border-transparent focus:border-blue-500 outline-none uppercase text-xs" placeholder="Sector o Salón">
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-slate-100 rounded-2xl p-2">
-                        <label class="text-[8px] font-black uppercase text-slate-400 block ml-2">Pax In Situ</label>
-                        <input id="aud-insitu" type="number" class="w-full p-2 bg-transparent font-black outline-none text-center" placeholder="0">
-                    </div>
-                    <div class="bg-slate-100 rounded-2xl p-2">
-                        <label class="text-[8px] font-black uppercase text-slate-400 block ml-2">Pax Micros</label>
-                        <input id="aud-micros" type="number" class="w-full p-2 bg-transparent font-black outline-none text-center" placeholder="0">
-                    </div>
-                </div>
-                <textarea id="aud-obs" class="w-full p-4 bg-slate-100 rounded-2xl font-bold border-2 border-transparent focus:border-blue-500 outline-none uppercase text-[10px]" rows="2" placeholder="Observaciones del servicio..."></textarea>
-            </div>
-            <button onclick="confirmSave()" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black uppercase shadow-lg shadow-blue-200">Guardar Reporte</button>
-            <button onclick="closeSaveModal()" class="w-full text-slate-400 font-bold uppercase text-[10px] text-center">Volver al mapa</button>
-        </div>
-    </div>
-
-    <!-- PANTALLA DE HISTORIAL -->
-    <div id="history-screen" class="fixed inset-0 bg-slate-50 z-[900] hidden flex-col p-6 overflow-hidden pt-40">
-        <div class="flex justify-between items-center mb-6 px-2">
-            <h2 class="text-xl font-black italic uppercase">Historial Pro</h2>
-            <button onclick="if(confirm('¿Borrar todo?')) { audits=[]; save(); renderHistory(); }" class="text-red-500 text-[10px] font-black uppercase tracking-widest">Limpiar</button>
-        </div>
-        <div id="history-list" class="space-y-4 overflow-y-auto pb-40 custom-scroll flex-1"></div>
+    <!-- TOAST -->
+    <div id="toast" class="bg-slate-900 text-white px-8 py-4 rounded-full text-[10px] font-black uppercase shadow-2xl border border-slate-700">
+        MENSAJE
     </div>
 
     <script>
-        const DB_KEY = 'SPOTCHECK_AUDIT_PRO';
-        let tables = JSON.parse(localStorage.getItem(`${DB_KEY}_tables`)) || [];
-        let audits = JSON.parse(localStorage.getItem(`${DB_KEY}_audits`)) || [];
-        let currentMode = 'audit';
+        // --- ESTADO INICIAL ---
+        let tables = JSON.parse(localStorage.getItem('sc_tables')) || [];
+        let audits = JSON.parse(localStorage.getItem('sc_history')) || [];
+        let localOccupied = {}; // Solo persiste durante la sesión de auditoría actual
+        
         let isLocked = true;
+        let currentTab = 'map';
         let selectedId = null;
+        let draggingId = null;
+        let startPos = { x: 0, y: 0 };
+        let startMesaPos = { x: 0, y: 0 };
 
-        let scale = 0.5;
-        let posX = 0;
-        let posY = 0;
-        let lastTouchDistance = 0;
-        let isDraggingMap = false;
-        let lastMouseX, lastMouseY;
-
+        // --- INICIALIZACIÓN ---
         function init() {
             if (tables.length === 0) {
-                for(let i=1; i<=15; i++) {
-                    tables.push({ id: i, x: 200 + (i%5)*150, y: 200 + Math.floor(i/5)*150, label: i.toString().padStart(2,'0'), type: 'mesa', status: 'free', w: 100, h: 100 });
-                }
+                // Crear plano por defecto si está vacío
+                tables = Array.from({length: 12}, (_, i) => ({
+                    id: Date.now() + i,
+                    x: 20 + (i % 3) * 30,
+                    y: 10 + Math.floor(i / 3) * 15,
+                    label: (i + 1).toString()
+                }));
+                saveTables();
             }
-            initTouchControls();
             render();
-            updateUI();
-            updateStats();
+            renderHistory();
         }
 
-        function initTouchControls() {
-            const wrapper = document.getElementById('map-wrapper');
-            const container = document.getElementById('map-container');
-
-            wrapper.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 2) {
-                    lastTouchDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                } else if (e.touches.length === 1) {
-                    if (e.target === wrapper || e.target === container || isLocked) {
-                        isDraggingMap = true;
-                        lastMouseX = e.touches[0].pageX; lastMouseY = e.touches[0].pageY;
-                    }
-                }
-            }, { passive: false });
-
-            wrapper.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                if (e.touches.length === 2) {
-                    const currentDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                    const delta = currentDistance / lastTouchDistance;
-                    scale = Math.min(Math.max(0.15, scale * delta), 2.5);
-                    lastTouchDistance = currentDistance;
-                    render();
-                } else if (e.touches.length === 1 && isDraggingMap) {
-                    posX += e.touches[0].pageX - lastMouseX;
-                    posY += e.touches[0].pageY - lastMouseY;
-                    lastMouseX = e.touches[0].pageX; lastMouseY = e.touches[0].pageY;
-                    render();
-                }
-            }, { passive: false });
-
-            wrapper.addEventListener('touchend', () => { isDraggingMap = false; lastTouchDistance = 0; });
-
-            wrapper.addEventListener('mousedown', (e) => {
-                if (e.target === wrapper || e.target === container || isLocked) {
-                    isDraggingMap = true; lastMouseX = e.pageX; lastMouseY = e.pageY;
-                }
-            });
-
-            window.addEventListener('mousemove', (e) => {
-                if (isDraggingMap) {
-                    posX += e.pageX - lastMouseX; posY += e.pageY - lastMouseY;
-                    lastMouseX = e.pageX; lastMouseY = e.pageY;
-                    render();
-                }
-            });
-
-            window.addEventListener('mouseup', () => isDraggingMap = false);
-            wrapper.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                scale = Math.min(Math.max(0.15, scale * (e.deltaY > 0 ? 0.9 : 1.1)), 2.5);
-                render();
-            }, { passive: false });
-        }
-
-        function updateStats() {
-            const total = tables.length || 1;
-            const occ = tables.filter(t => t.status === 'occupied').length;
-            const doubt = tables.filter(t => t.status === 'doubt').length;
-            const free = tables.filter(t => t.status === 'free').length;
-            
-            document.getElementById('stat-perc').innerText = Math.round((occ / total) * 100) + '%';
-            document.getElementById('stat-occ').innerText = occ;
-            document.getElementById('stat-doubt').innerText = doubt;
-            document.getElementById('stat-free').innerText = free;
-        }
-
+        // --- RENDERIZADO ---
         function render() {
             const layer = document.getElementById('mesas-layer');
             const container = document.getElementById('map-container');
-            layer.innerHTML = '';
+            if(!layer) return;
             
-            container.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-            container.className = (currentMode === 'design' && !isLocked) ? 'design-grid' : '';
+            layer.innerHTML = '';
+            container.classList.toggle('design-grid', currentTab === 'config');
 
             tables.forEach(t => {
-                const el = document.createElement('div');
-                let statusClass = t.status === 'doubt' ? 'item-doubt' : (t.status === 'occupied' ? 'item-occupied' : 'item-free');
-                const baseClass = t.type === 'vip' ? 'area-vip' : 'mesa';
-                const selectClass = (selectedId === t.id && currentMode === 'design') ? 'selected-design' : '';
-                
-                el.className = `${baseClass} ${statusClass} ${selectClass}`;
-                el.style.width = t.w + 'px'; el.style.height = t.h + 'px';
-                el.style.left = t.x + 'px'; el.style.top = t.y + 'px';
-                el.innerText = t.label;
+                const isOcc = localOccupied[t.id] || false;
+                const div = document.createElement('div');
+                div.className = `mesa ${isOcc ? 'mesa-ocupada' : 'mesa-libre'} ${selectedId === t.id && currentTab === 'config' ? 'ring-4 ring-emerald-400 ring-offset-4' : ''}`;
+                div.style.left = `${t.x}%`;
+                div.style.top = `${t.y}%`;
+                div.innerText = t.label;
 
-                el.onclick = (e) => {
-                    e.stopPropagation();
-                    if (currentMode === 'audit') {
-                        if (t.status === 'free') t.status = 'doubt';
-                        else if (t.status === 'doubt') t.status = 'occupied';
-                        else t.status = 'free';
-                        save(); render(); updateStats();
-                    } else if (currentMode === 'design' && !isLocked) {
-                        selectedId = t.id; updateUI(); render();
+                // Evento Clic (Auditoría)
+                div.onclick = () => {
+                    if (currentTab === 'map') {
+                        localOccupied[t.id] = !localOccupied[t.id];
+                        render();
                     }
                 };
 
-                if (currentMode === 'design' && !isLocked) {
-                    el.onpointerdown = (e) => { 
-                        if (e.pointerType === 'mouse' || e.isPrimary) {
-                            e.stopPropagation(); selectedId = t.id; updateUI(); startDraggingTable(e, t, el); 
-                        }
-                    };
-                }
-                layer.appendChild(el);
+                // Eventos Arrastre (Diseño)
+                div.onpointerdown = (e) => {
+                    if (currentTab === 'config' && !isLocked) {
+                        e.stopPropagation();
+                        draggingId = t.id;
+                        selectedId = t.id;
+                        startPos = { x: e.clientX, y: e.clientY };
+                        startMesaPos = { x: t.x, y: t.y };
+                        div.classList.add('dragging');
+                        document.getElementById('edit-box').classList.remove('hidden');
+                        document.getElementById('label-input').value = t.label;
+                        render();
+                    }
+                };
+
+                layer.appendChild(div);
             });
         }
 
-        function startDraggingTable(e, t, el) {
-            const startX = e.pageX; const startY = e.pageY;
-            const initX = t.x; const initY = t.y;
-            const moveH = (ev) => {
-                t.x = initX + (ev.pageX - startX) / scale;
-                t.y = initY + (ev.pageY - startY) / scale;
-                el.style.left = t.x + 'px'; el.style.top = t.y + 'px';
-            };
-            const stopH = () => {
-                window.removeEventListener('pointermove', moveH);
-                window.removeEventListener('pointerup', stopH);
-                save(); render();
-            };
-            window.addEventListener('pointermove', moveH);
-            window.addEventListener('pointerup', stopH);
+        // --- LÓGICA DE MOVIMIENTO (Puntero/Touch) ---
+        window.addEventListener('pointermove', (e) => {
+            if (!draggingId) return;
+            const dx = e.clientX - startPos.x;
+            const dy = e.clientY - startPos.y;
+            const rect = document.getElementById('map-container').getBoundingClientRect();
+            const t = tables.find(x => x.id === draggingId);
+            if (t) {
+                // Convertir pixeles a porcentaje relativo al contenedor
+                t.x = Math.max(5, Math.min(95, startMesaPos.x + (dx / rect.width * 100)));
+                t.y = Math.max(2, Math.min(98, startMesaPos.y + (dy / rect.height * 100)));
+                render();
+            }
+        });
+
+        window.addEventListener('pointerup', () => {
+            if (draggingId) {
+                draggingId = null;
+                saveTables();
+                showToast("Posición guardada");
+            }
+        });
+
+        // --- ACCIONES ---
+        function setTab(tab) {
+            currentTab = tab;
+            selectedId = null;
+            document.getElementById('edit-box').classList.add('hidden');
+            
+            document.getElementById('map-screen').style.display = tab === 'map' ? 'block' : 'none';
+            document.getElementById('history-screen').classList.toggle('active', tab === 'history');
+            document.getElementById('config-screen').classList.toggle('active', tab === 'config');
+            document.getElementById('footer-actions').classList.toggle('hidden', tab !== 'map');
+            
+            const btns = ['map', 'history', 'config'];
+            btns.forEach(b => {
+                document.getElementById(`btn-${b}`).className = `flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${tab === b ? 'bg-slate-50 text-slate-950 border-b-2 border-emerald-500' : 'text-slate-400'}`;
+            });
+            render();
         }
 
         function toggleLock() {
             isLocked = !isLocked;
-            document.getElementById('lock-icon').className = isLocked ? 'fa-solid fa-lock text-red-500 text-lg' : 'fa-solid fa-unlock text-blue-500 text-lg';
-            setMode(currentMode);
-        }
-
-        function setMode(m) {
-            currentMode = m;
-            selectedId = null;
-            document.querySelectorAll('nav button').forEach(b => {
-                b.classList.remove('bg-slate-950', 'text-white'); b.classList.add('text-slate-400');
-            });
-            document.getElementById(`nav-${m}`).classList.add('bg-slate-950', 'text-white');
-            
-            document.getElementById('audit-footer').classList.toggle('hidden', m !== 'audit');
-            document.getElementById('layout-console').classList.toggle('hidden', m !== 'design' || isLocked);
-            document.getElementById('history-screen').classList.toggle('hidden', m !== 'history');
-            document.getElementById('stats-bar').classList.toggle('hidden', m === 'history');
-            
-            if(m === 'history') renderHistory();
-            updateUI(); render();
-        }
-
-        function updateUI() {
-            const panel = document.getElementById('design-edit-top');
-            const item = tables.find(t => t.id === selectedId);
-            if (selectedId && currentMode === 'design' && !isLocked) {
-                panel.classList.remove('hidden');
-                const input = document.getElementById('label-input');
-                input.value = item.label;
-                input.oninput = (e) => { item.label = e.target.value.toUpperCase(); render(); save(); };
-            } else { panel.classList.add('hidden'); }
+            document.getElementById('lock-icon').className = isLocked ? 'fa-solid fa-lock text-red-500' : 'fa-solid fa-unlock text-emerald-400';
+            document.getElementById('lock-text').innerText = isLocked ? 'BLOQUEADO' : 'EDICIÓN';
+            document.getElementById('lock-text').className = isLocked ? 'text-slate-300' : 'text-emerald-400';
+            showToast(isLocked ? "Plano Protegido" : "Modo Edición Activo");
         }
 
         function addTable() {
-            const centerX = (-posX + (window.innerWidth/2)) / scale;
-            const centerY = (-posY + (window.innerHeight/2)) / scale;
-            const newT = { id: Date.now(), x: centerX - 50, y: centerY - 50, label: (tables.length + 1).toString(), type: 'mesa', status: 'free', w: 100, h: 100 };
-            tables.push(newT); selectedId = newT.id; save(); render(); updateUI(); updateStats();
-        }
-
-        function addVIP() {
-            const centerX = (-posX + (window.innerWidth/2)) / scale;
-            const centerY = (-posY + (window.innerHeight/2)) / scale;
-            const newV = { id: Date.now(), x: centerX - 125, y: centerY - 60, label: "VIP", type: 'vip', status: 'free', w: 250, h: 120 };
-            tables.push(newV); selectedId = newV.id; save(); render(); updateUI(); updateStats();
-        }
-
-        function changeSize(delta) {
-            const t = tables.find(x => x.id === selectedId);
-            if (t) { t.w = Math.max(40, t.w + delta); t.h = Math.max(40, t.h + delta); render(); save(); }
-        }
-        function rotateSelected() {
-            const t = tables.find(x => x.id === selectedId);
-            if(t) { [t.w, t.h] = [t.h, t.w]; render(); save(); }
-        }
-        function deleteSelected() {
-            if(confirm("¿Eliminar?")) { tables = tables.filter(t => t.id !== selectedId); selectedId = null; save(); render(); updateUI(); updateStats(); }
-        }
-
-        function openSaveModal() { document.getElementById('modal-save').style.display = 'flex'; }
-        function closeSaveModal() { document.getElementById('modal-save').style.display = 'none'; }
-
-        function confirmSave() {
-            const occupied = tables.filter(t => t.status === 'occupied').length;
-            const report = {
-                id: Date.now(),
-                resp: document.getElementById('aud-resp').value.toUpperCase() || 'USUARIO',
-                lugar: document.getElementById('aud-lugar').value.toUpperCase() || 'GENERAL',
-                insitu: document.getElementById('aud-insitu').value || 0,
-                micros: document.getElementById('aud-micros').value || 0,
-                obs: document.getElementById('aud-obs').value || '',
-                date: new Date().toLocaleDateString(),
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                occ: occupied, 
-                total: tables.length
+            if(isLocked) return showToast("Desbloquea el candado primero");
+            const newMesa = { 
+                id: Date.now(), 
+                x: 50, 
+                y: 5, 
+                label: (tables.length + 1).toString() 
             };
-            audits.unshift(report);
-            tables.forEach(t => t.status = 'free');
-            save(); closeSaveModal(); 
-            document.getElementById('aud-lugar').value = ''; document.getElementById('aud-insitu').value = '';
-            document.getElementById('aud-micros').value = ''; document.getElementById('aud-obs').value = '';
-            updateStats(); setMode('history');
+            tables.push(newMesa);
+            saveTables();
+            render();
+            showToast("Mesa Añadida");
+        }
+
+        function deleteSelected() {
+            if(!selectedId) return;
+            tables = tables.filter(t => t.id !== selectedId);
+            selectedId = null;
+            document.getElementById('edit-box').classList.add('hidden');
+            saveTables();
+            render();
+        }
+
+        document.getElementById('label-input').oninput = (e) => {
+            if(selectedId) {
+                const t = tables.find(x => x.id === selectedId);
+                if(t) { 
+                    t.label = e.target.value; 
+                    saveTables();
+                    render(); 
+                }
+            }
+        };
+
+        function finishAudit() {
+            const auditor = prompt("Tu nombre (Auditor):");
+            if (!auditor) return;
+
+            const occupiedCount = Object.values(localOccupied).filter(v => v).length;
+            const total = tables.length;
+            const percent = total > 0 ? Math.round((occupiedCount / total) * 100) : 0;
+
+            const newReport = {
+                id: Date.now(),
+                user: auditor.toUpperCase(),
+                result: `${occupiedCount}/${total}`,
+                percent: percent,
+                date: new Date().toLocaleString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })
+            };
+
+            audits.unshift(newReport);
+            localStorage.setItem('sc_history', JSON.stringify(audits));
+            
+            // Limpiar selección actual tras guardar
+            localOccupied = {};
+            render();
+            renderHistory();
+            showToast("Reporte Guardado");
+            setTab('history');
         }
 
         function renderHistory() {
             const list = document.getElementById('history-list');
-            list.innerHTML = audits.map(a => `
-                <div class="bg-white p-6 rounded-[2.5rem] border-2 border-slate-100 shadow-sm relative overflow-hidden">
-                    <div class="absolute left-0 top-0 bottom-0 w-2.5 bg-slate-900"></div>
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest block">${a.date} · ${a.time}</span>
-                            <h4 class="text-xl font-black text-slate-900 italic">${a.resp}</h4>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-3xl font-black text-slate-950">${Math.round((a.occ/a.total)*100)}%</span>
-                            <p class="text-[8px] font-black text-emerald-500 uppercase">Ocupación</p>
-                        </div>
+            list.innerHTML = audits.map(r => `
+                <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex justify-between items-center relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-2 ${r.percent > 70 ? 'bg-red-500' : 'bg-emerald-500'}"></div>
+                    <div>
+                        <p class="font-black text-xs text-slate-900 leading-none mb-1">${r.user}</p>
+                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">${r.date}</p>
                     </div>
-                    <div class="space-y-2">
-                        <div class="flex items-center gap-2">
-                            <span class="text-slate-400 font-bold uppercase text-[8px]">Sector:</span>
-                            <span class="font-black text-slate-700 italic uppercase text-[10px]">${a.lugar}</span>
-                        </div>
-                        <div class="grid grid-cols-2 bg-slate-50 p-3 rounded-2xl gap-4">
-                            <div><span class="text-slate-400 font-black uppercase text-[7px] block">In Situ</span><span class="font-black text-slate-800 text-lg">${a.insitu}</span></div>
-                            <div><span class="text-slate-400 font-black uppercase text-[7px] block">Micros</span><span class="font-black text-slate-800 text-lg">${a.micros}</span></div>
-                        </div>
-                        ${a.obs ? `<div class="bg-blue-50 p-3 rounded-2xl border border-blue-100 text-[10px] font-bold text-blue-900 uppercase italic">"${a.obs}"</div>` : ''}
+                    <div class="text-right">
+                        <p class="font-black ${r.percent > 70 ? 'text-red-500' : 'text-emerald-500'} text-xl leading-none">${r.percent}%</p>
+                        <p class="text-[9px] text-slate-400 font-black uppercase mt-1 italic">Ocupación</p>
                     </div>
                 </div>
-            `).join('') || '<div class="text-center py-20 uppercase font-black text-slate-300 text-[10px] tracking-widest">Sin reportes registrados</div>';
+            `).join('') || '<div class="py-20 text-center font-black text-slate-300 text-[10px] uppercase">No hay reportes aún</div>';
         }
 
-        function save() {
-            localStorage.setItem(`${DB_KEY}_tables`, JSON.stringify(tables));
-            localStorage.setItem(`${DB_KEY}_audits`, JSON.stringify(audits));
+        function clearHistory() {
+            if(confirm("¿Seguro quieres borrar todo el historial?")) {
+                audits = [];
+                localStorage.setItem('sc_history', JSON.stringify(audits));
+                renderHistory();
+            }
         }
 
-        window.onload = init;
+        function clearCurrentSelection() {
+            localOccupied = {};
+            render();
+            showToast("Marcado Limpiado");
+        }
+
+        function resetLayout() {
+            if(confirm("¿Restablecer el diseño original?")) {
+                localStorage.removeItem('sc_tables');
+                location.reload();
+            }
+        }
+
+        function saveTables() {
+            localStorage.setItem('sc_tables', JSON.stringify(tables));
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 2000);
+        }
+
+        // Arrancar
+        init();
     </script>
 </body>
 </html>
