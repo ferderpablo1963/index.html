@@ -22,14 +22,15 @@
         #main-scroll {
             overflow: auto;
             position: relative;
+            background-color: #e2e8f0;
         }
 
         #map-container { 
             height: 1200px; 
-            width: 200%;
+            width: 2000px;
             position: relative;
             background-color: #ffffff;
-            transition: background-image 0.3s, transform 0.3s ease-in-out;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             transform-origin: top left;
         }
 
@@ -54,13 +55,13 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
-        /* ESTADOS DE AUDITORÍA */
+        /* ESTADOS DE AUDITORÍA SOLICITADOS */
         .mesa-free { background-color: #ffffff; color: #64748b; border: 2px solid #e2e8f0; }
         .mesa-occupied { 
-            background-color: #0f172a !important; 
+            background-color: #000000 !important; 
             color: #ffffff !important; 
-            border: 2px solid #0f172a !important; 
-            box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.3);
+            border: 2px solid #000000 !important; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
         }
         .mesa-indet { 
             background-color: #ef4444 !important; 
@@ -125,7 +126,7 @@
             </div>
             <div>
                 <h1 class="font-black text-xl tracking-tighter uppercase italic leading-none">SPOT CHECK</h1>
-                <p class="text-[8px] text-slate-400 font-black tracking-[0.3em] uppercase mt-1">Live Mode</p>
+                <p class="text-[8px] text-slate-400 font-black tracking-[0.3em] uppercase mt-1">SISTEMA AUDITOR</p>
             </div>
         </div>
         <button onclick="toggleLock()" id="lock-btn" class="group flex items-center gap-2 px-4 py-2 bg-slate-900 rounded-2xl border border-slate-800 transition-all active:scale-95">
@@ -137,18 +138,18 @@
     <div class="bg-white border-b border-slate-200 px-6 py-3 flex justify-between items-center z-50 shrink-0">
         <div class="flex gap-4">
             <div>
-                <p class="text-[8px] font-black text-slate-400 uppercase">Ocup/Indet</p>
+                <p class="text-[8px] font-black text-slate-400 uppercase">Oc/Ind</p>
                 <p id="stat-occupied" class="text-sm font-black">0</p>
             </div>
             <div class="w-[1px] h-6 bg-slate-100 my-auto"></div>
             <div>
-                <p class="text-[8px] font-black text-slate-400 uppercase">Capacidad</p>
+                <p class="text-[8px] font-black text-slate-400 uppercase">Ocupación</p>
                 <p id="stat-percent" class="text-sm font-black text-emerald-600">0%</p>
             </div>
         </div>
         <div class="text-right flex items-center gap-4">
-            <button onclick="fitToScreen()" class="bg-slate-100 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase text-slate-500 hover:bg-slate-200 transition-colors">
-                <i class="fa-solid fa-expand mr-1"></i> Fit
+            <button onclick="toggleFit()" id="btn-fit" class="bg-slate-100 px-4 py-2 rounded-lg text-[10px] font-black uppercase text-slate-600 active:bg-slate-300 transition-colors">
+                <i class="fa-solid fa-expand mr-1"></i> FIT
             </button>
             <p id="current-time" class="text-[10px] font-black text-slate-950">00:00</p>
         </div>
@@ -163,28 +164,28 @@
         </div>
     </nav>
 
-    <main class="flex-1 overflow-hidden relative bg-slate-100" id="main-scroll">
-        <div id="map-container" class="rounded-[2.5rem] shadow-inner border border-slate-200" onclick="deselectTable()">
+    <main class="flex-1 overflow-hidden relative" id="main-scroll">
+        <div id="map-container" onclick="deselectTable()">
             <div id="mesas-layer" class="w-full h-full relative"></div>
         </div>
     </main>
 
-    <!-- SECCIÓN DE REPORTE ACTUALIZADA -->
+    <!-- PANTALLA REPORTE SEGÚN PLANTILLA -->
     <div id="notes-screen" class="screen-overlay flex-col p-4">
         <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-200 max-w-md mx-auto w-full space-y-6">
             <div class="text-center border-b border-slate-100 pb-4">
                 <h3 class="text-sm font-black uppercase italic text-slate-900">IMPRESION DE REPORTE</h3>
-                <p class="text-[10px] text-slate-400 font-bold">(Open Checks)</p>
+                <p class="text-[10px] text-slate-400 font-bold uppercase">(Open Checks)</p>
             </div>
             
             <div class="space-y-4">
                 <div>
-                    <label class="text-[9px] font-black uppercase text-slate-400 ml-2">Mesas Abiertas Registradas</label>
+                    <label class="text-[9px] font-black uppercase text-slate-400 ml-2 italic">Mesas Abiertas Registradas</label>
                     <input id="note-abiertas" type="number" readonly class="w-full p-4 bg-slate-100 border border-slate-200 rounded-2xl font-black text-sm text-emerald-600">
                 </div>
 
                 <div class="grid grid-cols-1 gap-2">
-                     <label class="text-[9px] font-black uppercase text-slate-400 ml-2">In Situ se observan</label>
+                     <label class="text-[9px] font-black uppercase text-slate-400 ml-2 italic">In Situ se observan</label>
                      <div class="flex gap-2">
                         <input id="note-lugar" type="text" placeholder="Lugar / Sector" class="flex-[2] p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-sm outline-none">
                         <input id="note-insitu" type="number" placeholder="Cant." class="flex-1 p-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-sm text-center outline-none">
@@ -192,43 +193,43 @@
                 </div>
 
                 <div>
-                    <label class="text-[9px] font-black uppercase text-slate-400 ml-2">Mesas Abiertas en Micros (Captura)</label>
+                    <label class="text-[9px] font-black uppercase text-slate-400 ml-2 italic">Mesas Abiertas en Micros (Captura)</label>
                     <input id="note-micros" type="text" placeholder="Número de captura..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-sm outline-none">
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="text-[9px] font-black uppercase text-slate-400 ml-2">Hora del Control</label>
+                        <label class="text-[9px] font-black uppercase text-slate-400 ml-2 italic">Hora del Control</label>
                         <input id="note-hora" type="text" class="w-full p-4 bg-slate-100 border border-slate-200 rounded-2xl font-bold text-xs text-center" readonly>
                     </div>
                     <div>
-                        <label class="text-[9px] font-black uppercase text-slate-400 ml-2">Firma</label>
+                        <label class="text-[9px] font-black uppercase text-slate-400 ml-2 italic">Firma</label>
                         <input id="note-firma" type="text" placeholder="Nombre" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-black uppercase text-xs outline-none text-center">
                     </div>
                 </div>
 
                 <div>
-                    <label class="text-[9px] font-black uppercase text-slate-400 ml-2">Observaciones</label>
+                    <label class="text-[9px] font-black uppercase text-slate-400 ml-2 italic">Observaciones</label>
                     <textarea id="note-observaciones" rows="3" placeholder="Notas adicionales..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-xs outline-none"></textarea>
                 </div>
             </div>
 
             <button onclick="openModal('audit-modal')" class="w-full bg-slate-950 text-white py-5 rounded-[2rem] font-black text-sm uppercase shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3">
-                <i class="fa-solid fa-cloud-arrow-up"></i> Guardar y Finalizar
+                <i class="fa-solid fa-cloud-arrow-up"></i> Guardar Reporte
             </button>
         </div>
     </div>
 
     <div id="history-screen" class="screen-overlay flex-col p-6">
         <div class="flex justify-between items-center mb-6 shrink-0">
-            <h2 class="text-2xl font-black uppercase italic text-slate-950 leading-none text-emerald-500">Historial</h2>
+            <h2 class="text-2xl font-black uppercase italic text-slate-950 leading-none">Historial</h2>
             <button onclick="setMode('audit')" class="w-10 h-10 bg-slate-100 text-slate-400 rounded-xl flex items-center justify-center">
                 <i class="fa-solid fa-arrow-left"></i>
             </button>
         </div>
         <div id="history-list" class="space-y-4"></div>
         <div class="mt-8 pb-20">
-             <button onclick="clearHistory()" class="w-full py-4 text-red-400 font-black text-[9px] uppercase tracking-widest bg-red-50 rounded-2xl">Borrar Todo el Historial</button>
+             <button onclick="clearHistory()" class="w-full py-4 text-red-400 font-black text-[9px] uppercase tracking-widest bg-red-50 rounded-2xl">Limpiar Historial</button>
         </div>
     </div>
 
@@ -279,7 +280,7 @@
     </div>
 
     <script>
-        const DB_PREFIX = 'spotcheck_v3';
+        const DB_PREFIX = 'spotcheck_final';
         
         let tables = JSON.parse(localStorage.getItem(`${DB_PREFIX}_tables`)) || [];
         let audits = JSON.parse(localStorage.getItem(`${DB_PREFIX}_audits`)) || [];
@@ -290,6 +291,7 @@
         let draggingId = null;
         let resizingId = null;
         let rotatingId = null;
+        let isFitted = false; // Estado del botón FIT
 
         let startPos = { x: 0, y: 0 };
         let startMesaPos = { x: 0, y: 0 };
@@ -302,6 +304,32 @@
             startTime();
             window.addEventListener('pointermove', handlePointerMove);
             window.addEventListener('pointerup', handlePointerUp);
+        }
+
+        // --- LÓGICA DEL BOTÓN FIT (MODIFICADA SEGÚN SOLICITUD) ---
+        function toggleFit() {
+            const container = document.getElementById('map-container');
+            const main = document.getElementById('main-scroll');
+            const btn = document.getElementById('btn-fit');
+
+            if (!isFitted) {
+                // Cálculo para encajar todo el plano (2000px ancho) en el visor
+                const scaleX = main.clientWidth / container.offsetWidth;
+                const scaleY = main.clientHeight / container.offsetHeight;
+                const finalScale = Math.min(scaleX, scaleY, 1) * 0.95; // Un poco de margen
+                
+                container.style.transform = `scale(${finalScale})`;
+                btn.classList.replace('bg-slate-100', 'bg-emerald-500');
+                btn.classList.replace('text-slate-600', 'text-white');
+                showToast("Vista Encajada");
+            } else {
+                // Volver a tamaño normal (100%)
+                container.style.transform = `scale(1)`;
+                btn.classList.replace('bg-emerald-500', 'bg-slate-100');
+                btn.classList.replace('text-white', 'text-slate-600');
+                showToast("Vista Normal");
+            }
+            isFitted = !isFitted;
         }
 
         function handlePointerMove(e) {
@@ -345,14 +373,6 @@
             }
         }
 
-        function fitToScreen() {
-            const container = document.getElementById('map-container');
-            const main = document.getElementById('main-scroll');
-            const scale = Math.min(main.clientWidth / container.offsetWidth, main.clientHeight / container.offsetHeight, 1);
-            container.style.transform = `scale(${scale})`;
-            showToast("Plano ajustado");
-        }
-
         function startTime() {
             setInterval(() => {
                 const now = new Date();
@@ -363,10 +383,10 @@
         }
 
         function createInitialLayout() {
-            tables = Array.from({ length: 12 }, (_, i) => ({
-                id: Date.now() + i, x: 15 + (i % 3) * 20, y: 10 + Math.floor(i / 3) * 12,
-                label: (i + 1).toString(), status: 'free', // status: free, occupied, indet
-                w: 65, h: 65, rotation: 0
+            tables = Array.from({ length: 15 }, (_, i) => ({
+                id: Date.now() + i, x: 10 + (i % 5) * 15, y: 10 + Math.floor(i / 5) * 15,
+                label: (i + 1).toString(), status: 'free',
+                w: 70, h: 70, rotation: 0
             }));
             saveData();
         }
@@ -375,7 +395,7 @@
             const layer = document.getElementById('mesas-layer');
             layer.innerHTML = '';
             const container = document.getElementById('map-container');
-            container.className = `rounded-[2.5rem] shadow-inner border border-slate-200 ${currentMode === 'design' ? 'design-mode design-grid' : ''}`;
+            container.className = `${currentMode === 'design' ? 'design-grid' : ''}`;
 
             let activeCount = 0;
             tables.forEach(t => {
@@ -418,7 +438,7 @@
                         startPos = { x: e.clientX, y: e.clientY }; startMesaPos = { x: t.x, y: t.y };
                         updateDesignPanel(); render();
                     } else if (currentMode === 'audit') {
-                        // CICLO DE 3 TOQUES: free -> occupied -> indet -> free
+                        // CICLO DE 3 TOQUES: free (blanca) -> occupied (negra) -> indet (roja) -> free
                         if (t.status === 'free' || !t.status) t.status = 'occupied';
                         else if (t.status === 'occupied') t.status = 'indet';
                         else t.status = 'free';
@@ -455,7 +475,7 @@
             isLocked = !isLocked; 
             updateLockUI(); 
             saveData(); 
-            showToast(isLocked ? "Bloqueado" : "Edición Libre");
+            showToast(isLocked ? "Cerrado para Auditoría" : "Modo Edición Activado");
             render();
         }
 
@@ -484,16 +504,16 @@
         function addTable(type) { 
             tables.push({ 
                 id: Date.now(), x: 50, y: 50, label: (tables.length + 1).toString(), status: 'free',
-                w: type === 'vip' ? 140 : 65, h: type === 'vip' ? 70 : 65, rotation: 0
+                w: type === 'vip' ? 140 : 70, h: type === 'vip' ? 80 : 70, rotation: 0
             }); 
             saveData(); render(); 
         }
 
         function clearCurrentAudit() {
-            if(!confirm("¿Limpiar tablero?")) return;
+            if(!confirm("¿Resetear el control actual?")) return;
             tables.forEach(t => t.status = 'free');
             saveData(); render();
-            showToast("Plano Limpiado");
+            showToast("Plano Reiniciado");
         }
 
         function saveAudit() {
@@ -509,8 +529,8 @@
                 lugar: document.getElementById('note-lugar').value || 'Sin Sector',
                 insitu: document.getElementById('note-insitu').value || totalActive,
                 micros: document.getElementById('note-micros').value || '-',
-                firma: (document.getElementById('note-firma').value || 'Auditor').toUpperCase(),
-                obs: document.getElementById('note-observaciones').value || 'Sin observaciones',
+                firma: (document.getElementById('note-firma').value || 'ADMIN').toUpperCase(),
+                obs: document.getElementById('note-observaciones').value || 'Ninguna',
                 percent: Math.round((totalActive / tables.length) * 100)
             });
             
@@ -518,57 +538,56 @@
             saveData();
             closeModal('audit-modal');
             setMode('history');
-            showToast("Reporte Guardado");
+            showToast("Reporte Finalizado");
         }
 
         function renderHistory() {
             document.getElementById('history-list').innerHTML = audits.map((a) => `
-                <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 relative">
-                    <button onclick="deleteAudit(${a.id})" class="absolute top-6 right-6 w-8 h-8 text-red-300 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+                <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-2 h-full bg-emerald-500"></div>
+                    <button onclick="deleteAudit(${a.id})" class="absolute top-6 right-6 w-8 h-8 text-slate-200 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
                     
-                    <div class="border-b border-slate-50 pb-3 mb-4">
-                        <h4 class="text-[10px] font-black text-slate-900 uppercase italic">REPORTE FINALIZADO</h4>
-                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">${a.date} | ${a.time}</p>
+                    <div class="border-b border-slate-50 pb-3 mb-4 flex justify-between items-end">
+                        <div>
+                            <h4 class="text-[10px] font-black text-slate-900 uppercase italic">REPORTE SPOT CHECK</h4>
+                            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tight">${a.date} | ${a.time}</p>
+                        </div>
+                        <div class="text-right">
+                             <p class="text-[14px] font-black text-emerald-500 leading-none">${a.percent}%</p>
+                             <p class="text-[6px] font-black text-slate-300 uppercase">Ocupación</p>
+                        </div>
                     </div>
 
                     <div class="space-y-2 text-[10px]">
                         <div class="flex justify-between border-b border-slate-50 pb-1">
-                            <span class="text-slate-400 font-bold uppercase">Mesas Abiertas Registradas:</span>
+                            <span class="text-slate-400 font-bold uppercase">Mesas Registradas:</span>
                             <span class="font-black text-slate-950">${a.abiertas}</span>
                         </div>
                         <div class="flex justify-between border-b border-slate-50 pb-1">
                             <span class="text-slate-400 font-bold uppercase">In Situ (${a.lugar}):</span>
-                            <span class="font-black text-emerald-600">${a.insitu} mesas ocupadas</span>
+                            <span class="font-black text-slate-900">${a.insitu} ocupadas</span>
                         </div>
                         <div class="flex justify-between border-b border-slate-50 pb-1">
                             <span class="text-slate-400 font-bold uppercase">Captura Micros:</span>
                             <span class="font-black text-slate-950">${a.micros}</span>
                         </div>
-                        <div class="flex justify-between border-b border-slate-50 pb-1">
-                            <span class="text-slate-400 font-bold uppercase">Hora del Control:</span>
-                            <span class="font-black text-slate-950">${a.time}</span>
-                        </div>
                         <div class="pt-2">
                             <span class="text-slate-400 font-bold uppercase block text-[8px] mb-1">Observaciones:</span>
-                            <p class="italic text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">${a.obs}</p>
+                            <p class="italic text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 text-[9px]">${a.obs}</p>
                         </div>
-                        <div class="pt-3 flex justify-between items-end">
+                        <div class="pt-3 flex justify-between items-center">
                             <div>
-                                <span class="text-slate-400 font-bold uppercase text-[8px] block">Firma</span>
-                                <span class="font-black text-slate-900 uppercase">${a.firma}</span>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-[18px] font-black text-emerald-500 leading-none">${a.percent}%</span>
-                                <span class="block text-[7px] font-black text-slate-300 uppercase">Ocupación</span>
+                                <span class="text-slate-400 font-bold uppercase text-[7px] block">Responsable</span>
+                                <span class="font-black text-slate-900 uppercase italic">${a.firma}</span>
                             </div>
                         </div>
                     </div>
                 </div>
-            `).join('') || '<p class="text-center text-slate-300 py-20 uppercase font-black text-[10px]">Historial Vacío</p>';
+            `).join('') || '<p class="text-center text-slate-300 py-20 uppercase font-black text-[10px] italic">No hay reportes guardados</p>';
         }
 
-        function deleteAudit(id) { if(confirm("¿Eliminar registro?")) { audits = audits.filter(a => a.id !== id); saveData(); renderHistory(); } }
-        function clearHistory() { if(confirm("¿Borrar todo?")) { audits = []; saveData(); renderHistory(); } }
+        function deleteAudit(id) { if(confirm("¿Eliminar este reporte?")) { audits = audits.filter(a => a.id !== id); saveData(); renderHistory(); } }
+        function clearHistory() { if(confirm("¿Seguro de borrar TODO el historial?")) { audits = []; saveData(); renderHistory(); } }
         function openModal(id) { document.getElementById(id).classList.replace('hidden', 'flex'); }
         function closeModal(id) { document.getElementById(id).classList.replace('flex', 'hidden'); }
         function showToast(msg) {
@@ -577,7 +596,7 @@
             t.classList.add('show');
             setTimeout(() => t.classList.remove('show'), 2000);
         }
-        function resetLayout() { if (confirm("¿Restablecer diseño?")) { createInitialLayout(); render(); } }
+        function resetLayout() { if (confirm("¿Limpiar todo el diseño actual?")) { createInitialLayout(); render(); } }
         function saveData() {
             localStorage.setItem(`${DB_PREFIX}_tables`, JSON.stringify(tables));
             localStorage.setItem(`${DB_PREFIX}_audits`, JSON.stringify(audits));
